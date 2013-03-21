@@ -2,7 +2,7 @@
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)
 
-**Contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), Tom Kwiatkowski
+**Contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), [Tom Kwiatkowski](http://homes.cs.washington.edu/~tomk/)
 
 ## Documentations
 
@@ -12,31 +12,27 @@ Coming soon …
 
 When using UWSPF, please acknowledge it by citing:
 
-Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf. 2013.
+> Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf.  2013.
 
 **Bibtex:**
 
-@article{artzi2013uwspf,
-	title={UW SPF: The University of Washington Semantic Parsing Framework},
-	author={Artzi, Yoav and Zettlemoyer, Luke},
-	year={2013}
-}
+    @article{artzi2013uwspf,
+        title={UW SPF: The University of Washington Semantic Parsing Framework},
+        author={Artzi, Yoav and Zettlemoyer, Luke},
+        year={2013}
+    }
 
 When using specific algorithms please cite the appropriate work:
 
 ### Validation based learning, joint inference and coarse-to-fine lexical generation
 (Classes: JointValidationSensitivePerceptron, JointModel, IJointFeatureSet, JointTemplatedAbstractLexiconGenerator, TemplatedAbstractLexiconGenerator)
 
-[Weakly Supervised Learning of Semantic Parsers for Mapping Instructions to Actions](http://yoavartzi.com/pub/az-tacl.2013.pdf)
-Yoav Artzi and Luke Zettlemoyer
-In Transactions of the Association for Computational Linguistics (TACL), 2013.
+[Weakly Supervised Learning of Semantic Parsers for Mapping Instructions to Actions](http://yoavartzi.com/pub/az-tacl.2013.pdf). Yoav Artzi and Luke Zettlemoyer. In Transactions of the Association for Computational Linguistics (TACL), 2013.
 
 ### Loss sensitive learning
 (Classes: LossSensitivePerceptronCKY)
 
-[Bootstrapping Semantic Parsers from Conversations](http://yoavartzi.com/pub/2011.emnlp.az.pdf)
-Yoav Artzi and Luke Zettlemoyer
-In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2011.
+[Bootstrapping Semantic Parsers from Conversations](http://yoavartzi.com/pub/2011.emnlp.az.pdf). Yoav Artzi and Luke Zettlemoyer. In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2011.
 
 ### Unification-based learning
 (Classes: UBLStocGradient, UBLPerceptron)
