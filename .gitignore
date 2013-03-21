@@ -1,0 +1,10 @@
+.DS_Store
+*.pyc
+run.*
+
+bin/
+dist/
+build/
+build.src/
+
+

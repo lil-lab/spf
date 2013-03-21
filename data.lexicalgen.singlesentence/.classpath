@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.lexicalgen"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.singlesentence"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg.genlex"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

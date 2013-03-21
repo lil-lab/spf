@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src-test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="/parser.ccg.rules.coordination"/>
+	<classpathentry kind="src" path="/mr.lambda"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry kind="src" path="/ccg"/>
+	<classpathentry kind="src" path="/mr.lambda.ccg"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
