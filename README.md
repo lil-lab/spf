@@ -6,11 +6,15 @@
 
 ## Documentations
 
-Coming soon … 
+More coming soon … 
+
+# Building
+
+To compile SPF use: `ant dist`. The output JAR file will be in the `dist` directory. You can also download the compiled JAR file from the [Downloads](https://bitbucket.org/yoavartzi/spf/downloads) section.
 
 ## Attribution
 
-When using UWSPF, please acknowledge it by citing:
+When using UW SPF, please acknowledge it by citing:
 
 Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf.  2013.
 
