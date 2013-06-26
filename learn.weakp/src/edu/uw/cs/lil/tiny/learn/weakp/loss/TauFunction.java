@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -19,7 +21,7 @@ package edu.uw.cs.lil.tiny.learn.weakp.loss;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.learn.weakp.loss.LossSensitivePerceptronCKY.RelativeLossFunction;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 
@@ -38,11 +40,11 @@ public class TauFunction<Y> implements IUpdateWeightFunction<Y> {
 	private final IHashVector									paramsVector;
 	private final double										valueForOptimalParses;
 	private final int[]											vCTotalValues;
-	private final List<Pair<Double, ? extends IParseResult<Y>>>	violatingOptimalParses;
+	private final List<Pair<Double, ? extends IParse<Y>>>	violatingOptimalParses;
 	
 	public TauFunction(
-			List<Pair<Double, ? extends IParseResult<Y>>> violatingOptimalParses,
-			List<Pair<Double, ? extends IParseResult<Y>>> violatingNonOptimalParses,
+			List<Pair<Double, ? extends IParse<Y>>> violatingOptimalParses,
+			List<Pair<Double, ? extends IParse<Y>>> violatingNonOptimalParses,
 			double margin, IHashVector paramsVector,
 			RelativeLossFunction deltaLossFunction) {
 		this.violatingOptimalParses = violatingOptimalParses;
@@ -55,8 +57,8 @@ public class TauFunction<Y> implements IUpdateWeightFunction<Y> {
 		
 		// Calculate array of vCTotal values
 		int cCounter = 0;
-		for (final Pair<Double, ? extends IParseResult<Y>> c : violatingOptimalParses) {
-			for (final Pair<Double, ? extends IParseResult<Y>> e : violatingNonOptimalParses) {
+		for (final Pair<Double, ? extends IParse<Y>> c : violatingOptimalParses) {
+			for (final Pair<Double, ? extends IParse<Y>> e : violatingNonOptimalParses) {
 				vCTotalValues[cCounter] += vCe(c, e);
 			}
 			++cCounter;
@@ -65,10 +67,10 @@ public class TauFunction<Y> implements IUpdateWeightFunction<Y> {
 	
 	@Override
 	public double evalNonOptimalParse(
-			Pair<Double, ? extends IParseResult<Y>> nonOptimalParse) {
+			Pair<Double, ? extends IParse<Y>> nonOptimalParse) {
 		double ret = 0;
 		int cCounter = 0;
-		for (final Pair<Double, ? extends IParseResult<Y>> c : violatingOptimalParses) {
+		for (final Pair<Double, ? extends IParse<Y>> c : violatingOptimalParses) {
 			ret += (double) vCe(c, nonOptimalParse)
 					/ (numViolatingOptimalParse * vCTotalValues[cCounter]);
 			++cCounter;
@@ -78,12 +80,12 @@ public class TauFunction<Y> implements IUpdateWeightFunction<Y> {
 	
 	@Override
 	public double evalOptimalParse(
-			Pair<Double, ? extends IParseResult<Y>> optimalParse) {
+			Pair<Double, ? extends IParse<Y>> optimalParse) {
 		return valueForOptimalParses;
 	}
 	
-	private int vCe(Pair<Double, ? extends IParseResult<Y>> c,
-			Pair<Double, ? extends IParseResult<Y>> e) {
+	private int vCe(Pair<Double, ? extends IParse<Y>> c,
+			Pair<Double, ? extends IParse<Y>> e) {
 		return c.second().getAverageMaxFeatureVector()
 				.addTimes(-1.0, e.second().getAverageMaxFeatureVector())
 				.vectorMultiply(paramsVector) < margin

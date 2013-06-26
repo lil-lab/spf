@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -19,13 +21,13 @@ package edu.uw.cs.lil.tiny.learn.ubl;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.IUBLSplitter;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
@@ -93,11 +95,11 @@ public abstract class AbstractUBL
 		return ret.toString();
 	}
 	
-	public IParseResult<LogicalExpression> getSingleBestParseFor(
+	public IParse<LogicalExpression> getSingleBestParseFor(
 			LogicalExpression label,
 			IParserOutput<LogicalExpression> parserOutput) {
 		// TODO [yoav] Currently skipping in case of ambiguity
-		final List<IParseResult<LogicalExpression>> maxParses = parserOutput
+		final List<IParse<LogicalExpression>> maxParses = parserOutput
 				.getMaxParses(label);
 		if (maxParses.size() == 1) {
 			return maxParses.get(0);

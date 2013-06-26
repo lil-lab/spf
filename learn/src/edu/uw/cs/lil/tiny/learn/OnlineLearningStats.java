@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,11 +16,11 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.learn.weakp;
+package edu.uw.cs.lil.tiny.learn;
 
 import edu.uw.cs.utils.collections.ArrayUtils;
 
-public class WeaklySupervisedPerceptronStats {
+public class OnlineLearningStats {
 	private double					averageGenerationParsingTime	= 0.0;
 	
 	private double					averageModelParsingTime			= 0.0;
@@ -29,7 +31,7 @@ public class WeaklySupervisedPerceptronStats {
 	private final int[]				numUpdates;
 	final private SampleStat[][]	sampleStat;
 	
-	public WeaklySupervisedPerceptronStats(int numIterations, int numSamples) {
+	public OnlineLearningStats(int numIterations, int numSamples) {
 		this.numIterations = numIterations;
 		this.numSamples = numSamples;
 		this.sampleStat = new SampleStat[numSamples][numIterations];

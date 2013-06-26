@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -19,9 +21,9 @@ package edu.uw.cs.lil.tiny.test;
 import java.util.List;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
@@ -75,10 +77,10 @@ public class Tester<X, Y> implements ITester<X, Y> {
 	}
 	
 	private void logParse(ILabeledDataItem<X, Y> dataItem,
-			IParseResult<Y> parse, boolean logLexicalItems, String tag,
+			IParse<Y> parse, boolean logLexicalItems, String tag,
 			IModelImmutable<X, Y> model) {
 		LOG.info("%s%s[S%.2f] %s",
-				dataItem.getLabel().equals(parse.getY()) ? "* " : "  ",
+				dataItem.getLabel().equals(parse.getSemantics()) ? "* " : "  ",
 				tag == null ? "" : tag + " ", parse.getScore(), parse);
 		LOG.info("Calculated score: %f", parse.getAverageMaxFeatureVector()
 				.vectorMultiply(model.getTheta()));
@@ -95,18 +97,18 @@ public class Tester<X, Y> implements ITester<X, Y> {
 	private void processSingleBestParse(ILabeledDataItem<X, Y> dataItem,
 			IModelImmutable<X, Y> model,
 			final IParserOutput<Y> modelParserOutput,
-			final IParseResult<Y> parse, boolean withWordSkipping,
+			final IParse<Y> parse, boolean withWordSkipping,
 			ITestingStatistics<X, Y> stats) {
 		final Set<LexicalEntry<Y>> lexicalEntries = parse
 				.getMaxLexicalEntries();
-		final Y label = parse.getY();
+		final Y label = parse.getSemantics();
 		
 		// Update statistics
 		if (withWordSkipping) {
 			stats.recordParseWithSkipping(dataItem, dataItem.getLabel(),
-					parse.getY());
+					parse.getSemantics());
 		} else {
-			stats.recordParse(dataItem, dataItem.getLabel(), parse.getY());
+			stats.recordParse(dataItem, dataItem.getLabel(), parse.getSemantics());
 		}
 		
 		if (dataItem.isCorrect(label)) {
@@ -119,11 +121,11 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			LOG.info(lexToString(lexicalEntries, model));
 			
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IParseResult<Y>> correctParses = modelParserOutput
+			final List<IParse<Y>> correctParses = modelParserOutput
 					.getMaxParses(dataItem.getLabel());
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
-				for (final IParseResult<Y> correctParse : correctParses) {
+				for (final IParse<Y> correctParse : correctParses) {
 					LOG.info(
 							"Correct parse lexical items:\n%s",
 							lexToString(correctParse.getMaxLexicalEntries(),
@@ -167,7 +169,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 		LOG.info("Test parsing time %.2f",
 				modelParserOutput.getParsingTime() / 1000.0);
 		
-		final List<IParseResult<Y>> bestModelParses = modelParserOutput
+		final List<IParse<Y>> bestModelParses = modelParserOutput
 				.getBestParses();
 		if (bestModelParses.size() == 1) {
 			// Case we have a single parse
@@ -179,10 +181,10 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			// Update statistics
 			stats.recordParses(dataItem, dataItem.getLabel(), ListUtils.map(
 					bestModelParses,
-					new ListUtils.Mapper<IParseResult<Y>, Y>() {
+					new ListUtils.Mapper<IParse<Y>, Y>() {
 						@Override
-						public Y process(IParseResult<Y> obj) {
-							return obj.getY();
+						public Y process(IParse<Y> obj) {
+							return obj.getSemantics();
 						}
 					}));
 			
@@ -191,15 +193,15 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			// from returning a result.
 			LOG.info("too many parses");
 			LOG.info("%d parses:", bestModelParses.size());
-			for (final IParseResult<Y> parse : bestModelParses) {
+			for (final IParse<Y> parse : bestModelParses) {
 				logParse(dataItem, parse, false, null, model);
 			}
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IParseResult<Y>> correctParses = modelParserOutput
+			final List<IParse<Y>> correctParses = modelParserOutput
 					.getMaxParses(dataItem.getLabel());
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
-				for (final IParseResult<Y> correctParse : correctParses) {
+				for (final IParse<Y> correctParse : correctParses) {
 					LOG.info(
 							"Correct parse lexical items:\n%s",
 							lexToString(correctParse.getMaxLexicalEntries(),
@@ -221,7 +223,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 						dataItem, model.createDataItemModel(dataItem), true);
 				LOG.info("EMPTY Parsing time %f",
 						parserOutputWithSkipping.getParsingTime() / 1000.0);
-				final List<IParseResult<Y>> bestEmptiesParses = parserOutputWithSkipping
+				final List<IParse<Y>> bestEmptiesParses = parserOutputWithSkipping
 						.getBestParses();
 				
 				if (bestEmptiesParses.size() == 1) {
@@ -238,24 +240,24 @@ public class Tester<X, Y> implements ITester<X, Y> {
 					// too many parses or no parses
 					stats.recordParsesWithSkipping(dataItem, dataItem
 							.getLabel(), ListUtils.map(bestEmptiesParses,
-							new ListUtils.Mapper<IParseResult<Y>, Y>() {
+							new ListUtils.Mapper<IParse<Y>, Y>() {
 								@Override
-								public Y process(IParseResult<Y> obj) {
-									return obj.getY();
+								public Y process(IParse<Y> obj) {
+									return obj.getSemantics();
 								}
 							}));
 					
 					LOG.info("WRONG: %d parses", bestEmptiesParses.size());
-					for (final IParseResult<Y> parse : bestEmptiesParses) {
+					for (final IParse<Y> parse : bestEmptiesParses) {
 						logParse(dataItem, parse, false, null, model);
 					}
 					// Check if we had the correct parse and it just wasn't
 					// the best
-					final List<IParseResult<Y>> correctParses = parserOutputWithSkipping
+					final List<IParse<Y>> correctParses = parserOutputWithSkipping
 							.getMaxParses(dataItem.getLabel());
 					LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 					if (!correctParses.isEmpty()) {
-						for (final IParseResult<Y> correctParse : correctParses) {
+						for (final IParse<Y> correctParse : correctParses) {
 							LOG.info(
 									"Correct parse lexical items:\n%s",
 									lexToString(

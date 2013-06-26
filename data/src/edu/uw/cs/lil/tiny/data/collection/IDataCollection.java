@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,21 +16,20 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.data.lexicalgen;
-
-import edu.uw.cs.lil.tiny.data.ILossDataItem;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
+package edu.uw.cs.lil.tiny.data.collection;
 
 /**
+ * An iterable with a certain number of data items.
+ * 
  * @author Yoav Artzi
- * @param <X>
- *            Sample (input) type
- * @param <Y>
- *            Semantics type
- * @param <Z>
- *            Label type
+ * @param <T>
  */
-public interface ILexicalGenerationLossDataItem<X, Y, Z> extends
-		ILossDataItem<X, Z> {
-	ILexicon<Y> generateLexicon();
+public interface IDataCollection<T> extends Iterable<T> {
+	
+	/**
+	 * Size of the collection.
+	 * 
+	 * @return
+	 */
+	int size();
 }

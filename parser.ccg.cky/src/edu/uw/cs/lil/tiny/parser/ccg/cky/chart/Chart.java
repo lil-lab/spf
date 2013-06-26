@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -27,7 +29,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParse;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
@@ -199,7 +201,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		return cellFactory;
 	}
 	
-	public List<IParseResult<Y>> getParseResults(IDataItemModel<Y> model) {
+	public List<IParse<Y>> getParseResults(IDataItemModel<Y> model) {
 		// Need a bounded queue here to make sure we don't return more than the
 		// beam, because lexical cells might exist outside of the beam
 		final OrderInvariantBoundedPriorityQueue<CKYParse<Y>> ret = new OrderInvariantBoundedPriorityQueue<CKYParse<Y>>(
@@ -212,7 +214,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		for (final Cell<Y> cell : fullparses()) {
 			ret.offer(new CKYParse<Y>(cell, model));
 		}
-		return new ArrayList<IParseResult<Y>>(ret);
+		return new ArrayList<IParse<Y>>(ret);
 	}
 	
 	/**

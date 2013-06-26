@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -19,7 +21,7 @@ package edu.uw.cs.lil.tiny.parser.joint;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.utils.composites.Pair;
@@ -96,7 +98,7 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<IParseResult<LF>> getAllParses() {
+	public List<IParse<LF>> getAllParses() {
 		return baseParserOutput.getAllParses();
 	}
 	
@@ -121,7 +123,7 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<IParseResult<LF>> getBestParses() {
+	public List<IParse<LF>> getBestParses() {
 		return baseParserOutput.getBestParses();
 	}
 	
@@ -192,7 +194,7 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<IParseResult<LF>> getMaxParses(LF label) {
+	public List<IParse<LF>> getMaxParses(LF label) {
 		return baseParserOutput.getMaxParses(label);
 	}
 	

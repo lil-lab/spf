@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -17,17 +19,21 @@
 package edu.uw.cs.lil.tiny.data;
 
 /**
- * A iterable data collection with a certain number of data items.
+ * Data item that supports validating a given result using a true/false
+ * function.
  * 
  * @author Yoav Artzi
- * @param <T>
+ * @param <SAMPLE>
+ *            Sample type (input).
+ * @param <LABEL>
+ *            Label (output) type.
  */
-public interface IDataCollection<T> extends Iterable<T> {
-	
+public interface IValidationDataItem<SAMPLE, LABEL> extends IDataItem<SAMPLE> {
 	/**
-	 * Size of the collection.
+	 * 'true' iff the given label is valid, otherwise 'false'.
 	 * 
+	 * @param label
 	 * @return
 	 */
-	int size();
+	boolean isValid(LABEL label);
 }

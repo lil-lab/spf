@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,32 +16,19 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.parser;
+package edu.uw.cs.lil.tiny.data.lexicalgen;
 
-import java.util.LinkedHashSet;
-
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.data.ILossDataItem;
 
 /**
- * Single parse result.
- * 
  * @author Yoav Artzi
+ * @param <X>
+ *            Sample (input) type
  * @param <Y>
- *            Representation of the parser output.
- * @see IParser
- * @see IParserOutput
+ *            Semantics type
+ * @param <Z>
+ *            Label type
  */
-public interface IParseResult<Y> {
-	LinkedHashSet<LexicalEntry<Y>> getAllLexicalEntries();
-	
-	IHashVector getAverageMaxFeatureVector();
-	
-	LinkedHashSet<LexicalEntry<Y>> getMaxLexicalEntries();
-	
-	LinkedHashSet<RuleUsageTriplet> getMaxRulesUsed();
-	
-	double getScore();
-	
-	Y getY();
+public interface ILexGenLossDataItem<X, Y, Z> extends
+		ILossDataItem<X, Z>, ILexGenDataItem<X, Y> {
 }

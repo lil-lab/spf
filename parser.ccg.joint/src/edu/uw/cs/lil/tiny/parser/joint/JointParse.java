@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -18,7 +20,7 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import java.util.LinkedHashSet;
 
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -35,15 +37,16 @@ import edu.uw.cs.utils.composites.Pair;
 public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	
 	private final IExecResultWrapper<ERESULT>	execResult;
-	private final IParseResult<LF>				innerParse;
+	private final IParse<LF>					innerParse;
 	private final Pair<LF, ERESULT>				resultPair;
 	private final double						score;
 	
-	public JointParse(IParseResult<LF> innerParse,
+	public JointParse(IParse<LF> innerParse,
 			IExecResultWrapper<ERESULT> execResult) {
 		this.innerParse = innerParse;
 		this.execResult = execResult;
-		this.resultPair = Pair.of(innerParse.getY(), execResult.getResult());
+		this.resultPair = Pair.of(innerParse.getSemantics(),
+				execResult.getResult());
 		this.score = innerParse.getScore() + execResult.getScore();
 	}
 	
@@ -118,8 +121,8 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public LF getY() {
-		return innerParse.getY();
+	public LF getSemantics() {
+		return innerParse.getSemantics();
 	}
 	
 	@Override

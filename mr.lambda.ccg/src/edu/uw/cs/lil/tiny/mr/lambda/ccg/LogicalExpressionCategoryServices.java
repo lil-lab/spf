@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -25,12 +27,17 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ApplyAndSimplify;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsValid;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 public class LogicalExpressionCategoryServices extends
 		AbstractCategoryServices<LogicalExpression> {
+	private static final ILogger				LOG					= LoggerFactory
+																			.create(LogicalExpressionCategoryServices.class);
 	
 	private final boolean						doTypeChecking;
 	private final Category<LogicalExpression>	EMP					= new SimpleCategory<LogicalExpression>(
@@ -46,14 +53,22 @@ public class LogicalExpressionCategoryServices extends
 	
 	private final boolean						lockOntology;
 	
+	private final boolean						validateLogExps;
+	
 	public LogicalExpressionCategoryServices() {
-		this(false, false);
+		this(false, false, false);
 	}
 	
 	public LogicalExpressionCategoryServices(boolean doTypeChecking,
 			boolean lockOntology) {
+		this(doTypeChecking, lockOntology, false);
+	}
+	
+	public LogicalExpressionCategoryServices(boolean doTypeChecking,
+			boolean lockOntology, boolean validateLogExps) {
 		this.doTypeChecking = doTypeChecking;
 		this.lockOntology = lockOntology;
+		this.validateLogExps = validateLogExps;
 	}
 	
 	@Override
@@ -71,6 +86,15 @@ public class LogicalExpressionCategoryServices extends
 			result = null;
 		} else {
 			result = applicationResult;
+		}
+		
+		if (result != null && validateLogExps && !IsValid.of(result)) {
+			LOG.error("Application result invalid");
+			LOG.error("function=%s", function);
+			LOG.error("arg=%s", argument);
+			LOG.error("result=%s", result);
+			throw new IllegalStateException(
+					"Invalid logical expression detected");
 		}
 		
 		return result;
@@ -123,9 +147,22 @@ public class LogicalExpressionCategoryServices extends
 					// gBodyWithNewVar (such as the case when f is the identity
 					// function).
 					// See AbstractSimplify.visit(Lambda).
-					return gBodyWithNewVar instanceof Variable
+					
+					final LogicalExpression result = gBodyWithNewVar instanceof Variable
 							|| gBodyWithNewVar == newbody ? Simplify
 							.of(newComposedExp) : newComposedExp;
+					
+					if (result != null && validateLogExps
+							&& !IsValid.of(result)) {
+						LOG.error("Composition result invalid");
+						LOG.error("g=%s", g);
+						LOG.error("f=%s", f);
+						LOG.error("result=%s", result);
+						throw new IllegalStateException(
+								"Invalid logical expression detected");
+					}
+					
+					return result;
 				}
 			}
 		}

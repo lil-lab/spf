@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -20,13 +22,14 @@ package edu.uw.cs.lil.tiny.data;
  * Represents a labeled data item.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Z>
+ * @param <SAMPLE>
+ * @param <LABEL>
  * @see IDataItem
  */
-public interface ILabeledDataItem<X, Z> extends ILossDataItem<X, Z> {
+public interface ILabeledDataItem<SAMPLE, LABEL> extends
+		ILossDataItem<SAMPLE, LABEL>, IValidationDataItem<SAMPLE, LABEL> {
 	
-	Z getLabel();
+	LABEL getLabel();
 	
 	/**
 	 * Compares a label to the gold standard if such exist.
@@ -34,5 +37,5 @@ public interface ILabeledDataItem<X, Z> extends ILossDataItem<X, Z> {
 	 * @param label
 	 * @return null if not gold standard exists.
 	 */
-	boolean isCorrect(Z label);
+	boolean isCorrect(LABEL label);
 }

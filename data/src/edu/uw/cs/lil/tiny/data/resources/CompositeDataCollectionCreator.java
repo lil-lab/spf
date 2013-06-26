@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -16,31 +18,31 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.resources;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
-import edu.uw.cs.lil.tiny.data.composite.CompositeDataset;
+import edu.uw.cs.lil.tiny.data.collection.CompositeDataCollection;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.ListUtils;
 
-public class CompositeDatasetCreator<T> implements
-		IResourceObjectCreator<CompositeDataset<T>> {
+public class CompositeDataCollectionCreator<T> implements
+		IResourceObjectCreator<CompositeDataCollection<T>> {
 	private static final String	DEFAULT_NAME	= "data.composite";
 	private final String		resourceName;
 	
-	public CompositeDatasetCreator() {
+	public CompositeDataCollectionCreator() {
 		this(DEFAULT_NAME);
 	}
 	
-	public CompositeDatasetCreator(String resourceName) {
+	public CompositeDataCollectionCreator(String resourceName) {
 		this.resourceName = resourceName;
 	}
 	
 	@Override
-	public CompositeDataset<T> create(Parameters parameters,
+	public CompositeDataCollection<T> create(Parameters parameters,
 			final IResourceRepository resourceRepo) {
-		return new CompositeDataset<T>(ListUtils.map(
+		return new CompositeDataCollection<T>(ListUtils.map(
 				parameters.getSplit("sets"),
 				new ListUtils.Mapper<String, IDataCollection<? extends T>>() {
 					
@@ -58,7 +60,7 @@ public class CompositeDatasetCreator<T> implements
 	
 	@Override
 	public ResourceUsage usage() {
-		return new ResourceUsage.Builder(type(), CompositeDataset.class)
+		return new ResourceUsage.Builder(type(), CompositeDataCollection.class)
 				.setDescription(
 						"Composite dataset. Concatenates separate datasets of the same type into a single one")
 				.addParam("sets", "list of datasets",

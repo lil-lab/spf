@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -322,7 +324,11 @@ public class LexicalTemplate {
 			
 			// In case of an order insensitive, sort the arguments by hashcode,
 			// so the abstraction of constants will be insensitive to order,
-			// when that order doesn't matter.
+			// when that order doesn't matter. TODO [yoav] [urgent] this
+			// solution is still not perfect and might cause duplicate
+			// templates/lexemes where such shouldn't exist. To fix it, we need
+			// to change lexemes to hold a set of constants and not a list
+			// (this, in turn, will cause difficulties in init templates)
 			if (!literal.getPredicateType().isOrderSensitive()) {
 				Collections.sort(args, new Comparator<LogicalExpression>() {
 					public int compare(LogicalExpression l1,

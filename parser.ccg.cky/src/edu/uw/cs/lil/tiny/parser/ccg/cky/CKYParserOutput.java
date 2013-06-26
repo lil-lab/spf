@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -20,7 +22,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
@@ -34,10 +36,10 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 public class CKYParserOutput<Y> implements IParserOutput<Y> {
 	
 	/** All parses */
-	private final List<IParseResult<Y>>	allParses;
+	private final List<IParse<Y>>	allParses;
 	
 	/** Best parses */
-	private final List<IParseResult<Y>>	bestParses;
+	private final List<IParse<Y>>	bestParses;
 	
 	/** The chart of this parse */
 	private final Chart<Y>				chart;
@@ -57,17 +59,17 @@ public class CKYParserOutput<Y> implements IParserOutput<Y> {
 				.unmodifiableList(findBestParses(allParses));
 	}
 	
-	private static <Y> List<IParseResult<Y>> findBestParses(
-			List<IParseResult<Y>> all) {
+	private static <Y> List<IParse<Y>> findBestParses(
+			List<IParse<Y>> all) {
 		return findBestParses(all, null);
 	}
 	
-	private static <Y> List<IParseResult<Y>> findBestParses(
-			List<IParseResult<Y>> all, Y exp) {
-		final List<IParseResult<Y>> best = new LinkedList<IParseResult<Y>>();
+	private static <Y> List<IParse<Y>> findBestParses(
+			List<IParse<Y>> all, Y exp) {
+		final List<IParse<Y>> best = new LinkedList<IParse<Y>>();
 		double bestScore = -Double.MAX_VALUE;
-		for (final IParseResult<Y> p : all) {
-			if ((exp == null || p.getY().equals(exp))) {
+		for (final IParse<Y> p : all) {
+			if ((exp == null || p.getSemantics().equals(exp))) {
 				if (p.getScore() == bestScore) {
 					best.add(p);
 				}
@@ -82,11 +84,11 @@ public class CKYParserOutput<Y> implements IParserOutput<Y> {
 	}
 	
 	@Override
-	public List<IParseResult<Y>> getAllParses() {
+	public List<IParse<Y>> getAllParses() {
 		return allParses;
 	}
 	
-	public List<IParseResult<Y>> getBestParses() {
+	public List<IParse<Y>> getBestParses() {
 		return bestParses;
 	}
 	
@@ -101,14 +103,14 @@ public class CKYParserOutput<Y> implements IParserOutput<Y> {
 	@Override
 	public List<LexicalEntry<Y>> getMaxLexicalEntries(Y semantics) {
 		final List<LexicalEntry<Y>> result = new LinkedList<LexicalEntry<Y>>();
-		for (final IParseResult<Y> p : findBestParses(allParses, semantics)) {
+		for (final IParse<Y> p : findBestParses(allParses, semantics)) {
 			result.addAll(p.getMaxLexicalEntries());
 		}
 		return result;
 	}
 	
 	@Override
-	public List<IParseResult<Y>> getMaxParses(Y label) {
+	public List<IParse<Y>> getMaxParses(Y label) {
 		return findBestParses(allParses, label);
 	}
 	

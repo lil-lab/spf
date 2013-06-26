@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -20,12 +22,12 @@ package edu.uw.cs.lil.tiny.data;
  * Represents a data item that can given loss and pruning information.
  * 
  * @author Yoav Artzi
- * @param <X>
+ * @param <SAMPLE>
  *            Type of the sample.
- * @param <Z>
+ * @param <LABEL>
  *            Type of the label.
  */
-public interface ILossDataItem<X, Z> extends IDataItem<X> {
+public interface ILossDataItem<SAMPLE, LABEL> extends IDataItem<SAMPLE> {
 	
 	/**
 	 * Scores a label.
@@ -33,7 +35,7 @@ public interface ILossDataItem<X, Z> extends IDataItem<X> {
 	 * @param label
 	 * @return
 	 */
-	double calculateLoss(Z label);
+	double calculateLoss(LABEL label);
 	
 	/**
 	 * Indicates if to prune a proposed label or not.
@@ -41,7 +43,7 @@ public interface ILossDataItem<X, Z> extends IDataItem<X> {
 	 * @param y
 	 * @return true if to prune the proposed label
 	 */
-	boolean prune(Z y);
+	boolean prune(LABEL y);
 	
 	/**
 	 * A normalized (0 - 1.0) quality measure. The higher the better.

@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -27,14 +29,14 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.IUBLSplitter;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.SplittingServices.SplittingPair;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.Pruner;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
@@ -179,14 +181,14 @@ public class UBLStocGradient extends AbstractUBL {
 				// Take the semantic form of the single best parse
 				// final LogicalExpression best = parserOutput
 				// .getBestSingleMeaningRepresentation();
-				final List<IParseResult<LogicalExpression>> bestList = parserOutput
+				final List<IParse<LogicalExpression>> bestList = parserOutput
 						.getBestParses();
 				
 				// this just collates and outputs the training
 				// accuracy.
 				if (bestList.size() == 1
-						&& dataItem.isCorrect(bestList.get(0).getY())) {
-					final LogicalExpression bestOutput = bestList.get(0).getY();
+						&& dataItem.isCorrect(bestList.get(0).getSemantics())) {
+					final LogicalExpression bestOutput = bestList.get(0).getSemantics();
 					LOG.info("CORRECT: %s", bestOutput);
 					final List<LexicalEntry<LogicalExpression>> lex = parserOutput
 							.getMaxLexicalEntries(bestOutput);
@@ -201,10 +203,10 @@ public class UBLStocGradient extends AbstractUBL {
 					correct++;
 				} else {
 					LOG.info("WRONG: ");
-					for (final IParseResult<LogicalExpression> wrongOutput : bestList) {
-						LOG.info(wrongOutput.getY().toString());
+					for (final IParse<LogicalExpression> wrongOutput : bestList) {
+						LOG.info(wrongOutput.getSemantics().toString());
 						final List<LexicalEntry<LogicalExpression>> lex = parserOutput
-								.getMaxLexicalEntries(wrongOutput.getY());
+								.getMaxLexicalEntries(wrongOutput.getSemantics());
 						// in factored learning, we have to add these to the
 						// model
 						// so that they get in the lexicalentry features set
@@ -383,7 +385,7 @@ public class UBLStocGradient extends AbstractUBL {
 				dataItem, Pruner.create(dataItem),
 				model.createDataItemModel(dataItem));
 		
-		final IParseResult<LogicalExpression> correctParse = getSingleBestParseFor(
+		final IParse<LogicalExpression> correctParse = getSingleBestParseFor(
 				dataItem.getLabel(), parserOutput);
 		
 		// if there is no possible parse, create a new lexical item for the

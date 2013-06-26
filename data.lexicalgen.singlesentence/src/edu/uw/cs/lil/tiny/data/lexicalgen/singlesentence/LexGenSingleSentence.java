@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -20,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexicalGenerationLabeledDataItem;
+import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenLabeledDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
@@ -30,14 +32,14 @@ import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.Lexicon;
 
-public class LexicalGenerationSingleSentence extends SingleSentence
+public class LexGenSingleSentence extends SingleSentence
 		implements
-		ILexicalGenerationLabeledDataItem<Sentence, LogicalExpression, LogicalExpression> {
+		ILexGenLabeledDataItem<Sentence, LogicalExpression, LogicalExpression> {
 	
 	private final IEvidenceLexicalGenerator<Sentence, LogicalExpression, LogicalExpression>	semanticsLexicalGeneration;
 	private final List<ISentenceLexiconGenerator<LogicalExpression>>						textLexicalGenerators;
 	
-	public LexicalGenerationSingleSentence(
+	public LexGenSingleSentence(
 			Sentence sentence,
 			LogicalExpression semantics,
 			IEvidenceLexicalGenerator<Sentence, LogicalExpression, LogicalExpression> semanticsLexicalGeneration,

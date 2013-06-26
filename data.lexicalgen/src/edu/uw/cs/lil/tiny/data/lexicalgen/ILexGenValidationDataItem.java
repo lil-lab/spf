@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,28 +16,21 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.parser.joint.model;
+package edu.uw.cs.lil.tiny.data.lexicalgen;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.lil.tiny.data.IValidationDataItem;
 
-public class JointDataItemWrapper<X, W> implements IDataItem<X> {
-	
-	private final IDataItem<Pair<X, W>>	baseDataItem;
-	private final X						sample;
-	
-	public JointDataItemWrapper(X sample, IDataItem<Pair<X, W>> baseDataItem) {
-		this.sample = sample;
-		this.baseDataItem = baseDataItem;
-	}
-	
-	public IDataItem<Pair<X, W>> getBaseDataItem() {
-		return baseDataItem;
-	}
-	
-	@Override
-	public X getSample() {
-		return sample;
-	}
+/**
+ * Data item that supports both validation {@see IValidationDataItem} and
+ * lexical generation {@see ILexicalGenerationDataItem}.
+ * 
+ * @author Yoav Artzi
+ * @param <SAMPLE>
+ * @param <LF>
+ * @param <LABEL>
+ */
+public interface ILexGenValidationDataItem<SAMPLE, LF, LABEL> extends
+		IValidationDataItem<SAMPLE, LABEL>,
+		ILexGenDataItem<SAMPLE, LF> {
 	
 }

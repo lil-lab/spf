@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -19,10 +21,10 @@ package edu.uw.cs.lil.learn.simple;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.learn.ILearner;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
@@ -76,19 +78,19 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 						.createDataItemModel(dataItem);
 				final IParserOutput<Z> parserOutput = parser.parse(dataItem,
 						dataItemModel);
-				final List<IParseResult<Z>> bestParses = parserOutput
+				final List<IParse<Z>> bestParses = parserOutput
 						.getBestParses();
 				
 				// Correct parse
-				final List<IParseResult<Z>> correctParses = parserOutput
+				final List<IParse<Z>> correctParses = parserOutput
 						.getMaxParses(dataItem.getLabel());
 				
 				// Violating parses
-				final List<IParseResult<Z>> violatingBadParses = new LinkedList<IParseResult<Z>>();
-				for (final IParseResult<Z> parse : bestParses) {
-					if (!dataItem.isCorrect(parse.getY())) {
+				final List<IParse<Z>> violatingBadParses = new LinkedList<IParse<Z>>();
+				for (final IParse<Z> parse : bestParses) {
+					if (!dataItem.isCorrect(parse.getSemantics())) {
 						violatingBadParses.add(parse);
-						LOG.info("Bad parse: %s", parse.getY());
+						LOG.info("Bad parse: %s", parse.getSemantics());
 					}
 				}
 				
@@ -100,13 +102,13 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 					final IHashVector update = HashVectorFactory.create();
 					
 					// Positive update
-					for (final IParseResult<Z> parse : correctParses) {
+					for (final IParse<Z> parse : correctParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								(1.0 / correctParses.size()), update);
 					}
 					
 					// Negative update
-					for (final IParseResult<Z> parse : violatingBadParses) {
+					for (final IParse<Z> parse : violatingBadParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								-1.0 * (1.0 / violatingBadParses.size()),
 								update);

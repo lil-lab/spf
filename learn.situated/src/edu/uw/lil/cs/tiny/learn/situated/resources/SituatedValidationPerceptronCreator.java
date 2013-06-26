@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,51 +16,48 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.learn.weakp.resources;
+package edu.uw.lil.cs.tiny.learn.situated.resources;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexicalGenerationLabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
+import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenValidationDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.learn.weakp.validation.JointValidationSensitivePerceptron;
-import edu.uw.cs.lil.tiny.learn.weakp.validation.JointValidationSensitivePerceptron.Builder;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.lil.cs.tiny.learn.situated.perceptron.SituatedValidationPerceptron;
+import edu.uw.lil.cs.tiny.learn.situated.perceptron.SituatedValidationPerceptron.Builder;
 
-public class JointValidationSensitivePerceptronCreator<STATE, LF, ESTEP, ERESULT>
+public class SituatedValidationPerceptronCreator<STATE, LF, ESTEP, ERESULT>
 		implements
-		IResourceObjectCreator<JointValidationSensitivePerceptron<STATE, LF, ESTEP, ERESULT>> {
+		IResourceObjectCreator<SituatedValidationPerceptron<STATE, LF, ESTEP, ERESULT>> {
 	
 	private final String	name;
 	
-	public JointValidationSensitivePerceptronCreator() {
-		this("learner.weakp.valid.joint");
+	public SituatedValidationPerceptronCreator() {
+		this("learner.weakp.valid.situated");
 	}
 	
-	public JointValidationSensitivePerceptronCreator(String name) {
+	public SituatedValidationPerceptronCreator(String name) {
 		this.name = name;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public JointValidationSensitivePerceptron<STATE, LF, ESTEP, ERESULT> create(
+	public SituatedValidationPerceptron<STATE, LF, ESTEP, ERESULT> create(
 			Parameters params, IResourceRepository repo) {
 		
-		final IDataCollection<? extends ILexicalGenerationLabeledDataItem<Pair<Sentence, STATE>, LF, ERESULT>> trainingData = repo
+		final IDataCollection<? extends ILexGenValidationDataItem<Pair<Sentence, STATE>, LF, Pair<LF, ERESULT>>> trainingData = repo
 				.getResource(params.get("data"));
 		
-		final Builder<STATE, LF, ESTEP, ERESULT> builder = new JointValidationSensitivePerceptron.Builder<STATE, LF, ESTEP, ERESULT>(
+		final Builder<STATE, LF, ESTEP, ERESULT> builder = new SituatedValidationPerceptron.Builder<STATE, LF, ESTEP, ERESULT>(
 				trainingData,
 				(IJointParser<Sentence, STATE, LF, ESTEP, ERESULT>) repo
-						.getResource(ParameterizedExperiment.PARSER_RESOURCE),
-				(IValidator<Pair<Sentence, STATE>, Pair<LF, ERESULT>>) repo
-						.getResource(params.get("validator")));
+						.getResource(ParameterizedExperiment.PARSER_RESOURCE));
 		
 		if ("true".equals(params.get("hard"))) {
 			builder.setHardUpdates(true);
@@ -102,11 +101,11 @@ public class JointValidationSensitivePerceptronCreator<STATE, LF, ESTEP, ERESULT
 	@Override
 	public ResourceUsage usage() {
 		return new ResourceUsage.Builder(type(),
-				JointValidationSensitivePerceptron.class)
+				SituatedValidationPerceptron.class)
 				.setDescription(
-						"Validation senstive perceptron for learning of joint models with joint inference (cite: Artzi and Zettlemoyer 2013)")
-				.addParam("data", "id", "Training data")
-				.addParam("validator", "id", "Validation function")
+						"Validation senstive perceptron for situated learning of models with situated inference (cite: Artzi and Zettlemoyer 2013)")
+				.addParam("data", "id",
+						"Training data (lexical generation + validation data)")
 				.addParam(
 						"hard",
 						"boolean",

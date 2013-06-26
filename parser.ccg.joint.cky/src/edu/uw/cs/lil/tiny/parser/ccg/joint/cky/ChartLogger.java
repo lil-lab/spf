@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -97,13 +99,13 @@ public class ChartLogger<ESTEP, ERESULT> implements
 										IJointParse<LogicalExpression, ERESULT> o2) {
 									final int comp = Double.compare(
 											o1.getScore(), o2.getScore());
-									return comp == 0 ? o1.getY().toString()
-											.compareTo(o2.getY().toString())
+									return comp == 0 ? o1.getSemantics().toString()
+											.compareTo(o2.getSemantics().toString())
 											: comp;
 								}
 							})) {
 				writer.write(String.format("[%.2f] %s\n", parse.getScore(),
-						parse.getY()));
+						parse.getSemantics()));
 				for (final LexicalEntry<LogicalExpression> entry : parse
 						.getMaxLexicalEntries()) {
 					writer.write(String.format(

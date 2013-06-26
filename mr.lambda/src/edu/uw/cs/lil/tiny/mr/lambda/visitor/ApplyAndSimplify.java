@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -25,17 +27,25 @@ import java.util.Set;
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
+import edu.uw.cs.lil.tiny.mr.lambda.Term;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 
 /**
- * Apply a functional expression to an argument. The result is simplified.
+ * Apply a functional expression to an argument. The result is simplified. The
+ * visitor also takes care of instances where the two logical expressions use
+ * the same variable object (by replacing as needed).
  * 
  * @author Luke Zettlemoyer
  */
 public class ApplyAndSimplify extends AbstrcatSimplify {
+	/**
+	 * Indicates if the arguments was applied once already. We need to track if
+	 * the argument is used more than oncey in the consuming function.
+	 */
+	private boolean							appliedOnceAlready	= false;
+	
 	/**
 	 * The argument of the application operation, e.g. x in f(x).
 	 */
@@ -60,11 +70,6 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 	 * expression
 	 */
 	private final LogicalExpression			rootVariable;
-	
-	/**
-	 * Variable for temporary storage of the result as we walk the structure.
-	 */
-	LogicalExpression						result				= null;
 	
 	/**
 	 * This constructor is private as a small part of the logic is in the static
@@ -107,11 +112,11 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 			// Case the functor is a literal, append the argument to
 			// the end of the arguments list
 			return Simplify.of(literalApplication((Literal) exp, arg));
-		} else if (exp instanceof Variable || exp instanceof LogicalConstant) {
-			// Case the functor is a variable of logical constant,
+		} else if (exp instanceof Term) {
+			// Case the functor is a variable or logical constant,
 			// create the a literal with the functor as predicate and the
 			// argument as the only argument in the argument list
-			return Simplify.of(termApplication(exp, arg));
+			return Simplify.of(termApplication((Term) exp, arg));
 		} else {
 			// Should never happen
 			throw new LogicalExpressionRuntimeException(
@@ -124,18 +129,26 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 		final List<LogicalExpression> newArgs = new ArrayList<LogicalExpression>(
 				literal.getArguments().size() + 1);
 		newArgs.addAll(literal.getArguments());
-		newArgs.add(arg);
+		// Append the argument to the list of arguments in the literal, verify
+		// that it doesn't contain any variables (identical objects) from the
+		// literal
+		newArgs.add(ReplaceVariablesIfPresent.of(arg, GetVariables.of(literal),
+				LogicLanguageServices.getTypeRepository()));
 		return new Literal(literal.getPredicate(), newArgs,
 				LogicLanguageServices.getTypeComparator(),
 				LogicLanguageServices.getTypeRepository());
 	}
 	
-	private static LogicalExpression termApplication(LogicalExpression exp,
+	private static LogicalExpression termApplication(Term exp,
 			LogicalExpression arg) {
 		final List<LogicalExpression> arguments = new ArrayList<LogicalExpression>(
 				1);
 		arguments.add(arg);
-		return new Literal(exp, arguments,
+		// Verify that the consuming function (the Term) doesn't contain any
+		// variables (identical objects) from the given argument and create the
+		// new literal
+		return new Literal(GetVariables.of(arg).contains(exp) ? new Variable(
+				exp.getType()) : exp, arguments,
 				LogicLanguageServices.getTypeComparator(),
 				LogicLanguageServices.getTypeRepository());
 	}
@@ -143,7 +156,15 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 	@Override
 	public void visit(Variable variable) {
 		if (variable == rootVariable) {
-			tempReturn = appliedToArg;
+			if (appliedOnceAlready) {
+				// Case the argument was already used once in the consuming
+				// function. Need to replace its variables, so these objects
+				// won't be shared.
+				tempReturn = ReplaceBoundVariables.of(appliedToArg);
+			} else {
+				appliedOnceAlready = true;
+				tempReturn = appliedToArg;
+			}
 			return;
 		}
 		if (argVars.contains(variable)) {

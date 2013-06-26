@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,11 +16,32 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.data.lexicalgen;
+package edu.uw.cs.lil.tiny.parser;
 
-import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import java.util.LinkedHashSet;
 
-public interface ILexicalGenerationLabeledDataItem<X, Y, Z> extends
-		ILabeledDataItem<X, Z>, ILexicalGenerationDataItem<X, Y> {
+import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+
+/**
+ * Single parse result.
+ * 
+ * @author Yoav Artzi
+ * @param <LF>
+ *            Meaning representation type.
+ * @see IParser
+ * @see IParserOutput
+ */
+public interface IParse<LF> {
+	LinkedHashSet<LexicalEntry<LF>> getAllLexicalEntries();
 	
+	IHashVector getAverageMaxFeatureVector();
+	
+	LinkedHashSet<LexicalEntry<LF>> getMaxLexicalEntries();
+	
+	LinkedHashSet<RuleUsageTriplet> getMaxRulesUsed();
+	
+	double getScore();
+	
+	LF getSemantics();
 }

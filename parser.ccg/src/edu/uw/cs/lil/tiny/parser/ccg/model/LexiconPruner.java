@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -21,10 +23,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
@@ -69,10 +71,10 @@ public class LexiconPruner<Y> implements IModelPostProcessor<Sentence, Y> {
 		for (final IDataItem<Sentence> dataItem : data) {
 			final IParserOutput<Y> parserOutput = parser.parse(dataItem,
 					model.createDataItemModel(dataItem));
-			final List<IParseResult<Y>> bestParses = parserOutput
+			final List<IParse<Y>> bestParses = parserOutput
 					.getBestParses();
 			if (!bestParses.isEmpty()) {
-				for (final IParseResult<Y> parse : bestParses) {
+				for (final IParse<Y> parse : bestParses) {
 					final LinkedHashSet<LexicalEntry<Y>> parseLexicalEntries = parse
 							.getMaxLexicalEntries();
 					for (final LexicalEntry<Y> entry : parseLexicalEntries) {

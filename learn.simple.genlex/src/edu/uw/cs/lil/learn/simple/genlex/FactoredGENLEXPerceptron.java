@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -22,15 +24,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.GetConstantsSet;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.Pruner;
@@ -107,10 +109,10 @@ public class FactoredGENLEXPerceptron
 	}
 	
 	protected static String lexToString(
-			List<IParseResult<LogicalExpression>> correctParses,
+			List<IParse<LogicalExpression>> correctParses,
 			Model<Sentence, LogicalExpression> model) {
 		final Set<LexicalEntry<LogicalExpression>> lexEntries = new LinkedHashSet<LexicalEntry<LogicalExpression>>();
-		for (final IParseResult<LogicalExpression> parse : correctParses) {
+		for (final IParse<LogicalExpression> parse : correctParses) {
 			lexEntries.addAll(parse.getMaxLexicalEntries());
 		}
 		return lexToString(lexEntries, model);
@@ -206,7 +208,7 @@ public class FactoredGENLEXPerceptron
 				// }
 				
 				// get the best correct parses, if any
-				final List<IParseResult<LogicalExpression>> correctParses = initialParserOutput
+				final List<IParse<LogicalExpression>> correctParses = initialParserOutput
 						.getMaxParses(dataItem.getLabel());
 				if (correctParses.size() > 0) {
 					// If correct parse is in chart
@@ -268,10 +270,10 @@ public class FactoredGENLEXPerceptron
 					Pruner.create(dataItem), initialDataItemModel, false,
 					generatedLexicon);
 			
-			final List<IParseResult<LogicalExpression>> parses = genlexParserOutput
+			final List<IParse<LogicalExpression>> parses = genlexParserOutput
 					.getMaxParses(dataItem.getLabel());
 			int newLexicalEntries = 0;
-			for (final IParseResult<LogicalExpression> parse : parses) {
+			for (final IParse<LogicalExpression> parse : parses) {
 				for (final LexicalEntry<LogicalExpression> entry : parse
 						.getMaxLexicalEntries()) {
 					if (model.addLexEntry(entry
@@ -305,9 +307,9 @@ public class FactoredGENLEXPerceptron
 			IParserOutput<LogicalExpression> correctParseOutput,
 			IParserOutput<LogicalExpression> badParseOutput) {
 		
-		final List<IParseResult<LogicalExpression>> badParses = badParseOutput
+		final List<IParse<LogicalExpression>> badParses = badParseOutput
 				.getAllParses();
-		final List<IParseResult<LogicalExpression>> correctParses = correctParseOutput
+		final List<IParse<LogicalExpression>> correctParses = correctParseOutput
 				.getMaxParses(dataItem.getLabel());
 		
 		if (correctParses.size() == 0) {
@@ -319,12 +321,12 @@ public class FactoredGENLEXPerceptron
 		
 		// Violating parses
 		
-		final List<IParseResult<LogicalExpression>> violatingBadParses = new LinkedList<IParseResult<LogicalExpression>>();
-		for (final IParseResult<LogicalExpression> parse : badParses) {
-			if (!dataItem.isCorrect(parse.getY())
+		final List<IParse<LogicalExpression>> violatingBadParses = new LinkedList<IParse<LogicalExpression>>();
+		for (final IParse<LogicalExpression> parse : badParses) {
+			if (!dataItem.isCorrect(parse.getSemantics())
 					&& parse.getScore() > (bestScore - MARGIN)) {
 				violatingBadParses.add(parse);
-				LOG.info("Bad parse: %s", parse.getY());
+				LOG.info("Bad parse: %s", parse.getSemantics());
 			}
 		}
 		
@@ -341,7 +343,7 @@ public class FactoredGENLEXPerceptron
 		
 		// Positive update
 		
-		for (final IParseResult<LogicalExpression> parse : correctParses) {
+		for (final IParse<LogicalExpression> parse : correctParses) {
 			model.addLexEntries(parse.getMaxLexicalEntries());
 			parse.getAverageMaxFeatureVector().addTimesInto(
 					(1.0 / correctParses.size()), update);
@@ -350,7 +352,7 @@ public class FactoredGENLEXPerceptron
 		// LOG.info("POS: %s", correctParse.getAverageMaxFeatureVector());
 		
 		// Negative update
-		for (final IParseResult<LogicalExpression> parse : violatingBadParses) {
+		for (final IParse<LogicalExpression> parse : violatingBadParses) {
 			model.addLexEntries(parse.getMaxLexicalEntries());
 			parse.getAverageMaxFeatureVector().addTimesInto(
 					-1.0 * (1.0 / violatingBadParses.size()), update);

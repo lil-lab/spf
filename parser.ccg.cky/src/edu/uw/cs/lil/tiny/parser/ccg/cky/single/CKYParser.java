@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -95,15 +97,12 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 			while (rules.hasNext()) {
 				for (final Cell<Y> newCell : rules.next().newCellsFrom(c,
 						cellFactory)) {
-					// Filter cells, only keep cells that pass
-					// pruning over the semantics, if there's a pruner and
-					// they have semantics
-					if (pruner == null
-							|| newCell.getCategroy().getSem() != null
-							|| !pruner.prune(newCell.getCategroy().getSem())) {
-						newCells.add(newCell);
-					} else {
+					// Prune
+					if (prune(pruner, newCell.getCategroy())) {
 						LOG.debug("Pruned (hard pruning): %s", newCell);
+					} else {
+						
+						newCells.add(newCell);
 					}
 				}
 			}

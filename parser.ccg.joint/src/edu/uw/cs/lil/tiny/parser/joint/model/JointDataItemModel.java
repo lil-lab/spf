@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -30,7 +32,7 @@ public class JointDataItemModel<LANG, STATE, LF, ESTEP> extends
 	public JointDataItemModel(
 			IJointModelImmutable<LANG, STATE, LF, ESTEP> model,
 			final IDataItem<Pair<LANG, STATE>> dataItem) {
-		super(model, new JointDataItemWrapper<LANG, STATE>(dataItem.getSample()
+		super(model, new SituatedDataItemWrapper<LANG, STATE>(dataItem.getSample()
 				.first(), dataItem));
 		this.model = model;
 		this.dataItem = dataItem;

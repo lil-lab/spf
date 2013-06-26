@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -18,26 +20,26 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky;
 
 import java.util.LinkedHashSet;
 
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
-public class CKYParse<Y> implements IParseResult<Y> {
-	private IHashVector				averageFeatureVector	= null;
-	private final Cell<Y>			cell;
-	private final IDataItemModel<Y>	model;
-	private final Y					semantics;
+public class CKYParse<LF> implements IParse<LF> {
+	private IHashVector					averageFeatureVector	= null;
+	private final Cell<LF>				cell;
+	private final IDataItemModel<LF>	model;
+	private final LF					semantics;
 	
-	public CKYParse(Cell<Y> cell, IDataItemModel<Y> model) {
+	public CKYParse(Cell<LF> cell, IDataItemModel<LF> model) {
 		this.cell = cell;
 		this.model = model;
 		this.semantics = cell.getCategroy().getSem();
 	}
 	
-	protected CKYParse(CKYParse<Y> parse) {
+	protected CKYParse(CKYParse<LF> parse) {
 		this(parse.cell, parse.model);
 	}
 	
@@ -72,7 +74,7 @@ public class CKYParse<Y> implements IParseResult<Y> {
 	}
 	
 	@Override
-	public LinkedHashSet<LexicalEntry<Y>> getAllLexicalEntries() {
+	public LinkedHashSet<LexicalEntry<LF>> getAllLexicalEntries() {
 		return cell.getAllLexicalEntriesRecursively();
 	}
 	
@@ -84,7 +86,7 @@ public class CKYParse<Y> implements IParseResult<Y> {
 		return averageFeatureVector;
 	}
 	
-	public LinkedHashSet<LexicalEntry<Y>> getMaxLexicalEntries() {
+	public LinkedHashSet<LexicalEntry<LF>> getMaxLexicalEntries() {
 		return cell.getMaxLexicalEntriesRecursively();
 	}
 	
@@ -97,7 +99,7 @@ public class CKYParse<Y> implements IParseResult<Y> {
 		return cell.getViterbiScore();
 	}
 	
-	public Y getY() {
+	public LF getSemantics() {
 		return semantics;
 	}
 	

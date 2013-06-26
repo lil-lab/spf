@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -27,14 +29,14 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.IUBLSplitter;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.SplittingServices.SplittingPair;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.Pruner;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
@@ -175,7 +177,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 						.parse(dataItem, Pruner.create(dataItem), dataItemModel);
 				LOG.info("Constrained parse time: %f",
 						constrainedParseOutput.getParsingTime() / 1000.0);
-				final IParseResult<LogicalExpression> correctParse = getSingleBestParseFor(
+				final IParse<LogicalExpression> correctParse = getSingleBestParseFor(
 						dataItem.getLabel(), constrainedParseOutput);
 				if (correctParse == null) {
 					LOG.info("Failed to find a correct parse. Update skipped.");
@@ -191,7 +193,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 				// Log current parses
 				if (unconstrainedParseOutput.getBestParses().size() == 1
 						&& unconstrainedParseOutput.getBestParses().get(0)
-								.getY().equals(dataItem.getLabel())) {
+								.getSemantics().equals(dataItem.getLabel())) {
 					LOG.info("CORRECT");
 					LOG.info("score: %f", unconstrainedParseOutput
 							.getBestParses().get(0).getScore());
@@ -208,7 +210,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 						++wrong;
 						if (unconstrainedParseOutput.getBestParses().size() == 1) {
 							LOG.info("Best parse: %s", unconstrainedParseOutput
-									.getBestParses().get(0).getY());
+									.getBestParses().get(0).getSemantics());
 							LOG.info("Best parse lexical entries:");
 							LOG.info(lexToString(unconstrainedParseOutput
 									.getBestParses().get(0)
@@ -235,11 +237,11 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 				// Collect all incorrect parses which violate the margin.
 				// Meaning: the score of their best parse is violating the
 				// margin in respect to the best correct parse.
-				final List<IParseResult<LogicalExpression>> violaltingParses = new LinkedList<IParseResult<LogicalExpression>>();
+				final List<IParse<LogicalExpression>> violaltingParses = new LinkedList<IParse<LogicalExpression>>();
 				boolean correctParseFoundInUnconstrained = false;
-				for (final IParseResult<LogicalExpression> parse : unconstrainedParseOutput
+				for (final IParse<LogicalExpression> parse : unconstrainedParseOutput
 						.getAllParses()) {
-					if (parse.getY().equals(dataItem.getLabel())) {
+					if (parse.getSemantics().equals(dataItem.getLabel())) {
 						correctParseFoundInUnconstrained = true;
 					} else if (parse.getScore() + margin >= bestCorrectParseScore) {
 						LOG.info("Violating parse with score %f",
@@ -273,7 +275,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 					// collected earlier and sum into a single vector.
 					final IHashVector negativeUpdate = HashVectorFactory
 							.create();
-					for (final IParseResult<LogicalExpression> parse : violaltingParses) {
+					for (final IParse<LogicalExpression> parse : violaltingParses) {
 						// Make sure all the lexical entries are in the model
 						model.addLexEntries(parse.getMaxLexicalEntries());
 						
@@ -496,7 +498,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 		LOG.info("getTopSplits parsing time %f",
 				parserOutput.getParsingTime() / 1000.0);
 		
-		final IParseResult<LogicalExpression> correctParse = getSingleBestParseFor(
+		final IParse<LogicalExpression> correctParse = getSingleBestParseFor(
 				dataItem.getLabel(), parserOutput);
 		
 		// If there's no correct parse, create a new sentential lexical item.

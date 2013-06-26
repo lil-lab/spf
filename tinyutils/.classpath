@@ -3,13 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="src-test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="/lib/javautils-1.0.jar" sourcepath="/lib/javautils-1.0.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/lib/javautils-1.0.jar!/"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="/lib/trove-3.0.1.jar" sourcepath="/lib/trove-3.0.1-src.jar"/>
-	<classpathentry kind="lib" path="/lib/biu-normalizer.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/biu-normalizer.jar" sourcepath="/TINY_REPO/lib/biu-normalizer.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/javautils-1.0.jar" sourcepath="/TINY_REPO/lib/javautils-1.0.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/trove-3.0.1.jar" sourcepath="/TINY_REPO/lib/trove-3.0.1-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

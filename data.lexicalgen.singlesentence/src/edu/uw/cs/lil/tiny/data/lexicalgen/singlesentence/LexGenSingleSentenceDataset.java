@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -26,7 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.data.DatasetException;
-import edu.uw.cs.lil.tiny.data.IDataCollection;
+import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
@@ -42,16 +44,16 @@ import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
  * 
  * @author Yoav Artzi
  */
-public class LexicalGenerationSingleSentenceDataset implements
-		IDataCollection<LexicalGenerationSingleSentence> {
-	private final List<LexicalGenerationSingleSentence>	data;
+public class LexGenSingleSentenceDataset implements
+		IDataCollection<LexGenSingleSentence> {
+	private final List<LexGenSingleSentence>	data;
 	
-	public LexicalGenerationSingleSentenceDataset(
-			List<LexicalGenerationSingleSentence> data) {
+	public LexGenSingleSentenceDataset(
+			List<LexGenSingleSentence> data) {
 		this.data = Collections.unmodifiableList(data);
 	}
 	
-	public static LexicalGenerationSingleSentenceDataset read(
+	public static LexGenSingleSentenceDataset read(
 			File f,
 			IStringFilter textFilter,
 			IEvidenceLexicalGenerator<Sentence, LogicalExpression, LogicalExpression> semanticsLexicalGeneration,
@@ -60,7 +62,7 @@ public class LexicalGenerationSingleSentenceDataset implements
 		try {
 			// Open the file
 			final BufferedReader in = new BufferedReader(new FileReader(f));
-			final List<LexicalGenerationSingleSentence> data = new LinkedList<LexicalGenerationSingleSentence>();
+			final List<LexGenSingleSentence> data = new LinkedList<LexGenSingleSentence>();
 			
 			String line;
 			String currentSentence = null;
@@ -98,7 +100,7 @@ public class LexicalGenerationSingleSentenceDataset implements
 								"Expression not well-typed: " + exp,
 								readLineCounter, f.getName());
 					}
-					data.add(new LexicalGenerationSingleSentence(new Sentence(
+					data.add(new LexGenSingleSentence(new Sentence(
 							currentSentence), exp, semanticsLexicalGeneration,
 							textLexicalGeneration));
 					currentSentence = null;
@@ -107,7 +109,7 @@ public class LexicalGenerationSingleSentenceDataset implements
 			
 			in.close();
 			
-			return new LexicalGenerationSingleSentenceDataset(data);
+			return new LexGenSingleSentenceDataset(data);
 		} catch (final IOException e) {
 			// Wrap with dataset exception and throw
 			throw new DatasetException(e);
@@ -115,7 +117,7 @@ public class LexicalGenerationSingleSentenceDataset implements
 	}
 	
 	@Override
-	public Iterator<LexicalGenerationSingleSentence> iterator() {
+	public Iterator<LexGenSingleSentence> iterator() {
 		return data.iterator();
 	}
 	

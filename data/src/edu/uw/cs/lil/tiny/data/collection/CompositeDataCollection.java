@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -14,25 +16,30 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.data.composite;
+package edu.uw.cs.lil.tiny.data.collection;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.IDataCollection;
 import edu.uw.cs.utils.collections.CompositeIterator;
 
-public class CompositeDataset<T> implements IDataCollection<T> {
+/**
+ * Concatenation of {@link IDataCollection}
+ * 
+ * @author Yoav Artzi
+ * @param <T>
+ */
+public class CompositeDataCollection<T> implements IDataCollection<T> {
 	
 	private final List<IDataCollection<? extends T>>	datasets;
 	
-	public CompositeDataset(IDataCollection<? extends T>... datasets) {
+	public CompositeDataCollection(IDataCollection<? extends T>... datasets) {
 		this(Arrays.asList(datasets));
 	}
 	
-	public CompositeDataset(List<IDataCollection<? extends T>> datasets) {
+	public CompositeDataCollection(List<IDataCollection<? extends T>> datasets) {
 		this.datasets = datasets;
 	}
 	

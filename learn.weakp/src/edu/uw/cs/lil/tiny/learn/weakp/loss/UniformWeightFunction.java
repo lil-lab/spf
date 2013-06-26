@@ -1,5 +1,7 @@
 /*******************************************************************************
- * UW SPF - The University of Washington Semantic Parsing Framework. Copyright (C) 2013 Yoav Artzi
+ * UW SPF - The University of Washington Semantic Parsing Framework
+ * <p>
+ * Copyright (C) 2013 Yoav Artzi
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -16,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.learn.weakp.loss;
 
-import edu.uw.cs.lil.tiny.parser.IParseResult;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
@@ -39,13 +41,13 @@ public class UniformWeightFunction<Y> implements IUpdateWeightFunction<Y> {
 	
 	@Override
 	public double evalNonOptimalParse(
-			Pair<Double, ? extends IParseResult<Y>> nonOptimalParse) {
+			Pair<Double, ? extends IParse<Y>> nonOptimalParse) {
 		return valueForNonOptimalParses;
 	}
 	
 	@Override
 	public double evalOptimalParse(
-			Pair<Double, ? extends IParseResult<Y>> optimalParse) {
+			Pair<Double, ? extends IParse<Y>> optimalParse) {
 		return valueForOptimalParses;
 	}
 }
