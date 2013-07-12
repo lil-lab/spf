@@ -16,7 +16,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.learn.validation.perceptron;
+package edu.uw.cs.lil.tiny.learn.validation.perceptron;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.uw.cs.lil.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
@@ -33,6 +32,7 @@ import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.learn.PerceptronServices;
+import edu.uw.cs.lil.tiny.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;

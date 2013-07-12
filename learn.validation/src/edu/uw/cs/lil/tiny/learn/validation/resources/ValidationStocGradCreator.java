@@ -16,11 +16,8 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.learn.validation.resources;
+package edu.uw.cs.lil.tiny.learn.validation.resources;
 
-import edu.uw.cs.lil.learn.validation.perceptron.ValidationPerceptron;
-import edu.uw.cs.lil.learn.validation.stocgrad.ValidationStocGrad;
-import edu.uw.cs.lil.learn.validation.stocgrad.ValidationStocGrad.Builder;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
@@ -31,6 +28,9 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.lil.tiny.learn.validation.perceptron.ValidationPerceptron;
+import edu.uw.cs.lil.tiny.learn.validation.stocgrad.ValidationStocGrad;
+import edu.uw.cs.lil.tiny.learn.validation.stocgrad.ValidationStocGrad.Builder;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.test.ITester;
