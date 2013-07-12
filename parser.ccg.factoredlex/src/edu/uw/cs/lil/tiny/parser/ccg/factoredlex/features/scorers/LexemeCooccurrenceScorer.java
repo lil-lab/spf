@@ -31,11 +31,11 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.Lexeme;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
 
 /**

@@ -18,8 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.lexicalgen;
 
-import edu.uw.cs.lil.tiny.data.IValidationDataItem;
-
 /**
  * Data item that supports both validation {@see IValidationDataItem} and
  * lexical generation {@see ILexicalGenerationDataItem}.
@@ -29,8 +27,7 @@ import edu.uw.cs.lil.tiny.data.IValidationDataItem;
  * @param <LF>
  * @param <LABEL>
  */
-public interface ILexGenValidationDataItem<SAMPLE, LF, LABEL> extends
-		IValidationDataItem<SAMPLE, LABEL>,
+public interface ILexGenValidationDataItem<SAMPLE, LF> extends
 		ILexGenDataItem<SAMPLE, LF> {
 	
 }

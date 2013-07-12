@@ -25,7 +25,13 @@ import java.util.List;
 
 import edu.uw.cs.utils.composites.Pair;
 
+/**
+ * Capture rule application information (the rule applied and on what spans).
+ * 
+ * @author Yoav Artzi
+ */
 public class RuleUsageTriplet {
+	/** (start,end) pair for all children of this parsing step */
 	private final List<Pair<Integer, Integer>>	children;
 	private final String						ruleName;
 	

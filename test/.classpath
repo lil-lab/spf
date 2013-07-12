@@ -7,5 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
 	<classpathentry kind="src" path="/exec"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

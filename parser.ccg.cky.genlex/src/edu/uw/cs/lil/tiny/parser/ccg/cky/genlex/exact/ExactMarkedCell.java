@@ -18,40 +18,35 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.exact;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.IMarkedEntriesCounter;
-import edu.uw.cs.lil.tiny.parser.ccg.genlex.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 
-public class ExactMarkedCell extends Cell<LogicalExpression> implements
+/**
+ * {@link Chart} cell that maintains a count of the number of GENLEX lexical
+ * entries in its subtree.
+ * 
+ * @author Yoav Artzi
+ */
+public class ExactMarkedCell<MR> extends Cell<MR> implements
 		IMarkedEntriesCounter {
 	
 	private final int	numMarkedLexicalEntries;
 	
-	protected ExactMarkedCell(Category<LogicalExpression> category,
-			String ruleName, Cell<LogicalExpression> child,
-			boolean isCompleteSpan, boolean isFullParse,
-			int numMarkedLexicalEntries) {
-		super(category, ruleName, child, isCompleteSpan, isFullParse);
-		this.numMarkedLexicalEntries = numMarkedLexicalEntries;
+	protected ExactMarkedCell(CKYLexicalStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan) {
+		super(parseStep, start, end, isCompleteSpan);
+		this.numMarkedLexicalEntries = parseStep.getLexicalEntry().getOrigin()
+				.equals(ILexiconGenerator.GENLEX_LEXICAL_ORIGIN) ? 1 : 0;
 	}
 	
-	protected ExactMarkedCell(Category<LogicalExpression> category,
-			String ruleName, Cell<LogicalExpression> leftChild,
-			Cell<LogicalExpression> rightChild, boolean isCompleteSpan,
-			boolean isFullParse, int numMarkedLexicalEntries) {
-		super(category, ruleName, leftChild, rightChild, isCompleteSpan,
-				isFullParse);
+	protected ExactMarkedCell(CKYParseStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan, int numMarkedLexicalEntries) {
+		super(parseStep, start, end, isCompleteSpan);
 		this.numMarkedLexicalEntries = numMarkedLexicalEntries;
-	}
-	
-	protected ExactMarkedCell(LexicalEntry<LogicalExpression> lexicalEntry,
-			int begin, int end, boolean isCompleteSpan, boolean isFullParse) {
-		super(lexicalEntry, begin, end, isCompleteSpan, isFullParse);
-		this.numMarkedLexicalEntries = lexicalEntry.getOrigin().equals(
-				ILexiconGenerator.GENLEX_LEXICAL_ORIGIN) ? 1 : 0;
 	}
 	
 	@Override
@@ -65,6 +60,7 @@ public class ExactMarkedCell extends Cell<LogicalExpression> implements
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		@SuppressWarnings("rawtypes")
 		final ExactMarkedCell other = (ExactMarkedCell) obj;
 		if (numMarkedLexicalEntries != other.numMarkedLexicalEntries) {
 			return false;

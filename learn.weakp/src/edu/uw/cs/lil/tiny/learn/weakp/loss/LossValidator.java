@@ -18,8 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.learn.weakp.loss;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.utils.IValidator;
 
 /**
  * Validator based on a loss function and threshold.
@@ -27,7 +27,7 @@ import edu.uw.cs.lil.tiny.data.sentence.Sentence;
  * @author Yoav Artzi
  * @param <Y>
  */
-public class LossValidator<Y> implements IValidator<Y> {
+public class LossValidator<Y> implements IValidator<Sentence, Y> {
 	
 	private final ILossFunction<Y>	lossFunction;
 	private final double			threshold;
@@ -38,7 +38,7 @@ public class LossValidator<Y> implements IValidator<Y> {
 	}
 	
 	@Override
-	public boolean isValid(IDataItem<Sentence> dataItem, Y label) {
+	public boolean isValid(Sentence dataItem, Y label) {
 		return lossFunction.calculateLoss(dataItem, label) <= threshold;
 	}
 	

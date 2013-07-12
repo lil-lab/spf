@@ -12,5 +12,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry kind="src" path="/mr.lambda.ccg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

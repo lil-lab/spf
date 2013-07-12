@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg;
 
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 
 /**
  * @author Yoav Artzi

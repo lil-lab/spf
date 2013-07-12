@@ -24,11 +24,11 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
@@ -81,16 +81,14 @@ public class ChartLogger<ESTEP, ERESULT> implements
 										chart.getTokens().subList(
 												cell.getStart(),
 												cell.getEnd() + 1), " ")))
-						.append(dataItemModel
-								.getTheta()
-								.printValues(
-										cell.computeMaxAvgFeaturesRecursively(dataItemModel)))
+						.append(dataItemModel.getTheta().printValues(
+								cell.computeMaxAvgFeaturesRecursively()))
 						.append("\n");
 			}
 			
 			writer.write("\n\n");
 			for (final IJointParse<LogicalExpression, ERESULT> parse : CollectionUtils
-					.sorted(output.getAllJointParses(),
+					.sorted(output.getAllParses(),
 							new Comparator<IJointParse<LogicalExpression, ERESULT>>() {
 								
 								@Override
@@ -99,9 +97,12 @@ public class ChartLogger<ESTEP, ERESULT> implements
 										IJointParse<LogicalExpression, ERESULT> o2) {
 									final int comp = Double.compare(
 											o1.getScore(), o2.getScore());
-									return comp == 0 ? o1.getSemantics().toString()
-											.compareTo(o2.getSemantics().toString())
-											: comp;
+									return comp == 0 ? o1
+											.getSemantics()
+											.toString()
+											.compareTo(
+													o2.getSemantics()
+															.toString()) : comp;
 								}
 							})) {
 				writer.write(String.format("[%.2f] %s\n", parse.getScore(),

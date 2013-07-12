@@ -19,7 +19,6 @@
 package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,124 +29,105 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
-import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
- * A single chart cell of a specific span with specific syntax and semantic
- * data.
+ * A single {@link Chart} cell of a specific span with specific syntax and
+ * semantic data.
  * 
  * @author Yoav Artzi
  * @author Luke Zettlemoyer
  * @author Tom Kwiatkowski
- * @see Chart
  */
-public class Cell<Y> {
+public class Cell<MR> {
 	
 	/** The starting index of the span of the input string covered by this cell. */
-	private final int					begin;
+	private final int								begin;
 	
-	private final Category<Y>			category;
+	private final Category<MR>						category;
 	
 	/** The end index of the span of the input string covered by this cell. */
-	private final int					end;
+	private final int								end;
 	
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
 	 * It mustn't be used when copying/comparing/storing/etc. the object.
 	 */
-	private int							hashCodeCache;
+	private int										hashCodeCache;
 	
 	/**
 	 * Mutable flag to indicate if the hash code cache is populated. This field
 	 * is for internal use only! It mustn't be used when
 	 * copying/comparing/storing/etc. the object.
 	 */
-	private boolean						hashCodeCalculated	= false;
+	private boolean									hashCodeCalculated	= false;
 	
 	/**
 	 * Inside score (exponentiated).
 	 */
-	private double						insideScore			= 0;
+	private double									insideScore			= 0;
 	
 	/**
 	 * A flag that the {@link Chart) can set to indicate this cell spans the
 	 * entire sentence, even if it's not a full parse.
 	 */
-	private final boolean				isCompleteSpan;
+	private final boolean							isCompleteSpan;
 	
 	/**
 	 * Flag to indicate if this cell represents a complete parse.
 	 */
-	private final boolean				isFullParse;
+	private final boolean							isFullParse;
 	
-	private boolean						isMax;
+	private boolean									isMax;
 	
 	/**
 	 * Outside score
 	 */
-	private double						outsideScore		= 0;
-	
-	/**
-	 * A flag to be used as a safety measure to {@link #score(IModelImmutable)}.
-	 * This field is for internal use only! It mustn't be used when
-	 * copying/comparing/storing/etc. the object. Don't use it for anything
-	 * else. Just don't touch it.
-	 */
-	private boolean						scored				= false;
+	private double									outsideScore		= 0;
 	
 	/**
 	 * Lists of derivation steps that created this cell
 	 */
-	private final Set<DerivationStep>	steps				= new HashSet<DerivationStep>();
+	private final Set<AbstractCKYParseStep<MR>>		steps				= new HashSet<AbstractCKYParseStep<MR>>();
 	
 	/**
 	 * Linear viterbi score.
 	 */
-	private double						viterbiScore		= -Double.MAX_VALUE;
+	private double									viterbiScore		= -Double.MAX_VALUE;
 	
-	protected int						numParses			= 0;
+	protected int									numParses			= 0;
 	
 	/**
 	 * Derivation steps that have the {@link #viterbiScore}.
 	 */
-	protected final Set<DerivationStep>	viterbiSteps		= new HashSet<DerivationStep>();
+	protected final Set<AbstractCKYParseStep<MR>>	viterbiSteps		= new HashSet<AbstractCKYParseStep<MR>>();
 	
-	protected Cell(Category<Y> category, String ruleName, Cell<Y> child,
-			boolean isCompleteSpan, boolean isFullParse) {
+	protected Cell(CKYLexicalStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan) {
 		this.isCompleteSpan = isCompleteSpan;
-		this.isFullParse = isFullParse;
-		this.category = category;
-		this.begin = child.getStart();
-		this.end = child.getEnd();
-		this.steps.add(new DerivationStep(child, ruleName));
-	}
-	
-	protected Cell(Category<Y> category, String ruleName, Cell<Y> leftChild,
-			Cell<Y> rightChild, boolean isCompleteSpan, boolean isFullParse) {
-		this.isCompleteSpan = isCompleteSpan;
-		this.isFullParse = isFullParse;
-		this.category = category;
-		this.begin = leftChild.getStart();
-		this.end = rightChild.getEnd();
-		this.steps.add(new DerivationStep(leftChild, rightChild, ruleName));
-	}
-	
-	protected Cell(LexicalEntry<Y> lexicalEntry, int begin, int end,
-			boolean isCompleteSpan, boolean isFullParse) {
-		this.isCompleteSpan = isCompleteSpan;
-		this.isFullParse = isFullParse;
-		this.category = lexicalEntry.getCategory();
-		this.begin = begin;
+		this.isFullParse = parseStep.isFullParse();
+		this.category = parseStep.getRoot();
+		this.begin = start;
 		this.end = end;
-		this.steps.add(new LexicalDerivationStep(lexicalEntry));
+		this.steps.add(parseStep);
+		updateInsideScore(parseStep);
+	}
+	
+	protected Cell(CKYParseStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan) {
+		this.isCompleteSpan = isCompleteSpan;
+		this.isFullParse = parseStep.isFullParse();
+		this.category = parseStep.getRoot();
+		this.begin = start;
+		this.end = end;
+		this.steps.add(parseStep);
+		updateInsideScore(parseStep);
 	}
 	
 	/**
@@ -159,13 +139,13 @@ public class Cell<Y> {
 	 * 
 	 * @return 'true' iff max children lists changed
 	 */
-	public boolean addCell(Cell<Y> other, IDataItemModel<Y> model) {
+	public boolean addCell(Cell<MR> other) {
 		// Iterate over the added children and add them to steps list and inside
 		// score
 		boolean addedToMaxChildren = false;
-		for (final DerivationStep derivationStep : other.steps) {
+		for (final AbstractCKYParseStep<MR> derivationStep : other.steps) {
 			if (steps.add(derivationStep)) {
-				addedToMaxChildren |= updateInsideScore(derivationStep, model);
+				addedToMaxChildren |= updateInsideScore(derivationStep);
 			}
 		}
 		return addedToMaxChildren;
@@ -173,13 +153,9 @@ public class Cell<Y> {
 	
 	/**
 	 * Recursively compute the mean (linear) viterbi feature vector.
-	 * 
-	 * @param model
-	 *            Features to use
 	 */
-	public IHashVector computeMaxAvgFeaturesRecursively(IDataItemModel<Y> model) {
-		return computeMaxAvgFeaturesRecursively(model,
-				new HashMap<Cell<Y>, IHashVector>());
+	public IHashVector computeMaxAvgFeaturesRecursively() {
+		return computeMaxAvgFeaturesRecursively(new HashMap<Cell<MR>, IHashVector>());
 	}
 	
 	@Override
@@ -217,18 +193,22 @@ public class Cell<Y> {
 	 * 
 	 * @return List of lexical entries
 	 */
-	public LinkedHashSet<LexicalEntry<Y>> getAllLexicalEntriesRecursively() {
-		final LinkedHashSet<LexicalEntry<Y>> result = new LinkedHashSet<LexicalEntry<Y>>();
-		recursiveGetAllLexicalEntries(result, new HashSet<Cell<Y>>());
+	public LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntriesRecursively() {
+		final LinkedHashSet<LexicalEntry<MR>> result = new LinkedHashSet<LexicalEntry<MR>>();
+		recursiveGetAllLexicalEntries(result, new HashSet<Cell<MR>>());
 		return result;
 	}
 	
-	public Category<Y> getCategroy() {
+	public Category<MR> getCategroy() {
 		return category;
 	}
 	
 	public int getEnd() {
 		return end;
+	}
+	
+	public double getInsideScore() {
+		return insideScore;
 	}
 	
 	public boolean getIsMax() {
@@ -242,24 +222,20 @@ public class Cell<Y> {
 	 * 
 	 * @return List of lexical entries
 	 */
-	public LinkedHashSet<LexicalEntry<Y>> getMaxLexicalEntriesRecursively() {
-		final LinkedHashSet<LexicalEntry<Y>> result = new LinkedHashSet<LexicalEntry<Y>>();
-		recursiveGetMaxLexicalEntries(result, new HashSet<Cell<Y>>());
+	public LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntriesRecursively() {
+		final LinkedHashSet<LexicalEntry<MR>> result = new LinkedHashSet<LexicalEntry<MR>>();
+		recursiveGetMaxLexicalEntries(result, new HashSet<Cell<MR>>());
 		return result;
 	}
 	
 	public LinkedHashSet<RuleUsageTriplet> getMaxRulesUsedRecursively() {
 		final LinkedHashSet<RuleUsageTriplet> result = new LinkedHashSet<RuleUsageTriplet>();
-		recursiveGetMaxRulesUsed(result, new HashSet<Cell<Y>>());
+		recursiveGetMaxRulesUsed(result, new HashSet<Cell<MR>>());
 		return result;
 	}
 	
 	public int getNumParses() {
 		return numParses;
-	}
-	
-	public double getOutsideScore() {
-		return outsideScore;
 	}
 	
 	public double getPruneScore() {
@@ -280,12 +256,11 @@ public class Cell<Y> {
 	 * 
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public Set<LexicalEntry<Y>> getViterbiLexicalEntries() {
-		final Set<LexicalEntry<Y>> entries = new HashSet<LexicalEntry<Y>>();
-		for (final DerivationStep step : viterbiSteps) {
-			if (step instanceof Cell.LexicalDerivationStep) {
-				entries.add(((LexicalDerivationStep) step).getLexicalEntry());
+	public Set<LexicalEntry<MR>> getViterbiLexicalEntries() {
+		final Set<LexicalEntry<MR>> entries = new HashSet<LexicalEntry<MR>>();
+		for (final AbstractCKYParseStep<MR> step : viterbiSteps) {
+			if (step instanceof CKYLexicalStep) {
+				entries.add(((CKYLexicalStep<MR>) step).getLexicalEntry());
 			}
 		}
 		return entries;
@@ -311,7 +286,7 @@ public class Cell<Y> {
 	}
 	
 	public boolean hasLexicalMaxStep() {
-		for (final DerivationStep step : viterbiSteps) {
+		for (final AbstractCKYParseStep<MR> step : viterbiSteps) {
 			if (step instanceof ILexicalParseStep) {
 				return true;
 			}
@@ -320,7 +295,7 @@ public class Cell<Y> {
 	}
 	
 	public boolean hasLexicalStep() {
-		for (final DerivationStep step : steps) {
+		for (final AbstractCKYParseStep<MR> step : steps) {
 			if (step instanceof ILexicalParseStep) {
 				return true;
 			}
@@ -352,7 +327,8 @@ public class Cell<Y> {
 				.append(steps.size()).append(" : ").append(viterbiScore)
 				.append(" : ");
 		
-		final Iterator<DerivationStep> iterator = viterbiSteps.iterator();
+		final Iterator<AbstractCKYParseStep<MR>> iterator = viterbiSteps
+				.iterator();
 		result.append("[");
 		while (iterator.hasNext()) {
 			result.append("[").append(iterator.next().toString(recursive))
@@ -379,16 +355,15 @@ public class Cell<Y> {
 	}
 	
 	/**
-	 * @see #computeMaxAvgFeaturesRecursively(IDataItemModel)
-	 * @param model
 	 * @param cache
 	 * @return
 	 */
 	private IHashVector computeMaxAvgFeaturesRecursively(
-			IDataItemModel<Y> model, Map<Cell<Y>, IHashVector> cache) {
+			Map<Cell<MR>, IHashVector> cache) {
 		final IHashVector result = HashVectorFactory.create();
 		int numSubTrees = 0;
 		
+		// Check if already visited, if so - return cached
 		final IHashVector cached = cache.get(this);
 		if (cached != null) {
 			return cached;
@@ -396,23 +371,25 @@ public class Cell<Y> {
 		
 		// Iterate over derivation steps to compute features (this includes both
 		// lexical and non-lexical steps)
-		for (final DerivationStep derivationStep : viterbiSteps) {
+		for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
 			// Get the features from the children
-			for (final Cell<Y> child : derivationStep) {
-				child.computeMaxAvgFeaturesRecursively(model, cache)
-						.addTimesInto(1.0, result);
+			for (final Cell<MR> child : derivationStep) {
+				child.computeMaxAvgFeaturesRecursively(cache).addTimesInto(1.0,
+						result);
 			}
 			// Parsing feature values
-			model.computeFeatures(derivationStep, result);
+			derivationStep.getLocalFeatures().addTimesInto(1.0, result);
 			++numSubTrees;
 		}
 		
-		// Average
+		// Average -- all viterbi steps have the same weight, so can get the
+		// mean
 		if (numSubTrees > 1) {
 			// Case we have more than 1 sub trees, do simple average
 			result.divideBy(numSubTrees);
 		}
 		
+		// Cache the result
 		cache.put(this, result);
 		
 		return result;
@@ -423,20 +400,19 @@ public class Cell<Y> {
 	 * @return
 	 * @see Cell#getAllLexicalEntriesRecursively()
 	 */
-	@SuppressWarnings("unchecked")
 	private void recursiveGetAllLexicalEntries(
-			LinkedHashSet<LexicalEntry<Y>> result, Set<Cell<Y>> visited) {
+			LinkedHashSet<LexicalEntry<MR>> result, Set<Cell<MR>> visited) {
 		if (visited.contains(this)) {
 			// no need to go further, we have already found the items in a
 			// previous recursive call
 			return;
 		} else {
-			for (final DerivationStep derivationStep : steps) {
-				if (derivationStep instanceof Cell.LexicalDerivationStep) {
-					result.add(((LexicalDerivationStep) derivationStep)
+			for (final AbstractCKYParseStep<MR> derivationStep : steps) {
+				if (derivationStep instanceof CKYLexicalStep) {
+					result.add(((CKYLexicalStep<MR>) derivationStep)
 							.getLexicalEntry());
 				}
-				for (final Cell<Y> child : derivationStep) {
+				for (final Cell<MR> child : derivationStep) {
 					child.recursiveGetMaxLexicalEntries(result, visited);
 				}
 			}
@@ -449,20 +425,19 @@ public class Cell<Y> {
 	 * @return
 	 * @see Cell#getMaxLexicalEntriesRecursively()
 	 */
-	@SuppressWarnings("unchecked")
 	private void recursiveGetMaxLexicalEntries(
-			LinkedHashSet<LexicalEntry<Y>> result, Set<Cell<Y>> visited) {
+			LinkedHashSet<LexicalEntry<MR>> result, Set<Cell<MR>> visited) {
 		if (visited.contains(this)) {
-			// no need to go further, we have already found the items in a
+			// No need to go further, we have already found the items in a
 			// previous recursive call
 			return;
 		} else {
-			for (final DerivationStep derivationStep : viterbiSteps) {
-				if (derivationStep instanceof Cell.LexicalDerivationStep) {
-					result.add(((LexicalDerivationStep) derivationStep)
+			for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
+				if (derivationStep instanceof CKYLexicalStep) {
+					result.add(((CKYLexicalStep<MR>) derivationStep)
 							.getLexicalEntry());
 				}
-				for (final Cell<Y> child : derivationStep) {
+				for (final Cell<MR> child : derivationStep) {
 					child.recursiveGetMaxLexicalEntries(result, visited);
 				}
 			}
@@ -471,17 +446,17 @@ public class Cell<Y> {
 	}
 	
 	private void recursiveGetMaxRulesUsed(
-			LinkedHashSet<RuleUsageTriplet> result, HashSet<Cell<Y>> visited) {
+			LinkedHashSet<RuleUsageTriplet> result, HashSet<Cell<MR>> visited) {
 		if (visited.contains(this)) {
 			// no need to go further, we have already found the items in a
 			// previous recursive call
 			return;
 		} else {
-			for (final DerivationStep derivationStep : viterbiSteps) {
-				if (!(derivationStep instanceof Cell.LexicalDerivationStep)) {
+			for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
+				if (!(derivationStep instanceof CKYLexicalStep)) {
 					final List<Pair<Integer, Integer>> children = new ArrayList<Pair<Integer, Integer>>(
 							2);
-					for (final Cell<Y> child : derivationStep) {
+					for (final Cell<MR> child : derivationStep) {
 						child.recursiveGetMaxRulesUsed(result, visited);
 						children.add(Pair.of(child.getStart(), child.getEnd()));
 					}
@@ -498,20 +473,15 @@ public class Cell<Y> {
 	 * the list of viterbi steps and/or update the viterbi score.
 	 * 
 	 * @param derivationStep
-	 * @param model
 	 */
-	protected boolean updateInsideScore(DerivationStep derivationStep,
-			IDataItemModel<Y> model) {
-		// Score the derivation step using the model
-		final double score = model.score(derivationStep);
-		
+	private boolean updateInsideScore(AbstractCKYParseStep<MR> derivationStep) {
 		// Given the cells participating in the parse step (as children),
 		// compute the viterbi score of the step, the number of parses it
 		// represents and the value to add to the cell's inside score
-		double stepViterbiScore = score;
+		double stepViterbiScore = derivationStep.getLocalScore();
 		int numParsesInStep = 1;
-		double addToInsideScore = Math.exp(score);
-		for (final Cell<Y> child : derivationStep) {
+		double addToInsideScore = Math.exp(derivationStep.getLocalScore());
+		for (final Cell<MR> child : derivationStep) {
 			addToInsideScore *= child.getInsideScore();
 			stepViterbiScore += child.getViterbiScore();
 			numParsesInStep *= child.numParses;
@@ -537,57 +507,40 @@ public class Cell<Y> {
 		return false;
 	}
 	
-	// Assumes that the inside probabilities have already been computed
-	void computeOutsideBinary(IDataItemModel<Y> model) {
-		if (!steps.isEmpty()) {
-			// Iterate through the ways of building this cell
-			for (final DerivationStep derivationStep : steps) {
-				if (derivationStep.numChildren() == 2) {
-					// Case binary parse rule
-					final double score = Math.exp(model.score(derivationStep));
-					final Cell<Y> child1 = derivationStep.getChildCell(0);
-					final Cell<Y> child2 = derivationStep.getChildCell(1);
-					child1.outsideScore += outsideScore * child2.insideScore
-							* score;
-					child2.outsideScore += outsideScore * child1.insideScore
-							* score;
-				}
+	/**
+	 * Update the cell's expected feature values to the given hash vector.
+	 * Assumes outside and inside scores computed.
+	 * 
+	 * @param expectedFeatures
+	 */
+	void collectExpectedFeatures(IHashVector expectedFeatures) {
+		// Iterate over all derivations steps (incl. both lexical and
+		// non-lexical steps)
+		for (final AbstractCKYParseStep<MR> step : steps) {
+			// Accumulate the weight for using this parse step: the outside of
+			// the root, the inside of each child and the local score associated
+			// with the current step.
+			double weight = outsideScore * Math.exp(step.getLocalScore());
+			for (final Cell<MR> child : step) {
+				weight *= child.insideScore;
 			}
+			// Update the weighted values of the local features into the result
+			// vector
+			step.getLocalFeatures().addTimesInto(weight, expectedFeatures);
 		}
-	}
-	
-	// Assumes that the inside probabilities have already been computed
-	void computeOutsideUnary(IDataItemModel<Y> model) {
-		if (!steps.isEmpty()) {
-			// Iterate through the ways of building this cell
-			for (final DerivationStep derivationStep : steps) {
-				if (derivationStep.numChildren() == 1) {
-					// Case unary parse rule
-					final double score = Math.exp(model.score(derivationStep));
-					final Cell<Y> child = derivationStep.getChildCell(0);
-					child.outsideScore += outsideScore * score;
-				}
-			}
-		}
-	}
-	
-	double getInsideScore() {
-		return insideScore;
 	}
 	
 	/**
-	 * Init outside probability with a constraining semantic category. Outside
+	 * Init outside probability with a constraining semantic filter. Outside
 	 * probability will be set to 1.0 for every full parse that results in the
 	 * given semantic category.
 	 * 
 	 * @param constrainingCategory
 	 *            If null, no constraint on output category will be enforced.
 	 */
-	void initializeOutsideProbabilities(Category<Y> constrainingCategory) {
-		if (isFullParse()
-				&& (constrainingCategory == null || category
-						.equals(constrainingCategory))) {
-			outsideScore = 1.0;
+	void initializeOutsideProbabilities(IScorer<MR> initialScorer) {
+		if (isFullParse()) {
+			outsideScore = initialScorer.score(category.getSem());
 		} else {
 			outsideScore = 0.0;
 		}
@@ -600,10 +553,10 @@ public class Cell<Y> {
 	 */
 	void propMaxNonUnary() {
 		// Iterate over all max children
-		for (final DerivationStep derivationStep : viterbiSteps) {
+		for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
 			if (!derivationStep.isUnary()) {
 				// Mark both children as participating in the max parse
-				for (final Cell<Y> child : derivationStep) {
+				for (final Cell<MR> child : derivationStep) {
 					child.setIsMax(true);
 				}
 			}
@@ -617,281 +570,73 @@ public class Cell<Y> {
 	 */
 	void propMaxUnary() {
 		// Iterate over all max children
-		for (final DerivationStep derivationStep : viterbiSteps) {
+		for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
 			if (derivationStep.isUnary()) {
 				// Mark the unary child as participating in the max parse
-				for (final Cell<Y> child : derivationStep) {
+				for (final Cell<MR> child : derivationStep) {
 					child.setIsMax(true);
 				}
 			}
 		}
 	}
 	
+	// TODO [yoav] understand this warning and resolve it
 	// WARNING: this will not work correctly if you have type shifting rules...
-	void recomputeInsideScore(IDataItemModel<Y> model) {
+	void recomputeInsideScore() {
 		numParses = 0;
 		viterbiSteps.clear();
 		// now add in the parsing steps
-		for (final DerivationStep derivationStep : steps) {
-			updateInsideScore(derivationStep, model);
+		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
+			updateInsideScore(derivationStep);
 		}
 		
-	}
-	
-	/**
-	 * This function should only be called once per cell. It's not done in the
-	 * constructor to save on scoring cells that are not added to the chart. It
-	 * has a security measure that prevents it from being called more than once.
-	 * 
-	 * @param model
-	 */
-	void score(IDataItemModel<Y> model) {
-		if (scored) {
-			throw new IllegalStateException(
-					"Trying to init a cell's score for the second time");
-		} else {
-			scored = true;
-		}
-		
-		viterbiScore = -Double.MAX_VALUE;
-		viterbiSteps.clear();
-		numParses = 0;
-		for (final DerivationStep derivationStep : steps) {
-			updateInsideScore(derivationStep, model);
-		}
 	}
 	
 	void setIsMax(boolean isMax) {
 		this.isMax = isMax;
 	}
 	
-	void updateExpFeats(IHashVector expFeats, IDataItemModel<Y> model) {
-		// Iterate over all derivations steps (incl. both lexical and
-		// non-lexical steps)
-		if (!steps.isEmpty()) {
-			// Iterate through the ways of building this cell
-			for (final DerivationStep derivationStep : steps) {
-				final IHashVector feats = HashVectorFactory.create();
-				model.computeFeatures(derivationStep, feats);
-				double pInside = 1.0;
-				for (final Cell<Y> child : derivationStep) {
-					pInside *= child.insideScore;
-				}
-				final double prob = outsideScore * pInside
-						* Math.exp(model.score(derivationStep));
-				feats.addTimesInto(prob, expFeats);
+	/**
+	 * Compute the contribution of the current cell to the outside score of its
+	 * children, in all binary production for which it's the root. Assumes
+	 * inside score computed.
+	 */
+	void updateBinaryChildrenOutsideScore() {
+		// Iterate through all derivation steps: all ways of producing this cell
+		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
+			// Only process binary derivations steps
+			if (derivationStep.numChildren() == 2) {
+				final double score = Math.exp(derivationStep.getLocalScore());
+				final Cell<MR> child1 = derivationStep.getChildCell(0);
+				final Cell<MR> child2 = derivationStep.getChildCell(1);
+				child1.outsideScore += outsideScore * child2.insideScore
+						* score;
+				child2.outsideScore += outsideScore * child1.insideScore
+						* score;
 			}
 		}
 	}
 	
 	/**
-	 * A single derivation step holding the children and the name of the rule
-	 * used to combine them. In the case of an unary step, the right child will
-	 * be null.
-	 * 
-	 * @author Yoav Artzi
+	 * Compute the contribution of the current cell to the outside score of its
+	 * children, in all unary production for which it's the root. Assumes inside
+	 * score computed.
 	 */
-	public class DerivationStep implements Iterable<Cell<Y>>, IParseStep<Y> {
-		
-		private final List<Cell<Y>>	children;
-		private final boolean		isUnary;
-		private final String		ruleName;
-		
-		private DerivationStep(Cell<Y> leftChild, Cell<Y> rightChild,
-				String ruleName) {
-			this.isUnary = rightChild == null;
-			List<Cell<Y>> list;
-			if (isUnary) {
-				list = new ArrayList<Cell<Y>>(1);
-				list.add(leftChild);
-			} else {
-				list = new ArrayList<Cell<Y>>(2);
-				list.add(leftChild);
-				list.add(rightChild);
+	void updateUnaryChildrenOutsideScore() {
+		// Iterate through all derivation steps: all ways of producing this cell
+		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
+			// Only process unary steps
+			if (derivationStep.numChildren() == 1) {
+				// The unary case of outside score is a bit tricky. It becomes
+				// clear when considering first principles: the outside score is
+				// the sum of potentials for all outside trees with a given
+				// non-terminal for a given span. For the unary case, there are
+				// no siblings, so no need to take any inside score into
+				// account, unlike the binary case.
+				derivationStep.getChildCell(0).outsideScore += outsideScore
+						* Math.exp(derivationStep.getLocalScore());
 			}
-			this.children = Collections.unmodifiableList(list);
-			this.ruleName = ruleName;
 		}
-		
-		private DerivationStep(Cell<Y> child, String ruleName) {
-			this(child, null, ruleName);
-		}
-		
-		private DerivationStep(String ruleName) {
-			this.isUnary = false;
-			this.ruleName = ruleName;
-			this.children = Collections.emptyList();
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			@SuppressWarnings("unchecked")
-			final DerivationStep other = (DerivationStep) obj;
-			if (!getOuterType().equals(other.getOuterType())) {
-				return false;
-			}
-			if (children == null) {
-				if (other.children != null) {
-					return false;
-				}
-			} else if (!children.equals(other.children)) {
-				return false;
-			}
-			if (isUnary != other.isUnary) {
-				return false;
-			}
-			if (ruleName == null) {
-				if (other.ruleName != null) {
-					return false;
-				}
-			} else if (!ruleName.equals(other.ruleName)) {
-				return false;
-			}
-			return true;
-		}
-		
-		@Override
-		public Category<Y> getChild(int i) {
-			return getChildCell(i).getCategroy();
-		}
-		
-		public Cell<Y> getChildCell(int i) {
-			return children.get(i);
-		}
-		
-		@Override
-		public Category<Y> getRoot() {
-			return category;
-		}
-		
-		@Override
-		public String getRuleName() {
-			return ruleName;
-		}
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result
-					+ ((children == null) ? 0 : children.hashCode());
-			result = prime * result + (isUnary ? 1231 : 1237);
-			result = prime * result
-					+ ((ruleName == null) ? 0 : ruleName.hashCode());
-			return result;
-		}
-		
-		@Override
-		public boolean isFullParse() {
-			return isFullParse;
-		}
-		
-		public boolean isUnary() {
-			return isUnary;
-		}
-		
-		@Override
-		public Iterator<Cell<Y>> iterator() {
-			return children.iterator();
-		}
-		
-		@Override
-		public int numChildren() {
-			return children.size();
-		}
-		
-		@Override
-		public String toString() {
-			return toString(true);
-		}
-		
-		public String toString(boolean recursive) {
-			final StringBuilder ret = new StringBuilder("[").append(ruleName)
-					.append(" :: ");
-			final Iterator<Cell<Y>> iterator = children.iterator();
-			while (iterator.hasNext()) {
-				if (recursive) {
-					ret.append(iterator.next().toString());
-				} else {
-					ret.append(iterator.next().hashCode());
-				}
-				if (iterator.hasNext()) {
-					ret.append(", ");
-				}
-			}
-			
-			return ret.toString();
-		}
-		
-		private Cell<?> getOuterType() {
-			return Cell.this;
-		}
-	}
-	
-	public class LexicalDerivationStep extends DerivationStep implements
-			ILexicalParseStep<Y> {
-		private final LexicalEntry<Y>	lexicalEntry;
-		
-		private LexicalDerivationStep(LexicalEntry<Y> lexicalEntry) {
-			super(LEXICAL_DERIVATION_STEP_RULENAME);
-			this.lexicalEntry = lexicalEntry;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (!super.equals(obj)) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			@SuppressWarnings("unchecked")
-			final LexicalDerivationStep other = (LexicalDerivationStep) obj;
-			if (!getOuterType().equals(other.getOuterType())) {
-				return false;
-			}
-			if (lexicalEntry == null) {
-				if (other.lexicalEntry != null) {
-					return false;
-				}
-			} else if (!lexicalEntry.equals(other.lexicalEntry)) {
-				return false;
-			}
-			return true;
-		}
-		
-		@Override
-		public LexicalEntry<Y> getLexicalEntry() {
-			return lexicalEntry;
-		}
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = super.hashCode();
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result
-					+ ((lexicalEntry == null) ? 0 : lexicalEntry.hashCode());
-			return result;
-		}
-		
-		private Cell<?> getOuterType() {
-			return Cell.this;
-		}
-		
 	}
 	
 	public static class ScoreComparator<Y> implements Comparator<Cell<Y>> {

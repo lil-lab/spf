@@ -18,8 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.lexicalgen;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
 
 /**
  * @author Yoav Artzi

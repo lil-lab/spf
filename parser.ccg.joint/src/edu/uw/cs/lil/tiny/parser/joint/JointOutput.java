@@ -21,9 +21,8 @@ package edu.uw.cs.lil.tiny.parser.joint;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.utils.composites.Pair;
 
 public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
@@ -31,15 +30,15 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	private final IParserOutput<LF>					baseParserOutput;
 	private final List<IJointParse<LF, ERESULT>>	bestJointParses;
 	private final List<IJointParse<LF, ERESULT>>	bestSuccessfulJointParses;
+	private final long								inferenceTime;
 	private final List<IJointParse<LF, ERESULT>>	jointParses;
-	private final long								parsingTime;
 	private final List<IJointParse<LF, ERESULT>>	successfulJointParses;
 	
 	public JointOutput(IParserOutput<LF> baseParserOutput,
-			List<IJointParse<LF, ERESULT>> jointParses, long parsingTime) {
+			List<IJointParse<LF, ERESULT>> jointParses, long inferenceTime) {
 		this.baseParserOutput = baseParserOutput;
 		this.jointParses = jointParses;
-		this.parsingTime = parsingTime;
+		this.inferenceTime = inferenceTime;
 		this.bestJointParses = findBestParses(jointParses);
 		this.successfulJointParses = successfulOnly(jointParses);
 		this.bestSuccessfulJointParses = findBestParses(successfulJointParses);
@@ -83,13 +82,12 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<? extends IJointParse<LF, ERESULT>> getAllJointParses() {
-		return getAllJointParses(true);
+	public List<IJointParse<LF, ERESULT>> getAllParses() {
+		return getAllParses(true);
 	}
 	
 	@Override
-	public List<? extends IJointParse<LF, ERESULT>> getAllJointParses(
-			boolean includeFails) {
+	public List<IJointParse<LF, ERESULT>> getAllParses(boolean includeFails) {
 		if (includeFails) {
 			return jointParses;
 		} else {
@@ -98,33 +96,22 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<IParse<LF>> getAllParses() {
-		return baseParserOutput.getAllParses();
-	}
-	
-	@Override
 	public IParserOutput<LF> getBaseParserOutput() {
 		return baseParserOutput;
 	}
 	
 	@Override
-	public List<? extends IJointParse<LF, ERESULT>> getBestJointParses() {
-		return getBestJointParses(true);
+	public List<IJointParse<LF, ERESULT>> getBestParses() {
+		return getBestParses(true);
 	}
 	
 	@Override
-	public List<? extends IJointParse<LF, ERESULT>> getBestJointParses(
-			boolean includeFails) {
+	public List<IJointParse<LF, ERESULT>> getBestParses(boolean includeFails) {
 		if (includeFails) {
 			return bestJointParses;
 		} else {
 			return bestSuccessfulJointParses;
 		}
-	}
-	
-	@Override
-	public List<IParse<LF>> getBestParses() {
-		return baseParserOutput.getBestParses();
 	}
 	
 	@Override
@@ -180,8 +167,8 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 	}
 	
 	@Override
-	public List<LexicalEntry<LF>> getMaxLexicalEntries(LF label) {
-		return getMaxLexicalEntries(Pair.of(label, (ERESULT) null));
+	public long getInferenceTime() {
+		return inferenceTime;
 	}
 	
 	public List<LexicalEntry<LF>> getMaxLexicalEntries(Pair<LF, ERESULT> label) {
@@ -191,11 +178,6 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 			result.addAll(p.getMaxLexicalEntries());
 		}
 		return result;
-	}
-	
-	@Override
-	public List<IParse<LF>> getMaxParses(LF label) {
-		return baseParserOutput.getMaxParses(label);
 	}
 	
 	@Override
@@ -229,10 +211,6 @@ public class JointOutput<LF, ERESULT> implements IJointOutput<LF, ERESULT> {
 			}
 		}
 		return parses;
-	}
-	
-	public long getParsingTime() {
-		return parsingTime;
 	}
 	
 }

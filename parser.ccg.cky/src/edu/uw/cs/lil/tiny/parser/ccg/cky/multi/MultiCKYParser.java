@@ -27,16 +27,14 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.Pruner;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
+import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.SimpleWordSkippingLexicalGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexiconImmutable;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
 import edu.uw.cs.utils.collections.CollectionUtils;
@@ -49,22 +47,22 @@ import edu.uw.cs.utils.log.thread.LoggingRunnable;
  * Multi threaded CKY parser. Work is distributed on the level of span splits.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  *            type of semantics.
  */
-public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
+public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 	private static final ILogger	LOG	= LoggerFactory
 												.create(MultiCKYParser.class);
 	private final ITinyExecutor		executor;
 	private final boolean			preChartPruning;
 	
 	private MultiCKYParser(int maxNumberOfCellsInSpan,
-			List<CKYBinaryParsingRule<Y>> binaryParseRules,
-			List<ISentenceLexiconGenerator<Y>> sentenceLexiconGenerators,
-			ISentenceLexiconGenerator<Y> wordSkippingLexicalGenerator,
-			ICategoryServices<Y> categoryServices, ITinyExecutor executor,
+			List<CKYBinaryParsingRule<MR>> binaryParseRules,
+			List<ISentenceLexiconGenerator<MR>> sentenceLexiconGenerators,
+			ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator,
+			ICategoryServices<MR> categoryServices, ITinyExecutor executor,
 			boolean pruneLexicalCells, boolean preChartPruning,
-			IFilter<Category<Y>> completeParseFilter) {
+			IFilter<Category<MR>> completeParseFilter) {
 		super(maxNumberOfCellsInSpan, binaryParseRules,
 				sentenceLexiconGenerators, wordSkippingLexicalGenerator,
 				categoryServices, pruneLexicalCells, completeParseFilter);
@@ -73,10 +71,10 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 	}
 	
 	@Override
-	protected Chart<Y> doParse(Pruner<Sentence, Y> pruner,
-			IDataItemModel<Y> model, Chart<Y> chart, int numTokens,
-			AbstractCellFactory<Y> cellFactory,
-			List<ILexiconImmutable<Y>> lexicons) {
+	protected Chart<MR> doParse(IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, Chart<MR> chart, int numTokens,
+			AbstractCellFactory<MR> cellFactory,
+			List<ILexiconImmutable<MR>> lexicons) {
 		
 		LOG.debug("Starting a multi-threaded CKY parse (chart already populated)");
 		
@@ -109,7 +107,7 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 		
 		// Create the listener
 		final Listener listener = new Listener(completedSpanBegins,
-				completedSpanEnds, pruner, model, chart, numTokens,
+				completedSpanEnds, pruningFilter, model, chart, numTokens,
 				cellFactory, lock, splits);
 		
 		try {
@@ -125,7 +123,7 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 					for (int j = i; j < numTokens; j++) {
 						executor.execute(new LexicalJob(cellFactory, chart,
 								listener, lock, model, new SpanPair(i, j),
-								lexicons, pruner));
+								lexicons, pruningFilter));
 					}
 				}
 				
@@ -216,16 +214,16 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 	}
 	
 	private abstract class AbstractJob extends LoggingRunnable {
-		protected final AbstractCellFactory<Y>	cellFactory;
-		protected final Chart<Y>				chart;
+		protected final AbstractCellFactory<MR>	cellFactory;
+		protected final Chart<MR>				chart;
 		protected final Listener				listener;
 		protected final SpanLock				lock;
-		protected final IDataItemModel<Y>		model;
+		protected final IDataItemModel<MR>		model;
 		protected final SplitTriplet			split;
 		
-		public AbstractJob(AbstractCellFactory<Y> cellFactory, Chart<Y> chart,
-				Listener listener, SpanLock lock, IDataItemModel<Y> model,
-				SplitTriplet split) {
+		public AbstractJob(AbstractCellFactory<MR> cellFactory,
+				Chart<MR> chart, Listener listener, SpanLock lock,
+				IDataItemModel<MR> model, SplitTriplet split) {
 			this.cellFactory = cellFactory;
 			this.chart = chart;
 			this.listener = listener;
@@ -237,43 +235,44 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 	
 	private class LexicalJob extends AbstractJob {
 		
-		private final List<ILexiconImmutable<Y>>	lexicons;
-		private final Pruner<Sentence, Y>			pruner;
+		private final List<ILexiconImmutable<MR>>	lexicons;
+		private final IFilter<MR>					pruningFilter;
 		
-		public LexicalJob(AbstractCellFactory<Y> cellFactory, Chart<Y> chart,
-				Listener listener, SpanLock lock, IDataItemModel<Y> model,
-				SpanPair span, List<ILexiconImmutable<Y>> lexicons,
-				Pruner<Sentence, Y> pruner) {
+		public LexicalJob(AbstractCellFactory<MR> cellFactory, Chart<MR> chart,
+				Listener listener, SpanLock lock, IDataItemModel<MR> model,
+				SpanPair span, List<ILexiconImmutable<MR>> lexicons,
+				IFilter<MR> pruningFilter) {
 			super(cellFactory, chart, listener, lock, model, new SplitTriplet(
 					span.begin, span.end, -1));
 			this.lexicons = lexicons;
-			this.pruner = pruner;
+			this.pruningFilter = pruningFilter;
 		}
 		
 		@Override
 		public void loggedRun() {
 			LOG.debug("%s Lexical job started", split.span);
 			
-			final List<Cell<Y>> newCells = generateLexicalCells(split.begin,
-					split.end, chart, lexicons);
+			final List<Cell<MR>> newCells = generateLexicalCells(split.begin,
+					split.end, chart, lexicons, model);
 			
 			LOG.debug("%s: %d new lexical cells", split.span, newCells.size());
 			
 			if (pruneLexicalCells) {
 				// Hard pruning
-				CollectionUtils.filterInPlace(newCells, new IFilter<Cell<Y>>() {
-					@Override
-					public boolean isValid(Cell<Y> e) {
-						return !prune(pruner, e.getCategroy());
-					}
-				});
+				CollectionUtils.filterInPlace(newCells,
+						new IFilter<Cell<MR>>() {
+							@Override
+							public boolean isValid(Cell<MR> e) {
+								return !prune(pruningFilter, e.getCategroy());
+							}
+						});
 				LOG.debug("%s: %d new lexical cells passed hard pruning",
 						split.span, newCells.size());
 			}
 			
 			// Add all the valid cells under a span lock
 			lock.lock(split.begin, split.end);
-			for (final Cell<Y> newCell : newCells) {
+			for (final Cell<MR> newCell : newCells) {
 				chart.add(newCell, model);
 			}
 			lock.unlock(split.begin, split.end);
@@ -288,25 +287,25 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 	
 	private class Listener {
 		private final IndexLock							adjacentLock;
-		private final AbstractCellFactory<Y>			cellFactory;
-		private final Chart<Y>							chart;
+		private final AbstractCellFactory<MR>			cellFactory;
+		private final Chart<MR>							chart;
 		private final Map<Integer, Set<SpanPair>>		completedSpanBegins;
 		private final Map<Integer, Set<SpanPair>>		completedSpanEnds;
 		private final SpanLock							lock;
-		private final IDataItemModel<Y>					model;
+		private final IDataItemModel<MR>				model;
 		private final int								numTokens;
-		private final Pruner<Sentence, Y>				pruner;
+		private final IFilter<MR>						pruningFilter;
 		private final Map<SpanPair, Set<SplitTriplet>>	splits;
 		
 		public Listener(Map<Integer, Set<SpanPair>> completedSpanBegins,
 				Map<Integer, Set<SpanPair>> completedSpanEnds,
-				Pruner<Sentence, Y> pruner, IDataItemModel<Y> model,
-				Chart<Y> chart, int numTokens,
-				AbstractCellFactory<Y> cellFactory, SpanLock lock,
+				IFilter<MR> pruningFilter, IDataItemModel<MR> model,
+				Chart<MR> chart, int numTokens,
+				AbstractCellFactory<MR> cellFactory, SpanLock lock,
 				Map<SpanPair, Set<SplitTriplet>> splits) {
 			this.completedSpanBegins = completedSpanBegins;
 			this.completedSpanEnds = completedSpanEnds;
-			this.pruner = pruner;
+			this.pruningFilter = pruningFilter;
 			this.model = model;
 			this.chart = chart;
 			this.numTokens = numTokens;
@@ -356,9 +355,9 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 					adjacentLock.lock(job.split.begin - 1);
 					for (final SpanPair leftSpan : completedSpanEnds
 							.get(job.split.begin - 1)) {
-						executor.execute(new SplitJob(pruner, model, chart,
-								numTokens, cellFactory, new SplitTriplet(
-										leftSpan.begin, job.split.end,
+						executor.execute(new SplitJob(pruningFilter, model,
+								chart, numTokens, cellFactory,
+								new SplitTriplet(leftSpan.begin, job.split.end,
 										leftSpan.end - leftSpan.begin), lock,
 								this));
 					}
@@ -378,11 +377,11 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 					adjacentLock.lock(job.split.end);
 					for (final SpanPair rightSpan : completedSpanBegins
 							.get(job.split.end + 1)) {
-						executor.execute(new SplitJob(pruner, model, chart,
-								numTokens, cellFactory, new SplitTriplet(
-										job.split.begin, rightSpan.end,
-										job.split.end - job.split.begin), lock,
-								this));
+						executor.execute(new SplitJob(pruningFilter, model,
+								chart, numTokens, cellFactory,
+								new SplitTriplet(job.split.begin,
+										rightSpan.end, job.split.end
+												- job.split.begin), lock, this));
 					}
 				}
 				// Add the end index of the span to the completed map
@@ -447,15 +446,15 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 	
 	private class SplitJob extends AbstractJob {
 		
-		private final int					numTokens;
-		private final Pruner<Sentence, Y>	pruner;
+		private final int			numTokens;
+		private final IFilter<MR>	pruningFilter;
 		
-		public SplitJob(Pruner<Sentence, Y> pruner, IDataItemModel<Y> model,
-				Chart<Y> chart, int numTokens,
-				AbstractCellFactory<Y> cellFactory, SplitTriplet split,
+		public SplitJob(IFilter<MR> pruningFilter, IDataItemModel<MR> model,
+				Chart<MR> chart, int numTokens,
+				AbstractCellFactory<MR> cellFactory, SplitTriplet split,
 				SpanLock lock, Listener listener) {
 			super(cellFactory, chart, listener, lock, model, split);
-			this.pruner = pruner;
+			this.pruningFilter = pruningFilter;
 			this.numTokens = numTokens;
 			LOG.debug("Created split job for %s", split);
 		}
@@ -464,17 +463,17 @@ public class MultiCKYParser<Y> extends AbstractCKYParser<Y> {
 		public void loggedRun() {
 			LOG.debug("%s: Split job started", split);
 			
-			final List<Cell<Y>> newCells = preChartPruning ? processSplitAndPrune(
+			final List<Cell<MR>> newCells = preChartPruning ? processSplitAndPrune(
 					split.begin, split.end, split.split, chart, cellFactory,
-					numTokens, pruner, chart.getBeamSize(), model)
+					numTokens, pruningFilter, chart.getBeamSize(), model)
 					: processSplit(split.begin, split.end, split.split, chart,
-							cellFactory, numTokens, pruner);
+							cellFactory, numTokens, pruningFilter, model);
 			
 			LOG.debug("%s: %d new cells", split, newCells.size());
 			
 			// Add all the valid cells under a span lock
 			lock.lock(split.begin, split.end);
-			for (final Cell<Y> newCell : newCells) {
+			for (final Cell<MR> newCell : newCells) {
 				chart.add(newCell, model);
 			}
 			lock.unlock(split.begin, split.end);

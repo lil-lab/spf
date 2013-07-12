@@ -24,19 +24,18 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
  * Result of applying a parse rule.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public class ParseRuleResult<Y> {
-	private final Category<Y>	resultCategory;
+public class ParseRuleResult<MR> {
+	private final Category<MR>	resultCategory;
 	private final String		ruleName;
 	
-	public ParseRuleResult(String ruleName, Category<Y> resultCategory) {
-		super();
+	public ParseRuleResult(String ruleName, Category<MR> resultCategory) {
 		this.ruleName = ruleName;
 		this.resultCategory = resultCategory;
 	}
 	
-	public Category<Y> getResultCategory() {
+	public Category<MR> getResultCategory() {
 		return resultCategory;
 	}
 	
@@ -44,4 +43,8 @@ public class ParseRuleResult<Y> {
 		return ruleName;
 	}
 	
+	@Override
+	public String toString() {
+		return ruleName + "->" + resultCategory;
+	}
 }

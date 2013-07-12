@@ -6,7 +6,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.singlesentence"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg.genlex"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
+	<classpathentry kind="src" path="/explat"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

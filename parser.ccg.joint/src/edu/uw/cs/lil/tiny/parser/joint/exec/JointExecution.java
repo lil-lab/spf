@@ -18,8 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.exec;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.exec.IExecution;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.utils.composites.Pair;

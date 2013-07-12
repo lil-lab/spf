@@ -6,5 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry kind="src" path="/exec"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
+	<classpathentry kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

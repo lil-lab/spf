@@ -24,9 +24,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.genlex.ccg.template.TemplateGenlex;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
@@ -36,13 +43,6 @@ import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.Pruner;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon.FactoredLexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.LexicalTemplate;
-import edu.uw.cs.lil.tiny.parser.ccg.genlex.TemplatedLexiconGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry.Origin;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.Tester;
@@ -109,7 +109,7 @@ public class FactoredGENLEXPerceptron
 	}
 	
 	protected static String lexToString(
-			List<IParse<LogicalExpression>> correctParses,
+			List<? extends IParse<LogicalExpression>> correctParses,
 			Model<Sentence, LogicalExpression> model) {
 		final Set<LexicalEntry<LogicalExpression>> lexEntries = new LinkedHashSet<LexicalEntry<LogicalExpression>>();
 		for (final IParse<LogicalExpression> parse : correctParses) {
@@ -208,7 +208,7 @@ public class FactoredGENLEXPerceptron
 				// }
 				
 				// get the best correct parses, if any
-				final List<IParse<LogicalExpression>> correctParses = initialParserOutput
+				final List<? extends IParse<LogicalExpression>> correctParses = initialParserOutput
 						.getMaxParses(dataItem.getLabel());
 				if (correctParses.size() > 0) {
 					// If correct parse is in chart
@@ -257,8 +257,8 @@ public class FactoredGENLEXPerceptron
 		
 		final Set<LogicalConstant> constants = GetConstantsSet.of(dataItem
 				.getLabel());
-		final TemplatedLexiconGenerator genlex = new TemplatedLexiconGenerator.Builder(
-				GENLEX_MAX_TOKENS + 1, model).addConstants(constants)
+		final TemplateGenlex genlex = new TemplateGenlex.Builder(
+				GENLEX_MAX_TOKENS + 1).addConstants(constants)
 				.addTemplates(templates).build();
 		final ILexicon<LogicalExpression> generatedLexicon = genlex
 				.generate(dataItem.getSample());
@@ -270,7 +270,7 @@ public class FactoredGENLEXPerceptron
 					Pruner.create(dataItem), initialDataItemModel, false,
 					generatedLexicon);
 			
-			final List<IParse<LogicalExpression>> parses = genlexParserOutput
+			final List<? extends IParse<LogicalExpression>> parses = genlexParserOutput
 					.getMaxParses(dataItem.getLabel());
 			int newLexicalEntries = 0;
 			for (final IParse<LogicalExpression> parse : parses) {
@@ -307,9 +307,9 @@ public class FactoredGENLEXPerceptron
 			IParserOutput<LogicalExpression> correctParseOutput,
 			IParserOutput<LogicalExpression> badParseOutput) {
 		
-		final List<IParse<LogicalExpression>> badParses = badParseOutput
+		final List<? extends IParse<LogicalExpression>> badParses = badParseOutput
 				.getAllParses();
-		final List<IParse<LogicalExpression>> correctParses = correctParseOutput
+		final List<? extends IParse<LogicalExpression>> correctParses = correctParseOutput
 				.getMaxParses(dataItem.getLabel());
 		
 		if (correctParses.size() == 0) {

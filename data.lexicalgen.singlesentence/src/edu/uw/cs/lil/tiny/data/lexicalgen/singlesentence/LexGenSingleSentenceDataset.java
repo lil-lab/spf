@@ -30,17 +30,18 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.data.DatasetException;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.IEvidenceLexicalGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 
 /**
- * Dataset of single sentences labeled with logical forms.
+ * Dataset of single sentences labeled with logical forms that can generate
+ * lexical entries.
  * 
  * @author Yoav Artzi
  */
@@ -48,16 +49,13 @@ public class LexGenSingleSentenceDataset implements
 		IDataCollection<LexGenSingleSentence> {
 	private final List<LexGenSingleSentence>	data;
 	
-	public LexGenSingleSentenceDataset(
-			List<LexGenSingleSentence> data) {
+	public LexGenSingleSentenceDataset(List<LexGenSingleSentence> data) {
 		this.data = Collections.unmodifiableList(data);
 	}
 	
-	public static LexGenSingleSentenceDataset read(
-			File f,
+	public static LexGenSingleSentenceDataset read(File f,
 			IStringFilter textFilter,
-			IEvidenceLexicalGenerator<Sentence, LogicalExpression, LogicalExpression> semanticsLexicalGeneration,
-			List<ISentenceLexiconGenerator<LogicalExpression>> textLexicalGeneration,
+			ILexiconGenerator<SingleSentence, LogicalExpression> genlex,
 			boolean lockConstants) {
 		try {
 			// Open the file
@@ -101,14 +99,11 @@ public class LexGenSingleSentenceDataset implements
 								readLineCounter, f.getName());
 					}
 					data.add(new LexGenSingleSentence(new Sentence(
-							currentSentence), exp, semanticsLexicalGeneration,
-							textLexicalGeneration));
+							currentSentence), exp, genlex));
 					currentSentence = null;
 				}
 			}
-			
 			in.close();
-			
 			return new LexGenSingleSentenceDataset(data);
 		} catch (final IOException e) {
 			// Wrap with dataset exception and throw

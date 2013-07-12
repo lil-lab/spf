@@ -26,8 +26,8 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderServices;
+import edu.uw.cs.lil.tiny.storage.DecoderHelper;
+import edu.uw.cs.lil.tiny.storage.DecoderServices;
 
 public class SavedModelCreator<X, Y> implements
 		IResourceObjectCreator<Model<X, Y>> {

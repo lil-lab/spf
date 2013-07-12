@@ -25,9 +25,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.LexicalTemplate;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
 
 public class LexicalSyntaxPenaltyScorer implements IScorer<LexicalTemplate> {

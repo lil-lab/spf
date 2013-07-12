@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.learn.ubl.resources;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
@@ -28,7 +29,6 @@ import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.learn.ubl.LexicalSplittingCountScorer;
 import edu.uw.cs.lil.tiny.learn.ubl.splitting.IUBLSplitter;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.Lexeme;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources.AbstractScaledScorerCreator;
 
 public class LexicalSplittingCountScorerCreator extends

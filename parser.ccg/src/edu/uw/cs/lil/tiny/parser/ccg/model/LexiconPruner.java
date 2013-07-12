@@ -23,14 +23,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.Lexicon;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -71,7 +71,7 @@ public class LexiconPruner<Y> implements IModelPostProcessor<Sentence, Y> {
 		for (final IDataItem<Sentence> dataItem : data) {
 			final IParserOutput<Y> parserOutput = parser.parse(dataItem,
 					model.createDataItemModel(dataItem));
-			final List<IParse<Y>> bestParses = parserOutput
+			final List<? extends IParse<Y>> bestParses = parserOutput
 					.getBestParses();
 			if (!bestParses.isEmpty()) {
 				for (final IParse<Y> parse : bestParses) {

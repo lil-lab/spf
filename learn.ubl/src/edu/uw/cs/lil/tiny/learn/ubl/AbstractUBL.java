@@ -21,6 +21,7 @@ package edu.uw.cs.lil.tiny.learn.ubl;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
@@ -30,7 +31,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.utils.log.ILogger;
@@ -99,7 +99,7 @@ public abstract class AbstractUBL
 			LogicalExpression label,
 			IParserOutput<LogicalExpression> parserOutput) {
 		// TODO [yoav] Currently skipping in case of ambiguity
-		final List<IParse<LogicalExpression>> maxParses = parserOutput
+		final List<? extends IParse<LogicalExpression>> maxParses = parserOutput
 				.getMaxParses(label);
 		if (maxParses.size() == 1) {
 			return maxParses.get(0);

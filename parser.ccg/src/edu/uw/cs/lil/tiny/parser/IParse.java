@@ -20,28 +20,54 @@ package edu.uw.cs.lil.tiny.parser;
 
 import java.util.LinkedHashSet;
 
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 /**
- * Single parse result.
+ * Single parse result. In some parsers a single parse capture a number of parse
+ * trees that lead to the same logical form.
  * 
  * @author Yoav Artzi
- * @param <LF>
+ * @param <MR>
  *            Meaning representation type.
  * @see IParser
  * @see IParserOutput
  */
-public interface IParse<LF> {
-	LinkedHashSet<LexicalEntry<LF>> getAllLexicalEntries();
+public interface IParse<MR> {
+	/**
+	 * Collect all lexical entries from all trees in this parse.
+	 * 
+	 * @return
+	 */
+	LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntries();
 	
-	IHashVector getAverageMaxFeatureVector();
+	IHashVectorImmutable getAverageMaxFeatureVector();
 	
-	LinkedHashSet<LexicalEntry<LF>> getMaxLexicalEntries();
+	/**
+	 * Get all lexical entries from all maximally scoring trees in this parse.
+	 * 
+	 * @return
+	 */
+	LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries();
 	
+	/**
+	 * Get all rules applied within all maximally scoring trees in this parse.
+	 * 
+	 * @return
+	 */
 	LinkedHashSet<RuleUsageTriplet> getMaxRulesUsed();
 	
+	/**
+	 * Parse viterbi score.
+	 * 
+	 * @return
+	 */
 	double getScore();
 	
-	LF getSemantics();
+	/**
+	 * The semantics at the root of the parse.
+	 * 
+	 * @return
+	 */
+	MR getSemantics();
 }

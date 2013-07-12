@@ -288,7 +288,7 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
-	public String printValues(IHashVector other) {
+	public String printValues(IHashVectorImmutable other) {
 		final StringBuilder ret = new StringBuilder();
 		ret.append("{");
 		if (other instanceof TreeHashVector) {

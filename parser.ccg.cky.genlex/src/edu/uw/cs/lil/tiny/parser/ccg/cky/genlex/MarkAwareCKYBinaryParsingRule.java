@@ -18,32 +18,27 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
-public class MarkAwareCKYBinaryParsingRule extends
-		CKYBinaryParsingRule<LogicalExpression> {
+public class MarkAwareCKYBinaryParsingRule<MR> extends CKYBinaryParsingRule<MR> {
 	
 	private final int	maxMarkedLexicalEntries;
 	
-	public MarkAwareCKYBinaryParsingRule(
-			IBinaryParseRule<LogicalExpression> ccgParseRule,
+	public MarkAwareCKYBinaryParsingRule(IBinaryParseRule<MR> ccgParseRule,
 			int maxMarkedLexicalEntries) {
 		super(ccgParseRule);
 		this.maxMarkedLexicalEntries = maxMarkedLexicalEntries;
 	}
 	
 	@Override
-	protected List<Cell<LogicalExpression>> newCellsFrom(
-			Cell<LogicalExpression> left, Cell<LogicalExpression> right,
-			AbstractCellFactory<LogicalExpression> cellFactory,
-			boolean isCompleteSentence) {
+	protected Collection<ParseRuleResult<MR>> apply(Cell<MR> left,
+			Cell<MR> right, boolean isCompleteSentence) {
 		// If both cells contains a GENLEX lexical entry, don't apply the rule,
 		// just return
 		if (left instanceof IMarkedEntriesCounter
@@ -54,6 +49,6 @@ public class MarkAwareCKYBinaryParsingRule extends
 			return Collections.emptyList();
 		}
 		
-		return super.newCellsFrom(left, right, cellFactory, isCompleteSentence);
+		return super.apply(left, right, isCompleteSentence);
 	}
 }

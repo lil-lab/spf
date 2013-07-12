@@ -26,11 +26,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
+import edu.uw.cs.lil.tiny.storage.DecoderHelper;
+import edu.uw.cs.lil.tiny.storage.DecoderServices;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
 
 public class SkippingSensitiveLexicalEntryScorer<Y> implements

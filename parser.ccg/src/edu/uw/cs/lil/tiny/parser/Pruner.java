@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser;
 
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
+import edu.uw.cs.utils.filter.IFilter;
 
 /**
  * Given a {@link ILossDataItem} wraps its loss and pruning abilities to
@@ -28,7 +29,7 @@ import edu.uw.cs.lil.tiny.data.ILossDataItem;
  * 
  * @author Yoav Artzi
  */
-public class Pruner<X, Y> {
+public class Pruner<X, Y> implements IFilter<Y> {
 	
 	private final ILossDataItem<X, Y>	dataItem;
 	
@@ -40,11 +41,8 @@ public class Pruner<X, Y> {
 		return new Pruner<X, Y>(dataItem);
 	}
 	
-	public double loss(Y y) {
-		return dataItem.calculateLoss(y);
-	}
-	
-	public boolean prune(Y y) {
-		return dataItem.prune(y);
+	@Override
+	public boolean isValid(Y y) {
+		return !dataItem.prune(y);
 	}
 }

@@ -58,10 +58,11 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	private final TinyExecutorService	executor;
 	
 	private final List<Job>				jobs					= new LinkedList<Job>();
+	
 	private final Set<String>			launchedIds				= new HashSet<String>();
+	
 	private final File					outputDir;
 	private boolean						running					= true;
-	
 	private final long					startingTime			= System.currentTimeMillis();
 	
 	public DistributedExperiment(File initFile) throws IOException {
@@ -84,7 +85,10 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 		this.executor = new TinyExecutorService(
 				globalParams.contains("threads") ? Integer.valueOf(globalParams
 						.get("threads")) : Runtime.getRuntime()
-						.availableProcessors(), new LoggingThreadFactory());
+						.availableProcessors(), new LoggingThreadFactory(),
+				globalParams.contains("threadMonitorPolling") ? Long
+						.valueOf(globalParams.get("threadMonitorPolling"))
+						: ITinyExecutor.DEFAULT_MONITOR_SLEEP);
 		
 		// //////////////////////////////////////////
 		// Init logging and output stream
@@ -119,6 +123,13 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 			Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
 			throws InterruptedException {
 		return executor.invokeAll(tasks, timeout, unit);
+	}
+	
+	@Override
+	public <T> List<Future<T>> invokeAllWithUniqueTimeout(
+			Collection<? extends Callable<T>> tasks, long timeout)
+			throws InterruptedException {
+		return executor.invokeAllWithUniqueTimeout(tasks, timeout);
 	}
 	
 	@Override
@@ -187,6 +198,11 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		return executor.submit(task);
+	}
+	
+	@Override
+	public <T> Future<T> submit(Callable<T> task, long timeout) {
+		return executor.submit(task, timeout);
 	}
 	
 	@Override

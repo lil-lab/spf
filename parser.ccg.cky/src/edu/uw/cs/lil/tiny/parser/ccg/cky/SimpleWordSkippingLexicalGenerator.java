@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ISentenceLexiconGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 
 /**
  * Generate an EMPTY lexical entry for each token.

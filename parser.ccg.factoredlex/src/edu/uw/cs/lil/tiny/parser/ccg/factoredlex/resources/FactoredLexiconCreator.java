@@ -18,11 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
 
 public class FactoredLexiconCreator implements
 		IResourceObjectCreator<FactoredLexicon> {

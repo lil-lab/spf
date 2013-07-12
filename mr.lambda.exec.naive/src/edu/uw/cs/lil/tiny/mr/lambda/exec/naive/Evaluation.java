@@ -39,7 +39,15 @@ import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
+import edu.uw.cs.utils.log.thread.InterruptedRuntimeException;
 
+/**
+ * Generic evaluation visitor for {@link LogicalExpression}. Stops when
+ * executing thread receives an interrupt and throws a
+ * {@link InterruptedRuntimeException}.
+ * 
+ * @author Yoav Artzi
+ */
 public class Evaluation implements ILogicalExpressionVisitor {
 	private static final ILogger		LOG			= LoggerFactory
 															.create(Evaluation.class);
@@ -88,6 +96,7 @@ public class Evaluation implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Lambda lambda) {
+		testInterruption();
 		if (services.isCached(lambda)) {
 			// Case is cache
 			result = services.getFromCache(lambda);
@@ -100,6 +109,7 @@ public class Evaluation implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Literal literal) {
+		testInterruption();
 		// Try to get from cache
 		if (services.isCached(literal)) {
 			result = services.getFromCache(literal);
@@ -181,6 +191,7 @@ public class Evaluation implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(LogicalConstant logicalConstant) {
+		testInterruption();
 		// Try to get from cache
 		if (services.isCached(logicalConstant)) {
 			result = services.getFromCache(logicalConstant);
@@ -206,15 +217,24 @@ public class Evaluation implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(LogicalExpression logicalExpression) {
+		testInterruption();
 		logicalExpression.accept(this);
 	}
 	
 	@Override
 	public void visit(Variable variable) {
+		testInterruption();
 		// Variables are not cached, since their denotation constantly changes
 		
 		// Current denotation
 		result = denotations.get(variable);
+	}
+	
+	private void testInterruption() {
+		if (Thread.interrupted()) {
+			throw new InterruptedRuntimeException(new InterruptedException(
+					"Evaluation interuppted"));
+		}
 	}
 	
 	protected boolean isPartialLiteral(Literal literal) {

@@ -42,7 +42,7 @@ public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
 		this.dataItemModel = dataItemModel;
 		this.allExecutions = Collections
 				.unmodifiableList(ListUtils.map(
-						jointOutput.getAllJointParses(!pruneFails),
+						jointOutput.getAllParses(!pruneFails),
 						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {
 							
 							@Override
@@ -54,7 +54,7 @@ public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
 						}));
 		this.bestExecutions = Collections
 				.unmodifiableList(ListUtils.map(
-						jointOutput.getBestJointParses(!pruneFails),
+						jointOutput.getBestParses(!pruneFails),
 						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {
 							
 							@Override
@@ -78,7 +78,7 @@ public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
 	
 	@Override
 	public long getExecTime() {
-		return jointOutput.getParsingTime();
+		return jointOutput.getInferenceTime();
 	}
 	
 	@Override

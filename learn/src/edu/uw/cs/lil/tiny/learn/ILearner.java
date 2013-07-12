@@ -23,6 +23,6 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 /**
  * @author Yoav Artzi
  */
-public interface ILearner<LANG, LF, MODEL extends Model<LANG, LF>> {
+public interface ILearner<LANG, MR, MODEL extends Model<LANG, MR>> {
 	void train(MODEL model);
 }

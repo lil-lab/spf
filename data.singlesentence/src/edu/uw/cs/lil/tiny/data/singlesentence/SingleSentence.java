@@ -96,11 +96,6 @@ public class SingleSentence implements
 	}
 	
 	@Override
-	public boolean isValid(LogicalExpression label) {
-		return semantics.equals(label);
-	}
-	
-	@Override
 	public boolean prune(LogicalExpression y) {
 		final Map<LogicalConstant, Counter> currentPredCounts = GetConstCounts
 				.of(y);

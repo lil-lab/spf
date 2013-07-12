@@ -18,55 +18,40 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.exact;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CellFactory;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.utils.filter.IFilter;
 
-public class ExactMarkAwareCellFactory extends CellFactory<LogicalExpression> {
+/**
+ * Cell factory for {@link ExactMarkedCell}.
+ * 
+ * @author Yoav Artzi
+ */
+public class ExactMarkAwareCellFactory<MR> extends CellFactory<MR> {
 	
-	public ExactMarkAwareCellFactory(IDataItemModel<LogicalExpression> model,
-			int sentenceSize,
-			IFilter<Category<LogicalExpression>> completeParseFilter) {
-		super(model, sentenceSize, completeParseFilter);
+	public ExactMarkAwareCellFactory(int sentenceSize) {
+		super(sentenceSize);
 	}
 	
 	@Override
-	protected Cell<LogicalExpression> doCreate(
-			Category<LogicalExpression> category,
-			Cell<LogicalExpression> child, boolean completeSpan,
-			boolean fullParse, String ruleName) {
-		return new ExactMarkedCell(category, ruleName, child, completeSpan,
-				fullParse,
-				child instanceof ExactMarkedCell ? ((ExactMarkedCell) child)
-						.getNumMarkedLexicalEntries() : 0);
+	protected Cell<MR> doCreate(CKYLexicalStep<MR> parseStep, int start,
+			int end, boolean isCompleteSpan) {
+		return new ExactMarkedCell<MR>(parseStep, start, end, isCompleteSpan);
 	}
 	
 	@Override
-	protected Cell<LogicalExpression> doCreate(
-			Category<LogicalExpression> category,
-			Cell<LogicalExpression> leftChild,
-			Cell<LogicalExpression> rightChild, boolean completeSpan,
-			boolean fullParse, String ruleName) {
-		final int leftGeneratedLexicalEntries = leftChild instanceof ExactMarkedCell ? ((ExactMarkedCell) leftChild)
-				.getNumMarkedLexicalEntries() : 0;
-		final int rightGeneratedLexicalEntries = rightChild instanceof ExactMarkedCell ? ((ExactMarkedCell) rightChild)
-				.getNumMarkedLexicalEntries() : 0;
+	protected Cell<MR> doCreate(CKYParseStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan) {
+		final int leftGeneratedLexicalEntries = parseStep.numChildren() > 0
+				&& (parseStep.getChildCell(0) instanceof ExactMarkedCell) ? ((ExactMarkedCell<MR>) parseStep
+				.getChildCell(0)).getNumMarkedLexicalEntries() : 0;
+		final int rightGeneratedLexicalEntries = parseStep.numChildren() > 1
+				&& (parseStep.getChildCell(1) instanceof ExactMarkedCell) ? ((ExactMarkedCell<MR>) parseStep
+				.getChildCell(1)).getNumMarkedLexicalEntries() : 0;
 		
-		return new ExactMarkedCell(category, ruleName, leftChild, rightChild,
-				completeSpan, fullParse, leftGeneratedLexicalEntries
-						+ rightGeneratedLexicalEntries);
-	}
-	
-	@Override
-	protected Cell<LogicalExpression> doCreate(
-			LexicalEntry<LogicalExpression> lexicalEntry, int begin, int end,
-			boolean completeSpan, boolean fullParse) {
-		return new ExactMarkedCell(lexicalEntry, begin, end, completeSpan,
-				fullParse);
+		return new ExactMarkedCell<MR>(parseStep, start, end, isCompleteSpan,
+				leftGeneratedLexicalEntries + rightGeneratedLexicalEntries);
 	}
 	
 }

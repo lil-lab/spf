@@ -25,17 +25,17 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.Pruner;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
+import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.SimpleWordSkippingLexicalGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexiconImmutable;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -46,22 +46,22 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Luke Zettlemoyer
  * @author Tom Kwiatkowski
  */
-public class CKYParser<Y> extends AbstractCKYParser<Y> {
+public class CKYParser<MR> extends AbstractCKYParser<MR> {
 	private static final ILogger				LOG	= LoggerFactory
 															.create(CKYParser.class);
 	
 	/**
 	 * Unary CCG parsing rules.
 	 */
-	private final List<CKYUnaryParsingRule<Y>>	unaryRules;
+	private final List<CKYUnaryParsingRule<MR>>	unaryRules;
 	
 	private CKYParser(int maxNumberOfCellsInSpan,
-			List<CKYBinaryParsingRule<Y>> binaryParseRules,
-			List<CKYUnaryParsingRule<Y>> unaryParseRules,
-			List<ISentenceLexiconGenerator<Y>> sentenceLexiconGenerators,
-			ISentenceLexiconGenerator<Y> wordSkippingLexicalGenerator,
-			ICategoryServices<Y> categoryServices, boolean pruneLexicalCells,
-			IFilter<Category<Y>> completeParseFilter) {
+			List<CKYBinaryParsingRule<MR>> binaryParseRules,
+			List<CKYUnaryParsingRule<MR>> unaryParseRules,
+			List<ISentenceLexiconGenerator<MR>> sentenceLexiconGenerators,
+			ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator,
+			ICategoryServices<MR> categoryServices, boolean pruneLexicalCells,
+			IFilter<Category<MR>> completeParseFilter) {
 		super(maxNumberOfCellsInSpan, binaryParseRules,
 				sentenceLexiconGenerators, wordSkippingLexicalGenerator,
 				categoryServices, pruneLexicalCells, completeParseFilter);
@@ -75,8 +75,6 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 	 *            list of new cells
 	 * @param chart
 	 *            Chart to add the cells to
-	 * @param pruner
-	 *            'true' if to prune
 	 */
 	private static <Y> void addAllToChart(List<Cell<Y>> newCells,
 			Chart<Y> chart, IDataItemModel<Y> model) {
@@ -85,22 +83,33 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 		}
 	}
 	
-	private List<Cell<Y>> unaryParse(int begin, int end, Chart<Y> currentChart,
-			AbstractCellFactory<Y> cellFactory, Pruner<Sentence, Y> pruner) {
-		final Iterator<Cell<Y>> cells = currentChart
-				.getSpanIterator(begin, end);
-		final List<Cell<Y>> newCells = new LinkedList<Cell<Y>>();
+	private List<Cell<MR>> unaryParse(int start, int end,
+			Chart<MR> currentChart, AbstractCellFactory<MR> cellFactory,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
+		final Iterator<Cell<MR>> cells = currentChart.getSpanIterator(start,
+				end);
+		final List<Cell<MR>> newCells = new LinkedList<Cell<MR>>();
 		while (cells.hasNext()) {
-			final Cell<Y> c = cells.next();
-			final Iterator<CKYUnaryParsingRule<Y>> rules = unaryRules
+			final Cell<MR> c = cells.next();
+			final Iterator<CKYUnaryParsingRule<MR>> rules = unaryRules
 					.iterator();
 			while (rules.hasNext()) {
-				for (final Cell<Y> newCell : rules.next().newCellsFrom(c,
-						cellFactory)) {
+				for (final ParseRuleResult<MR> prr : rules.next().apply(c)) {
 					// Prune
-					if (prune(pruner, newCell.getCategroy())) {
-						LOG.debug("Pruned (hard pruning): %s", newCell);
+					if (prune(pruningFilter, prr.getResultCategory())) {
+						LOG.debug("Pruned (hard pruning): [%d,%d] %s", start,
+								end, prr);
 					} else {
+						// Create the parse step
+						final CKYParseStep<MR> parseStep = new CKYParseStep<MR>(
+								prr.getResultCategory(), c, isFullParse(start,
+										end, prr.getResultCategory(),
+										currentChart.getSentenceLength()),
+								prr.getRuleName(), model);
+						
+						// Create the chart cell
+						final Cell<MR> newCell = cellFactory.create(parseStep,
+								start, end);
 						
 						newCells.add(newCell);
 					}
@@ -111,28 +120,30 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 	}
 	
 	@Override
-	protected Chart<Y> doParse(Pruner<Sentence, Y> pruner,
-			IDataItemModel<Y> model, Chart<Y> chart, int numTokens,
-			AbstractCellFactory<Y> cellFactory,
-			List<ILexiconImmutable<Y>> lexicons) {
+	protected Chart<MR> doParse(IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, Chart<MR> chart, int numTokens,
+			AbstractCellFactory<MR> cellFactory,
+			List<ILexiconImmutable<MR>> lexicons) {
 		
 		// Add lexical entries from all active lexicons
 		for (int i = 0; i < numTokens; i++) {
 			for (int j = i; j < numTokens; j++) {
-				final List<Cell<Y>> newCells = generateLexicalCells(i, j,
-						chart, lexicons);
+				final List<Cell<MR>> newCells = generateLexicalCells(i, j,
+						chart, lexicons, model);
 				
 				// Filter cells, only keep cells that have semantics and pass
-				// pruning (if there's a pruner)
-				CollectionUtils.filterInPlace(newCells, new IFilter<Cell<Y>>() {
-					@Override
-					public boolean isValid(Cell<Y> e) {
-						return e.getCategroy().getSyntax().equals(Syntax.EMPTY)
-								|| e.getCategroy().getSem() != null;
-					}
-				});
+				// pruning (if there's a pruning filter)
+				CollectionUtils.filterInPlace(newCells,
+						new IFilter<Cell<MR>>() {
+							@Override
+							public boolean isValid(Cell<MR> e) {
+								return e.getCategroy().getSyntax()
+										.equals(Syntax.EMPTY)
+										|| e.getCategroy().getSem() != null;
+							}
+						});
 				
-				for (final Cell<Y> newCell : newCells) {
+				for (final Cell<MR> newCell : newCells) {
 					chart.add(newCell, model);
 				}
 			}
@@ -140,8 +151,9 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 		
 		// Use unary parse rules
 		for (int i = 0; i < numTokens; ++i) {
-			addAllToChart(unaryParse(i, i, chart, cellFactory, pruner), chart,
-					model);
+			addAllToChart(
+					unaryParse(i, i, chart, cellFactory, pruningFilter, model),
+					chart, model);
 		}
 		
 		// now do the CKY parsing:
@@ -150,12 +162,12 @@ public class CKYParser<Y> extends AbstractCKYParser<Y> {
 				for (int split = 0; split < len; split++) {
 					addAllToChart(
 							processSplit(begin, begin + len, split, chart,
-									cellFactory, numTokens, pruner), chart,
-							model);
+									cellFactory, numTokens, pruningFilter,
+									model), chart, model);
 				}
 				addAllToChart(
 						unaryParse(begin, begin + len, chart, cellFactory,
-								pruner), chart, model);
+								pruningFilter, model), chart, model);
 			}
 		}
 		

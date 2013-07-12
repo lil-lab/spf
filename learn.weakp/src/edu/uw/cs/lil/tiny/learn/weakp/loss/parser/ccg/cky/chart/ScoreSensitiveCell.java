@@ -18,39 +18,36 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.learn.weakp.loss.parser.ccg.cky.chart;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.learn.weakp.loss.parser.IScoreFunction;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 
-public class ScoreSensitiveCell<Y> extends Cell<Y> {
-	private final boolean			calculatedScore	= false;
-	private double					score;
-	private final boolean			scoreIsPrimary;
-	private final IScoreFunction<Y>	scoringFunction;
+/**
+ * CKY chart cell that allows two scoring metric to break ties, with one
+ * considered as the primary.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ */
+public class ScoreSensitiveCell<MR> extends Cell<MR> {
+	private final boolean				calculatedScore	= false;
+	private double						score;
+	private final boolean				scoreIsPrimary;
+	private final IScoreFunction<MR>	scoringFunction;
 	
-	ScoreSensitiveCell(Category<Y> category, String ruleName,
-			Cell<Y> leftChild, Cell<Y> rightChild,
-			IScoreFunction<Y> scoringFunction, boolean scoreIsPrimary,
-			boolean isCompleteSpan, boolean isFullParse) {
-		super(category, ruleName, leftChild, rightChild, isCompleteSpan,
-				isFullParse);
+	ScoreSensitiveCell(CKYLexicalStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan, IScoreFunction<MR> scoringFunction,
+			boolean scoreIsPrimary) {
+		super(parseStep, start, end, isCompleteSpan);
 		this.scoringFunction = scoringFunction;
 		this.scoreIsPrimary = scoreIsPrimary;
 	}
 	
-	ScoreSensitiveCell(Category<Y> category, String ruleName, Cell<Y> child,
-			IScoreFunction<Y> scoringFunction, boolean scoreIsPrimary,
-			boolean isCompleteSpan, boolean isFullParse) {
-		super(category, ruleName, child, isCompleteSpan, isFullParse);
-		this.scoringFunction = scoringFunction;
-		this.scoreIsPrimary = scoreIsPrimary;
-	}
-	
-	ScoreSensitiveCell(LexicalEntry<Y> lexicalEntry, int begin, int end,
-			IScoreFunction<Y> scoringFunction, boolean scoreIsPrimary,
-			boolean isCompleteSpan, boolean isFullParse) {
-		super(lexicalEntry, begin, end, isCompleteSpan, isFullParse);
+	ScoreSensitiveCell(CKYParseStep<MR> parseStep, int start, int end,
+			boolean isCompleteSpan, IScoreFunction<MR> scoringFunction,
+			boolean scoreIsPrimary) {
+		super(parseStep, start, end, isCompleteSpan);
 		this.scoringFunction = scoringFunction;
 		this.scoreIsPrimary = scoreIsPrimary;
 	}

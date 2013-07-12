@@ -28,18 +28,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
-import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParse;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.CompositeIterator;
+import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.collections.OrderInvariantBoundedPriorityQueue;
 import edu.uw.cs.utils.collections.OrderInvariantDirectAccessBoundedQueue;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -51,20 +51,20 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Tom Kwiatkowski
  * @see Cell
  */
-public class Chart<Y> implements Iterable<Cell<Y>> {
+public class Chart<MR> implements Iterable<Cell<MR>> {
 	private static final ILogger			LOG	= LoggerFactory
 														.create(Chart.class
 																.getName());
 	
 	private final int						beamSize;
 	
-	private final AbstractCellFactory<Y>	cellFactory;
+	private final AbstractCellFactory<MR>	cellFactory;
 	
 	/** An array of spans for every starting and end indices */
-	private final AbstractSpan<Y>[][]		chart;
+	private final AbstractSpan<MR>[][]		chart;
 	
 	/** Number of words in input sentence */
-	private final int						size;
+	private final int						sentenceLength;
 	
 	/**
 	 * The tokens this chart is created for.
@@ -73,16 +73,16 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	
 	@SuppressWarnings("unchecked")
 	public Chart(List<String> tokens, int maxNumberOfCellPerSpan,
-			AbstractCellFactory<Y> cellFactory, boolean separateLexicalQueue) {
+			AbstractCellFactory<MR> cellFactory, boolean separateLexicalQueue) {
 		this.beamSize = maxNumberOfCellPerSpan;
 		this.tokens = Collections.unmodifiableList(tokens);
 		this.cellFactory = cellFactory;
-		this.size = tokens.size();
-		this.chart = new AbstractSpan[size][size];
-		for (int i = 0; i < size; i++) {
-			for (int j = i; j < size; j++) {
-				chart[i][j] = separateLexicalQueue ? new TwoQueueSpan<Y>(
-						maxNumberOfCellPerSpan) : new SingleQueueSpan<Y>(
+		this.sentenceLength = tokens.size();
+		this.chart = new AbstractSpan[sentenceLength][sentenceLength];
+		for (int i = 0; i < sentenceLength; i++) {
+			for (int j = i; j < sentenceLength; j++) {
+				chart[i][j] = separateLexicalQueue ? new TwoQueueSpan<MR>(
+						maxNumberOfCellPerSpan) : new SingleQueueSpan<MR>(
 						maxNumberOfCellPerSpan);
 			}
 		}
@@ -96,15 +96,16 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * 
 	 * @param cell
 	 */
-	public void add(Cell<Y> cell, IDataItemModel<Y> model) {
+	public void add(Cell<MR> cell, IDataItemModel<MR> model) {
+		
 		if (cell.isCompleteSpan() && !cell.isFullParse()) {
 			// Case the complete span, but not a complete parse, don't add to
 			// the chart
 			return;
 		}
 		
-		final AbstractSpan<Y> span = chart[cell.getStart()][cell.getEnd()];
-		final Cell<Y> existingCell = span.get(cell);
+		final AbstractSpan<MR> span = chart[cell.getStart()][cell.getEnd()];
+		final Cell<MR> existingCell = span.get(cell);
 		if (existingCell == null) {
 			// Case we are adding a new cell
 			addNew(cell);
@@ -120,101 +121,67 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	}
 	
 	/**
-	 * Compute expectations of features under distribution conditioned on given
-	 * semantics
+	 * Traditional expected features. Outside scores of complete parses that
+	 * pass the filter are set to 1.0, all others are set to 0.0.
 	 * 
-	 * @param targetSem
-	 *            Semantics to condition the probability by
+	 * @param filter
+	 * @return
 	 */
-	public IHashVector computeExpFeatVals(Category<Y> targetCat,
-			IDataItemModel<Y> model) {
-		final IHashVector exp = HashVectorFactory.create();
-		computeOutsideProbs(targetCat, model);
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
-				final Iterator<Cell<Y>> i = getSpanIterator(begin, begin + len);
-				while (i.hasNext()) {
-					final Cell<Y> c = i.next();
-					c.updateExpFeats(exp, model);
+	public IHashVector expectedFeatures(final IFilter<MR> filter) {
+		return expectedFeatures(new IScorer<MR>() {
+			@Override
+			public double score(MR e) {
+				if (filter.isValid(e)) {
+					return 1.0;
+				} else {
+					return 0.0;
 				}
 			}
-		}
-		return exp;
+		});
 	}
 	
-	/**
-	 * Compute expectations of features.
-	 * 
-	 * @return
-	 */
-	public IHashVector computeExpFeatVals(IDataItemModel<Y> model) {
-		final IHashVector exp = HashVectorFactory.create();
-		computeOutsideProbs(model);
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
-				final Iterator<Cell<Y>> i = getSpanIterator(begin, begin + len);
-				while (i.hasNext()) {
-					final Cell<Y> cell = i.next();
-					cell.updateExpFeats(exp, model);
-				}
-			}
-		}
-		return exp;
-	}
-	
-	/**
-	 * Compute the total probability of all parses represented in the chart.
-	 * 
-	 * @return
-	 */
-	public double computeNorm() {
-		return computeNorm(null);
-	}
-	
-	/**
-	 * Compute the total probability of all parses with the given root
-	 * semantics.
-	 * 
-	 * @param semantics
-	 *            If null, calculate probability of all parses.
-	 * @return
-	 */
-	public double computeNorm(Y semantics) {
-		double norm = 0.0;
-		for (final Cell<Y> c : fullparses()) {
-			if (semantics == null || c.getCategroy().getSem().equals(semantics)) {
-				norm += c.getInsideScore();
-			}
-		}
-		return norm;
+	public IHashVector expectedFeatures(IScorer<MR> initialScorer) {
+		// Step I: compute outside probabilities
+		// Initialize outside probabilities
+		initializeOutsideProbabilities(initialScorer);
+		
+		// Propagate outside probabilities
+		propagateOutsideProbabilities();
+		
+		// Step II: Collected expected features
+		return collectExpectedFeatures();
 	}
 	
 	public int getBeamSize() {
 		return beamSize;
 	}
 	
-	public Cell<Y> getCell(Cell<Y> cell) {
+	public Cell<MR> getCell(Cell<MR> cell) {
 		return chart[cell.getStart()][cell.getEnd()].get(cell);
 	}
 	
-	public AbstractCellFactory<Y> getCellFactory() {
+	public AbstractCellFactory<MR> getCellFactory() {
 		return cellFactory;
 	}
 	
-	public List<IParse<Y>> getParseResults(IDataItemModel<Y> model) {
+	public List<CKYParse<MR>> getParseResults() {
 		// Need a bounded queue here to make sure we don't return more than the
 		// beam, because lexical cells might exist outside of the beam
-		final OrderInvariantBoundedPriorityQueue<CKYParse<Y>> ret = new OrderInvariantBoundedPriorityQueue<CKYParse<Y>>(
-				beamSize, new Comparator<CKYParse<Y>>() {
+		final OrderInvariantBoundedPriorityQueue<CKYParse<MR>> ret = new OrderInvariantBoundedPriorityQueue<CKYParse<MR>>(
+				beamSize, new Comparator<CKYParse<MR>>() {
 					@Override
-					public int compare(CKYParse<Y> o1, CKYParse<Y> o2) {
+					public int compare(CKYParse<MR> o1, CKYParse<MR> o2) {
 						return Double.compare(o1.getScore(), o2.getScore());
 					}
 				});
-		for (final Cell<Y> cell : fullparses()) {
-			ret.offer(new CKYParse<Y>(cell, model));
+		for (final Cell<MR> cell : fullparses()) {
+			ret.offer(new CKYParse<MR>(cell));
 		}
-		return new ArrayList<IParse<Y>>(ret);
+		return new ArrayList<CKYParse<MR>>(ret);
+	}
+	
+	public int getSentenceLength() {
+		return sentenceLength;
 	}
 	
 	/**
@@ -224,7 +191,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * @param endIndex
 	 * @return
 	 */
-	public Iterator<Cell<Y>> getSpanIterator(int startIndex, int endIndex) {
+	public Iterator<Cell<MR>> getSpanIterator(int startIndex, int endIndex) {
 		return getSpanIterator(startIndex, endIndex, null);
 	}
 	
@@ -235,11 +202,11 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * @param endIndex
 	 * @return
 	 */
-	public Iterator<Cell<Y>> getSpanIterator(int startIndex, int endIndex,
-			Comparator<Cell<Y>> comparator) {
+	public Iterator<Cell<MR>> getSpanIterator(int startIndex, int endIndex,
+			Comparator<Cell<MR>> comparator) {
 		if (comparator != null) {
-			final List<Cell<Y>> cells = new LinkedList<Cell<Y>>();
-			for (final Cell<Y> cell : chart[startIndex][endIndex]) {
+			final List<Cell<MR>> cells = new LinkedList<Cell<MR>>();
+			for (final Cell<MR> cell : chart[startIndex][endIndex]) {
 				cells.add(cell);
 			}
 			return CollectionUtils.sorted(cells, comparator).iterator();
@@ -253,21 +220,38 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	}
 	
 	@Override
-	public Iterator<Cell<Y>> iterator() {
+	public Iterator<Cell<MR>> iterator() {
 		return iterator(null);
 	}
 	
-	public Iterator<Cell<Y>> iterator(Comparator<Cell<Y>> comparator) {
-		return iterator(0, size, comparator);
+	public Iterator<Cell<MR>> iterator(Comparator<Cell<MR>> comparator) {
+		return iterator(0, sentenceLength, comparator);
 	}
 	
-	public Iterator<Cell<Y>> iterator(int start, int end) {
+	public Iterator<Cell<MR>> iterator(int start, int end) {
 		return iterator(start, end, null);
 	}
 	
-	public Iterator<Cell<Y>> iterator(int start, int end,
-			Comparator<Cell<Y>> comparator) {
+	public Iterator<Cell<MR>> iterator(int start, int end,
+			Comparator<Cell<MR>> comparator) {
 		return new CellIterator(start, end, comparator);
+	}
+	
+	/**
+	 * Compute the total probability of all parses with their root category
+	 * passing the filter.
+	 * 
+	 * @param filter
+	 * @return
+	 */
+	public double norm(IFilter<MR> filter) {
+		double norm = 0.0;
+		for (final Cell<MR> c : fullparses()) {
+			if (filter.isValid(c.getCategroy().getSem())) {
+				norm += c.getInsideScore();
+			}
+		}
+		return norm;
 	}
 	
 	/**
@@ -276,18 +260,20 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * 
 	 * @param constrainingCategory
 	 */
-	public void recomputeInsideScore(IDataItemModel<Y> model) {
+	public void recomputeInsideScore() {
+		// TODO [yoav] Clarify this method and its uses -- not clear what it's
+		// supposed to do and if it actually does that
 		
 		// Iterate over all spans from the entire sentence to the token level
 		// and propagate outside probabilities
-		for (int len = 0; len < size; len++) {
-			for (int begin = 0; begin < size - len; begin++) {
+		for (int len = 0; len < sentenceLength; len++) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
 				
 				// Must first do cells that results from unary parsing rules
-				final Iterator<Cell<Y>> spanIterator = getSpanIterator(begin,
+				final Iterator<Cell<MR>> spanIterator = getSpanIterator(begin,
 						begin + len);
 				while (spanIterator.hasNext()) {
-					spanIterator.next().recomputeInsideScore(model);
+					spanIterator.next().recomputeInsideScore();
 				}
 			}
 		}
@@ -299,14 +285,14 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * 
 	 * @param semantics
 	 */
-	public void setMaxes(Y semantics) {
+	public void setMaxes(MR semantics) {
 		// First, clear out all of the maxes
 		resetMaxes();
 		
 		// Find the max parses for the given expression
-		final List<Cell<Y>> maxCells = new LinkedList<Cell<Y>>();
+		final List<Cell<MR>> maxCells = new LinkedList<Cell<MR>>();
 		double highest = -Double.MAX_VALUE;
-		for (final Cell<Y> cell : fullparses()) {
+		for (final Cell<MR> cell : fullparses()) {
 			if (semantics.equals(cell.getCategroy().getSem())) {
 				if (cell.getViterbiScore() > highest) {
 					highest = cell.getViterbiScore();
@@ -319,7 +305,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		}
 		
 		// Flag the cells found as participating in max-score parse
-		for (final Cell<Y> cell : maxCells) {
+		for (final Cell<MR> cell : maxCells) {
 			cell.setIsMax(true);
 		}
 		
@@ -335,9 +321,9 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 		
-		final Iterator<Cell<Y>> iterator = iterator();
+		final Iterator<Cell<MR>> iterator = iterator();
 		while (iterator.hasNext()) {
-			final Cell<Y> cell = iterator.next();
+			final Cell<MR> cell = iterator.next();
 			result.append(
 					cell.toString(
 							false,
@@ -358,11 +344,11 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	 * @param end
 	 * @param cell
 	 */
-	private void addNew(Cell<Y> cell) {
+	private void addNew(Cell<MR> cell) {
 		
 		final int begin = cell.getStart();
 		final int end = cell.getEnd();
-		final AbstractSpan<Y> span = chart[begin][end];
+		final AbstractSpan<MR> span = chart[begin][end];
 		
 		LOG.debug("IN: %s", cell);
 		LOG.debug("Pre-offer size of span: %d", span.size());
@@ -377,61 +363,30 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	}
 	
 	/**
-	 * Compute outside probabilities with a constraining category. Assumes that
-	 * we are parsing with a probabilistic model.
+	 * Iterates over the chart and collects expected feature values. Assumes
+	 * outside probabilities were computed.
 	 * 
-	 * @param constrainingCategory
+	 * @return
 	 */
-	private void computeOutsideProbs(Category<Y> constrainingCategory,
-			IDataItemModel<Y> model) {
-		// First, init all outside probabilities. All full parses that match the
-		// input category should be set to one, all other cells should be set to
-		// 0.0.
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
-				// first do the type raised cells
-				final Iterator<Cell<Y>> spanIterator = getSpanIterator(begin,
-						begin + len);
-				while (spanIterator.hasNext()) {
-					spanIterator.next().initializeOutsideProbabilities(
-							constrainingCategory);
+	private IHashVector collectExpectedFeatures() {
+		final IHashVector feats = HashVectorFactory.create();
+		for (int len = sentenceLength - 1; len >= 0; len--) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
+				final Iterator<Cell<MR>> i = getSpanIterator(begin, begin + len);
+				while (i.hasNext()) {
+					final Cell<MR> c = i.next();
+					c.collectExpectedFeatures(feats);
 				}
 			}
 		}
-		
-		// Iterate over all spans from the entire sentence to the token level
-		// and propagate outside probabilities
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
-				// Must first do cells that results from unary parsing rules
-				final Iterator<Cell<Y>> unarySpanIterator = getSpanIterator(
-						begin, begin + len);
-				while (unarySpanIterator.hasNext()) {
-					unarySpanIterator.next().computeOutsideUnary(model);
-				}
-				// Now do the rest of the cells
-				final Iterator<Cell<Y>> binarySpanIterator = getSpanIterator(
-						begin, begin + len);
-				while (binarySpanIterator.hasNext()) {
-					binarySpanIterator.next().computeOutsideBinary(model);
-				}
-			}
-		}
+		return feats;
 	}
 	
-	/**
-	 * Compute outside probabilities without a constraining category. Assumes
-	 * that we are parsing with a probabilistic model.
-	 */
-	private void computeOutsideProbs(IDataItemModel<Y> model) {
-		computeOutsideProbs(null, model);
-	}
-	
-	private List<Cell<Y>> fullparses() {
-		final List<Cell<Y>> result = new LinkedList<Cell<Y>>();
-		final Iterator<Cell<Y>> k = getSpanIterator(0, size - 1);
+	private List<Cell<MR>> fullparses() {
+		final List<Cell<MR>> result = new LinkedList<Cell<MR>>();
+		final Iterator<Cell<MR>> k = getSpanIterator(0, sentenceLength - 1);
 		while (k.hasNext()) {
-			final Cell<Y> c = k.next();
+			final Cell<MR> c = k.next();
 			if (c.isFullParse()) {
 				result.add(c);
 			}
@@ -439,20 +394,67 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		return result;
 	}
 	
+/**
+	 * Initializes outside probabilities based on the given filter in preparation to propagate them (see {@link #propagateOutsideProbabilities()).
+	 * 
+	 * @param initialScorer
+	 */
+	private void initializeOutsideProbabilities(IScorer<MR> initialScorer) {
+		// First, init all outside probabilities. All roots of complete parses
+		// are scored using the given scorer.
+		for (int len = sentenceLength - 1; len >= 0; len--) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
+				final Iterator<Cell<MR>> spanIterator = getSpanIterator(begin,
+						begin + len);
+				while (spanIterator.hasNext()) {
+					spanIterator.next().initializeOutsideProbabilities(
+							initialScorer);
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * Propagates outside probabilities. Assumes that all appropriate source
+	 * cells were initialized appropriately (usually to 1.0) and the others were
+	 * initialized to 0.0.
+	 */
+	private void propagateOutsideProbabilities() {
+		// Iterate over all spans from the entire sentence to the token level
+		for (int len = sentenceLength - 1; len >= 0; len--) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
+				// Must first process unary derivation steps
+				final Iterator<Cell<MR>> unarySpanIterator = getSpanIterator(
+						begin, begin + len);
+				while (unarySpanIterator.hasNext()) {
+					unarySpanIterator.next().updateUnaryChildrenOutsideScore();
+				}
+				// Now do the rest of the steps (i.e., results of binary steps)
+				final Iterator<Cell<MR>> binarySpanIterator = getSpanIterator(
+						begin, begin + len);
+				while (binarySpanIterator.hasNext()) {
+					binarySpanIterator.next()
+							.updateBinaryChildrenOutsideScore();
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Propagate existing max flags through the chart.
 	 */
 	private void propogateMaxes() {
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
+		for (int len = sentenceLength - 1; len >= 0; len--) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
 				// First do cells that come from unary parsing rules
-				final Iterator<Cell<Y>> iteratorForUnaries = getSpanIterator(
+				final Iterator<Cell<MR>> iteratorForUnaries = getSpanIterator(
 						begin, begin + len);
 				while (iteratorForUnaries.hasNext()) {
 					iteratorForUnaries.next().propMaxUnary();
 				}
 				// Do the rest of the cells
-				final Iterator<Cell<Y>> iteratorForTheRest = getSpanIterator(
+				final Iterator<Cell<MR>> iteratorForTheRest = getSpanIterator(
 						begin, begin + len);
 				while (iteratorForTheRest.hasNext()) {
 					iteratorForTheRest.next().propMaxNonUnary();
@@ -462,9 +464,9 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 	}
 	
 	private void resetMaxes() {
-		for (int len = size - 1; len >= 0; len--) {
-			for (int begin = 0; begin < size - len; begin++) {
-				final Iterator<Cell<Y>> spanIterator = getSpanIterator(begin,
+		for (int len = sentenceLength - 1; len >= 0; len--) {
+			for (int begin = 0; begin < sentenceLength - len; begin++) {
+				final Iterator<Cell<MR>> spanIterator = getSpanIterator(begin,
 						begin + len);
 				while (spanIterator.hasNext()) {
 					spanIterator.next().setIsMax(false);
@@ -492,14 +494,14 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		
 	}
 	
-	private class CellIterator implements Iterator<Cell<Y>> {
-		private final Comparator<Cell<Y>>	comparator;
+	private class CellIterator implements Iterator<Cell<MR>> {
+		private final Comparator<Cell<MR>>	comparator;
 		private final int					end;
 		private int							i;
 		private int							j;
-		private Iterator<Cell<Y>>			spanIterator;
+		private Iterator<Cell<MR>>			spanIterator;
 		
-		public CellIterator(int start, int end, Comparator<Cell<Y>> comparator) {
+		public CellIterator(int start, int end, Comparator<Cell<MR>> comparator) {
 			this.end = end;
 			this.i = start;
 			this.comparator = comparator;
@@ -518,7 +520,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 		}
 		
 		@Override
-		public Cell<Y> next() {
+		public Cell<MR> next() {
 			if (hasNext()) {
 				return spanIterator.next();
 			} else {
@@ -571,7 +573,7 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 			// Adding the cell into an existing one, may change the score of the
 			// cell, so we have to remove it from the queue and re-insert it, if
 			// its max-children changed
-			if (existingCell.addCell(newCell, model)) {
+			if (existingCell.addCell(newCell)) {
 				queue.remove(existingCell);
 				queue.add(existingCell);
 			}
@@ -625,12 +627,12 @@ public class Chart<Y> implements Iterable<Cell<Y>> {
 			if (existingCell.hasLexicalStep()) {
 				// No need to remove and re-insert since the lexical map
 				// maintains no ordering
-				existingCell.addCell(newCell, model);
+				existingCell.addCell(newCell);
 			} else {
 				// Adding the cell into an existing one, may change the score of
 				// the cell, so we have to remove it from the queue and
 				// re-insert it, if its max-children changed
-				if (existingCell.addCell(newCell, model)) {
+				if (existingCell.addCell(newCell)) {
 					nonLexicalQueue.remove(existingCell);
 					nonLexicalQueue.add(existingCell);
 				}

@@ -29,6 +29,9 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
@@ -41,17 +44,17 @@ import edu.uw.cs.lil.tiny.parser.Pruner;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -181,14 +184,15 @@ public class UBLStocGradient extends AbstractUBL {
 				// Take the semantic form of the single best parse
 				// final LogicalExpression best = parserOutput
 				// .getBestSingleMeaningRepresentation();
-				final List<IParse<LogicalExpression>> bestList = parserOutput
+				final List<? extends IParse<LogicalExpression>> bestList = parserOutput
 						.getBestParses();
 				
 				// this just collates and outputs the training
 				// accuracy.
 				if (bestList.size() == 1
 						&& dataItem.isCorrect(bestList.get(0).getSemantics())) {
-					final LogicalExpression bestOutput = bestList.get(0).getSemantics();
+					final LogicalExpression bestOutput = bestList.get(0)
+							.getSemantics();
 					LOG.info("CORRECT: %s", bestOutput);
 					final List<LexicalEntry<LogicalExpression>> lex = parserOutput
 							.getMaxLexicalEntries(bestOutput);
@@ -206,7 +210,8 @@ public class UBLStocGradient extends AbstractUBL {
 					for (final IParse<LogicalExpression> wrongOutput : bestList) {
 						LOG.info(wrongOutput.getSemantics().toString());
 						final List<LexicalEntry<LogicalExpression>> lex = parserOutput
-								.getMaxLexicalEntries(wrongOutput.getSemantics());
+								.getMaxLexicalEntries(wrongOutput
+										.getSemantics());
 						// in factored learning, we have to add these to the
 						// model
 						// so that they get in the lexicalentry features set
@@ -220,19 +225,15 @@ public class UBLStocGradient extends AbstractUBL {
 					wrong++;
 				}
 				
-				// Get the parse chart to calculate the norm for the update
-				final Chart<LogicalExpression> firstChart = parserOutput
-						.getChart();
-				
 				// compute first half of parameter update:
 				// subtract the expectation of parameters
 				// under the distribution that is conditioned
 				// on the sentence alone.
-				final double norm = firstChart.computeNorm();
+				final double norm = parserOutput.norm();
 				final IHashVector update = HashVectorFactory.create();
 				IHashVector firstfeats = null;
 				if (norm != 0.0) {
-					firstfeats = firstChart.computeExpFeatVals(dataItemModel);
+					firstfeats = parserOutput.expectedFeatures();
 					firstfeats.divideBy(norm);
 					firstfeats.dropSmallEntries();
 					LOG.info("Negative update: %s", firstfeats);
@@ -257,18 +258,24 @@ public class UBLStocGradient extends AbstractUBL {
 					continue;
 				}
 				
-				final Chart<LogicalExpression> secondChart = parserTrueSemOutput
-						.getChart();
-				final double secnorm = secondChart.computeNorm(dataItem
-						.getLabel());
+				final double secnorm = parserTrueSemOutput
+						.norm(new IFilter<LogicalExpression>() {
+							
+							@Override
+							public boolean isValid(LogicalExpression e) {
+								return e.equals(dataItem.getLabel());
+							}
+						});
 				IHashVector secondfeats = null;
 				if (norm != 0.0) {
-					secondfeats = secondChart
-							.computeExpFeatVals(
-									categoryServices.getSentenceCategory()
-											.cloneWithNewSemantics(
-													dataItem.getLabel()),
-									dataItemModel);
+					secondfeats = parserTrueSemOutput
+							.expectedFeatures(new IFilter<LogicalExpression>() {
+								
+								@Override
+								public boolean isValid(LogicalExpression e) {
+									return dataItem.getLabel().equals(e);
+								}
+							});
 					secondfeats.divideBy(secnorm);
 					
 					secondfeats.dropSmallEntries();
@@ -496,11 +503,17 @@ public class UBLStocGradient extends AbstractUBL {
 				// adding each potential option (or rebuilding the chart each
 				// time, etc)
 				
+				final IDataItemModel<LogicalExpression> dataItemModel = model
+						.createDataItemModel(dataItem);
+				
 				// Create cells for the splits
 				final Cell<LogicalExpression> newLeftCell = cellFactory.create(
-						leftEntry, begin, splittingPoint);
+						new CKYLexicalStep<LogicalExpression>(leftEntry, false,
+								dataItemModel), begin, splittingPoint);
 				final Cell<LogicalExpression> newRightCell = cellFactory
-						.create(rightEntry, splittingPoint + 1, end);
+						.create(new CKYLexicalStep<LogicalExpression>(
+								rightEntry, false, dataItemModel),
+								splittingPoint + 1, end);
 				
 				// If equivalent cells exist in the chart and they have a higher
 				// max score
@@ -540,7 +553,10 @@ public class UBLStocGradient extends AbstractUBL {
 				
 				// Create the new root cell
 				final Cell<LogicalExpression> newRootCell = cellFactory.create(
-						rootCategory, leftCell, rightCell, "splitMerge");
+						new CKYParseStep<LogicalExpression>(rootCategory,
+								leftCell, rightCell, cell.isFullParse(),
+								"splitMerge", dataItemModel), leftCell
+								.getStart(), rightCell.getEnd());
 				
 				final double improvement = newRootCell.getViterbiScore()
 						- cell.getViterbiScore();

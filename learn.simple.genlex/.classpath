@@ -7,10 +7,12 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
 	<classpathentry kind="src" path="/tinyutils"/>
 	<classpathentry kind="src" path="/parser.ccg.factoredlex"/>
-	<classpathentry kind="src" path="/parser.ccg.genlex"/>
 	<classpathentry kind="src" path="/test"/>
 	<classpathentry kind="src" path="/explat"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda.ccg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
+	<classpathentry kind="src" path="/ccg.lexicon.factored.lambda"/>
+	<classpathentry kind="src" path="/genlex.ccg.template"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

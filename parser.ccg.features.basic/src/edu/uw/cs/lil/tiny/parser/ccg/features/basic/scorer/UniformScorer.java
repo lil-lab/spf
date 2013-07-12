@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
 
 /**

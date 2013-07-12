@@ -26,13 +26,40 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public interface ITinyExecutor extends Executor {
+	public static final long	DEFAULT_MONITOR_SLEEP	= 1000l;
+	
 	<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException;
 	
 	<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
 			long timeout, TimeUnit unit) throws InterruptedException;
 	
+	/**
+	 * Invoke all tasks each with a unique timer set when it starts running. If
+	 * the time limit is reached, the executor makes a best effort to stop the
+	 * task by interrupting it.
+	 * 
+	 * @param tasks
+	 * @param timeout
+	 * @return
+	 * @throws InterruptedException
+	 */
+	<T> List<Future<T>> invokeAllWithUniqueTimeout(
+			Collection<? extends Callable<T>> tasks, long timeout)
+			throws InterruptedException;
+	
 	<T> Future<T> submit(Callable<T> task);
+	
+	/**
+	 * Submit the task and sets a timer when it starts running, if the time
+	 * limit is reached, makes a best effort to stop the working thread by
+	 * interrupting it.
+	 * 
+	 * @param task
+	 * @param timeout
+	 * @return
+	 */
+	<T> Future<T> submit(Callable<T> task, long timeout);
 	
 	void wait(Object object) throws InterruptedException;
 	

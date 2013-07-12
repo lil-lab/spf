@@ -27,7 +27,7 @@ package edu.uw.cs.lil.tiny.data;
  * @see IDataItem
  */
 public interface ILabeledDataItem<SAMPLE, LABEL> extends
-		ILossDataItem<SAMPLE, LABEL>, IValidationDataItem<SAMPLE, LABEL> {
+		ILossDataItem<SAMPLE, LABEL> {
 	
 	LABEL getLabel();
 	

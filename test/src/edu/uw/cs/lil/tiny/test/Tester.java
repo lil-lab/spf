@@ -21,12 +21,12 @@ package edu.uw.cs.lil.tiny.test;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.test.stats.ITestingStatistics;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -76,9 +76,8 @@ public class Tester<X, Y> implements ITester<X, Y> {
 		return ret.toString();
 	}
 	
-	private void logParse(ILabeledDataItem<X, Y> dataItem,
-			IParse<Y> parse, boolean logLexicalItems, String tag,
-			IModelImmutable<X, Y> model) {
+	private void logParse(ILabeledDataItem<X, Y> dataItem, IParse<Y> parse,
+			boolean logLexicalItems, String tag, IModelImmutable<X, Y> model) {
 		LOG.info("%s%s[S%.2f] %s",
 				dataItem.getLabel().equals(parse.getSemantics()) ? "* " : "  ",
 				tag == null ? "" : tag + " ", parse.getScore(), parse);
@@ -96,9 +95,8 @@ public class Tester<X, Y> implements ITester<X, Y> {
 	
 	private void processSingleBestParse(ILabeledDataItem<X, Y> dataItem,
 			IModelImmutable<X, Y> model,
-			final IParserOutput<Y> modelParserOutput,
-			final IParse<Y> parse, boolean withWordSkipping,
-			ITestingStatistics<X, Y> stats) {
+			final IParserOutput<Y> modelParserOutput, final IParse<Y> parse,
+			boolean withWordSkipping, ITestingStatistics<X, Y> stats) {
 		final Set<LexicalEntry<Y>> lexicalEntries = parse
 				.getMaxLexicalEntries();
 		final Y label = parse.getSemantics();
@@ -108,7 +106,8 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			stats.recordParseWithSkipping(dataItem, dataItem.getLabel(),
 					parse.getSemantics());
 		} else {
-			stats.recordParse(dataItem, dataItem.getLabel(), parse.getSemantics());
+			stats.recordParse(dataItem, dataItem.getLabel(),
+					parse.getSemantics());
 		}
 		
 		if (dataItem.isCorrect(label)) {
@@ -121,7 +120,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			LOG.info(lexToString(lexicalEntries, model));
 			
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IParse<Y>> correctParses = modelParserOutput
+			final List<? extends IParse<Y>> correctParses = modelParserOutput
 					.getMaxParses(dataItem.getLabel());
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
@@ -169,7 +168,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 		LOG.info("Test parsing time %.2f",
 				modelParserOutput.getParsingTime() / 1000.0);
 		
-		final List<IParse<Y>> bestModelParses = modelParserOutput
+		final List<? extends IParse<Y>> bestModelParses = modelParserOutput
 				.getBestParses();
 		if (bestModelParses.size() == 1) {
 			// Case we have a single parse
@@ -180,8 +179,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 			
 			// Update statistics
 			stats.recordParses(dataItem, dataItem.getLabel(), ListUtils.map(
-					bestModelParses,
-					new ListUtils.Mapper<IParse<Y>, Y>() {
+					bestModelParses, new ListUtils.Mapper<IParse<Y>, Y>() {
 						@Override
 						public Y process(IParse<Y> obj) {
 							return obj.getSemantics();
@@ -197,7 +195,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 				logParse(dataItem, parse, false, null, model);
 			}
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IParse<Y>> correctParses = modelParserOutput
+			final List<? extends IParse<Y>> correctParses = modelParserOutput
 					.getMaxParses(dataItem.getLabel());
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
@@ -223,7 +221,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 						dataItem, model.createDataItemModel(dataItem), true);
 				LOG.info("EMPTY Parsing time %f",
 						parserOutputWithSkipping.getParsingTime() / 1000.0);
-				final List<IParse<Y>> bestEmptiesParses = parserOutputWithSkipping
+				final List<? extends IParse<Y>> bestEmptiesParses = parserOutputWithSkipping
 						.getBestParses();
 				
 				if (bestEmptiesParses.size() == 1) {
@@ -253,7 +251,7 @@ public class Tester<X, Y> implements ITester<X, Y> {
 					}
 					// Check if we had the correct parse and it just wasn't
 					// the best
-					final List<IParse<Y>> correctParses = parserOutputWithSkipping
+					final List<? extends IParse<Y>> correctParses = parserOutputWithSkipping
 							.getMaxParses(dataItem.getLabel());
 					LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 					if (!correctParses.isEmpty()) {
@@ -275,39 +273,39 @@ public class Tester<X, Y> implements ITester<X, Y> {
 		}
 	}
 	
-	public static class Builder<X, Y> {
+	public static class Builder<LANG, MR> {
 		
-		private final IParser<X, Y>										parser;
+		private final IParser<LANG, MR>										parser;
 		
 		/** Filters which data items are valid for parsing with word skipping */
-		private IFilter<ILabeledDataItem<X, Y>>							skipParsingFilter	= new IFilter<ILabeledDataItem<X, Y>>() {
-																								
-																								@Override
-																								public boolean isValid(
-																										ILabeledDataItem<X, Y> e) {
-																									return true;
-																								}
-																							};
+		private IFilter<ILabeledDataItem<LANG, MR>>							skipParsingFilter	= new IFilter<ILabeledDataItem<LANG, MR>>() {
+																									
+																									@Override
+																									public boolean isValid(
+																											ILabeledDataItem<LANG, MR> e) {
+																										return true;
+																									}
+																								};
 		
-		private final IDataCollection<? extends ILabeledDataItem<X, Y>>	testData;
+		private final IDataCollection<? extends ILabeledDataItem<LANG, MR>>	testData;
 		
 		public Builder(
-				IDataCollection<? extends ILabeledDataItem<X, Y>> testData,
-				IParser<X, Y> parser) {
+				IDataCollection<? extends ILabeledDataItem<LANG, MR>> testData,
+				IParser<LANG, MR> parser) {
 			this.testData = testData;
 			this.parser = parser;
 		}
 		
-		public Tester<X, Y> build() {
-			return new Tester<X, Y>(testData, skipParsingFilter, parser);
+		public Tester<LANG, MR> build() {
+			return new Tester<LANG, MR>(testData, skipParsingFilter, parser);
 		}
 		
-		public IFilter<ILabeledDataItem<X, Y>> getSkipParsingFilter() {
+		public IFilter<ILabeledDataItem<LANG, MR>> getSkipParsingFilter() {
 			return skipParsingFilter;
 		}
 		
-		public Builder<X, Y> setSkipParsingFilter(
-				IFilter<ILabeledDataItem<X, Y>> skipParsingFilter) {
+		public Builder<LANG, MR> setSkipParsingFilter(
+				IFilter<ILabeledDataItem<LANG, MR>> skipParsingFilter) {
 			this.skipParsingFilter = skipParsingFilter;
 			return this;
 		}

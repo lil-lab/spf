@@ -18,9 +18,14 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.utils.concurrency;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,17 +37,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class TinyExecutorService implements ExecutorService, ITinyExecutor {
+	
 	private final ThreadPoolExecutor	executor;
+	private boolean						isRunning			= true;
+	private final long					monitorSleep;
+	private final Map<Thread, Long>		scheduledTimeouts	= new ConcurrentHashMap<Thread, Long>();
 	
 	public TinyExecutorService(int nThreads) {
-		this(nThreads, Executors.defaultThreadFactory());
+		this(nThreads, Executors.defaultThreadFactory(), DEFAULT_MONITOR_SLEEP);
 	}
 	
-	public TinyExecutorService(int nThreads, ThreadFactory threadFactory) {
-		this.executor = new ThreadPoolExecutor(nThreads, nThreads, 0L,
+	public TinyExecutorService(int nThreads, ThreadFactory threadFactory,
+			long monitorSleepMSec) {
+		this.executor = new ThreadPoolExecutor(nThreads + 1, nThreads + 1, 0L,
 				TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
 				threadFactory);
 		executor.allowCoreThreadTimeOut(false);
+		this.monitorSleep = monitorSleepMSec;
+		executor.submit(new Monitor());
 	}
 	
 	@Override
@@ -91,6 +103,29 @@ public class TinyExecutorService implements ExecutorService, ITinyExecutor {
 	}
 	
 	@Override
+	public <T> List<Future<T>> invokeAllWithUniqueTimeout(
+			Collection<? extends Callable<T>> tasks, long timeout)
+			throws InterruptedException {
+		synchronized (executor) {
+			executor.setCorePoolSize(executor.getCorePoolSize() + 1);
+		}
+		
+		// Create timed callables for all
+		final List<Callable<T>> wrappers = new ArrayList<Callable<T>>(
+				tasks.size());
+		for (final Callable<T> task : tasks) {
+			wrappers.add(new TimedCallable<T>(task, timeout));
+		}
+		
+		// Invoke all wrapping callables
+		final List<Future<T>> result = executor.invokeAll(wrappers);
+		synchronized (executor) {
+			executor.setCorePoolSize(executor.getCorePoolSize() - 1);
+		}
+		return result;
+	}
+	
+	@Override
 	public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
 			throws InterruptedException, ExecutionException {
 		throw new UnsupportedOperationException("not implemented");
@@ -115,17 +150,24 @@ public class TinyExecutorService implements ExecutorService, ITinyExecutor {
 	
 	@Override
 	public void shutdown() {
+		isRunning = false;
 		executor.shutdown();
 	}
 	
 	@Override
 	public List<Runnable> shutdownNow() {
+		isRunning = false;
 		return executor.shutdownNow();
 	}
 	
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		return executor.submit(task);
+	}
+	
+	@Override
+	public <T> Future<T> submit(Callable<T> task, long timeout) {
+		return executor.submit(new TimedCallable<T>(task, timeout));
 	}
 	
 	@Override
@@ -164,6 +206,65 @@ public class TinyExecutorService implements ExecutorService, ITinyExecutor {
 				executor.setCorePoolSize(executor.getCorePoolSize() - 1);
 			}
 		}
+	}
+	
+	/**
+	 * Job used to monitor timed jobs. Makes a best effort at killing them
+	 * 
+	 * @author Yoav Artzi
+	 */
+	private class Monitor implements Runnable {
+		
+		@Override
+		public void run() {
+			while (isRunning) {
+				final long current = System.currentTimeMillis();
+				final Iterator<Entry<Thread, Long>> iterator = scheduledTimeouts
+						.entrySet().iterator();
+				while (iterator.hasNext()) {
+					final Entry<Thread, Long> entry = iterator.next();
+					if (entry.getValue() < current) {
+						iterator.remove();
+						entry.getKey().interrupt();
+					}
+				}
+				try {
+					Thread.sleep(monitorSleep);
+				} catch (final InterruptedException e) {
+				}
+			}
+		}
+		
+	}
+	
+	private class TimedCallable<V> implements Callable<V> {
+		
+		private final Callable<V>	task;
+		private final long			timeout;
+		
+		public TimedCallable(Callable<V> task, long timeout) {
+			this.task = task;
+			this.timeout = timeout;
+		}
+		
+		@Override
+		public V call() throws Exception {
+			
+			scheduledTimeouts.put(Thread.currentThread(),
+					System.currentTimeMillis() + timeout);
+			try {
+				return task.call();
+			} catch (final InterruptedException e) {
+				throw e;
+			} catch (final ExecutionException e) {
+				throw e;
+			} finally {
+				if (scheduledTimeouts.containsKey(Thread.currentThread())) {
+					scheduledTimeouts.remove(Thread.currentThread());
+				}
+			}
+		}
+		
 	}
 	
 }

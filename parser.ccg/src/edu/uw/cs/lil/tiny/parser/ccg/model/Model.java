@@ -29,23 +29,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.ILexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSetImmutable;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoDir;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoDir;
+import edu.uw.cs.lil.tiny.storage.DecoderHelper;
+import edu.uw.cs.lil.tiny.storage.DecoderServices;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
@@ -198,7 +199,7 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			}
 		}
 		for (final IParseFeatureSet<X, LF> set : parseFeatures) {
-			if (set.isValidWeightVector(vector)) {
+			if (!set.isValidWeightVector(vector)) {
 				return false;
 			}
 		}
@@ -240,7 +241,7 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			ret.append("\t").append(featureSet).append("\n");
 		}
 		ret.append("Lexicon [size=").append(lexicon.size()).append("]\n");
-		ret.append(lexicon.toString(this));
+		ret.append(lexiconToString(lexicon));
 		ret.append("Feature vector\n").append(theta);
 		
 		return ret.toString();
@@ -251,6 +252,19 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			lfs.addFixedEntry(entry, theta);
 		}
 		return lexicon.add(entry);
+	}
+	
+	private String lexiconToString(ILexicon<LF> lex) {
+		final StringBuffer result = new StringBuffer();
+		final Iterator<LexicalEntry<LF>> i = lex.toCollection().iterator();
+		while (i.hasNext()) {
+			final LexicalEntry<LF> entry = i.next();
+			result.append(entry);
+			result.append(" [").append(score(entry)).append("]");
+			
+			result.append("\n");
+		}
+		return result.toString();
 	}
 	
 	public static class Builder<X, Y> {

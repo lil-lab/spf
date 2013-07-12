@@ -113,7 +113,7 @@ public interface IHashVectorImmutable extends Iterable<Pair<KeyArgs, Double>> {
 	
 	double l1Norm();
 	
-	String printValues(final IHashVector other);
+	String printValues(final IHashVectorImmutable other);
 	
 	int size();
 	

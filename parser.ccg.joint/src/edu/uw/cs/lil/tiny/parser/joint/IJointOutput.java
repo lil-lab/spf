@@ -20,18 +20,25 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointOutput<LF, ERESULT> extends IParserOutput<LF> {
+/**
+ * Output for joint inference of parsing and semantics evaluation.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ * @param <ERESULT>
+ */
+public interface IJointOutput<MR, ERESULT> {
 	
 	/**
 	 * All joint parses. Including failed executions.
 	 * 
 	 * @return
 	 */
-	List<? extends IJointParse<LF, ERESULT>> getAllJointParses();
+	List<IJointParse<MR, ERESULT>> getAllParses();
 	
 	/**
 	 * All joint parses.
@@ -40,23 +47,33 @@ public interface IJointOutput<LF, ERESULT> extends IParserOutput<LF> {
 	 *            exclude failed execution iff 'false'
 	 * @return
 	 */
-	List<? extends IJointParse<LF, ERESULT>> getAllJointParses(
-			boolean includeFails);
+	List<IJointParse<MR, ERESULT>> getAllParses(boolean includeFails);
 	
-	IParserOutput<LF> getBaseParserOutput();
+	/**
+	 * Internal output of the base parser.
+	 * 
+	 * @return
+	 */
+	IParserOutput<MR> getBaseParserOutput();
 	
-	List<? extends IJointParse<LF, ERESULT>> getBestJointParses();
+	List<IJointParse<MR, ERESULT>> getBestParses();
 	
-	List<? extends IJointParse<LF, ERESULT>> getBestJointParses(
-			boolean includeFails);
+	List<IJointParse<MR, ERESULT>> getBestParses(boolean includeFails);
 	
-	List<IJointParse<LF, ERESULT>> getBestParsesFor(Pair<LF, ERESULT> label);
+	List<IJointParse<MR, ERESULT>> getBestParsesFor(Pair<MR, ERESULT> label);
 	
-	List<IJointParse<LF, ERESULT>> getBestParsesForY(LF partialLabel);
+	List<IJointParse<MR, ERESULT>> getBestParsesForY(MR partialLabel);
 	
-	List<IJointParse<LF, ERESULT>> getBestParsesForZ(ERESULT partialLabel);
+	List<IJointParse<MR, ERESULT>> getBestParsesForZ(ERESULT partialLabel);
 	
-	List<LexicalEntry<LF>> getMaxLexicalEntries(Pair<LF, ERESULT> label);
+	/**
+	 * Total inference time in milliseconds.
+	 * 
+	 * @return
+	 */
+	long getInferenceTime();
+	
+	List<LexicalEntry<MR>> getMaxLexicalEntries(Pair<MR, ERESULT> label);
 	
 	/**
 	 * Get all parses for the given result.
@@ -64,9 +81,9 @@ public interface IJointOutput<LF, ERESULT> extends IParserOutput<LF> {
 	 * @param label
 	 * @return null if no parse has this label
 	 */
-	List<IJointParse<LF, ERESULT>> getParsesFor(Pair<LF, ERESULT> label);
+	List<IJointParse<MR, ERESULT>> getParsesFor(Pair<MR, ERESULT> label);
 	
-	List<IJointParse<LF, ERESULT>> getParsesForY(LF partialLabel);
+	List<IJointParse<MR, ERESULT>> getParsesForY(MR partialLabel);
 	
-	List<IJointParse<LF, ERESULT>> getParsesForZ(ERESULT partialLabel);
+	List<IJointParse<MR, ERESULT>> getParsesForZ(ERESULT partialLabel);
 }

@@ -29,6 +29,9 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
@@ -41,17 +44,17 @@ import edu.uw.cs.lil.tiny.parser.Pruner;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -266,7 +269,7 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 					// tree that gives the correct logical form. To make sure,
 					// add all its lexical entries to the model. The positive
 					// update is the feature vector of the best parse.
-					final IHashVector positiveUpdate = correctParse
+					final IHashVectorImmutable positiveUpdate = correctParse
 							.getAverageMaxFeatureVector();
 					LOG.info("Positive update: %s", positiveUpdate);
 					positiveUpdate.addTimesInto(1.0, update);
@@ -388,11 +391,17 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 				// adding each potential option (or rebuilding the chart each
 				// time, etc)
 				
+				final IDataItemModel<LogicalExpression> dataItemModel = model
+						.createDataItemModel(dataItem);
+				
 				// Create cells for the splits
 				final Cell<LogicalExpression> newLeftCell = cellFactory.create(
-						leftEntry, begin, splittingPoint);
+						new CKYLexicalStep<LogicalExpression>(leftEntry, false,
+								dataItemModel), begin, splittingPoint);
 				final Cell<LogicalExpression> newRightCell = cellFactory
-						.create(rightEntry, splittingPoint + 1, end);
+						.create(new CKYLexicalStep<LogicalExpression>(
+								rightEntry, false, dataItemModel),
+								splittingPoint + 1, end);
 				
 				// If equivalent cells exist in the chart and they have a higher
 				// max score
@@ -432,7 +441,10 @@ public class UBLMarginConstrainedPerceptron extends AbstractUBL {
 				
 				// Create the new root cell
 				final Cell<LogicalExpression> newRootCell = cellFactory.create(
-						rootCategory, leftCell, rightCell, "splitMerge");
+						new CKYParseStep<LogicalExpression>(rootCategory,
+								leftCell, rightCell, cell.isFullParse(),
+								"splitMerge", dataItemModel), leftCell
+								.getStart(), rightCell.getEnd());
 				
 				final double improvement = newRootCell.getViterbiScore()
 						- cell.getViterbiScore();

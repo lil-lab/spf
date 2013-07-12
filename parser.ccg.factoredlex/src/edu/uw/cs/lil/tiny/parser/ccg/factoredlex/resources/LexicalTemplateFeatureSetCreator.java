@@ -18,22 +18,22 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.LexicalTemplate;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexicalTemplateFeatureSet;
 import edu.uw.cs.utils.collections.IScorer;
 
-public class LexicalTemplateFeatureSetCreator<X> implements
-		IResourceObjectCreator<LexicalTemplateFeatureSet<X>> {
+public class LexicalTemplateFeatureSetCreator<SENT> implements
+		IResourceObjectCreator<LexicalTemplateFeatureSet<SENT>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexicalTemplateFeatureSet<X> create(Parameters parameters,
+	public LexicalTemplateFeatureSet<SENT> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final LexicalTemplateFeatureSet.Builder<X> builder = new LexicalTemplateFeatureSet.Builder<X>();
+		final LexicalTemplateFeatureSet.Builder<SENT> builder = new LexicalTemplateFeatureSet.Builder<SENT>();
 		
 		if (parameters.contains("scale")) {
 			builder.setScale(Double.valueOf(parameters.get("scale")));

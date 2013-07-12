@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint;
 
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 /**
  * Wraps an execution result to abstract the model signature from the joint
@@ -29,7 +29,7 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
  */
 public interface IExecResultWrapper<ERESULT> {
 	
-	IHashVector getFeatures();
+	IHashVectorImmutable getFeatures();
 	
 	ERESULT getResult();
 	

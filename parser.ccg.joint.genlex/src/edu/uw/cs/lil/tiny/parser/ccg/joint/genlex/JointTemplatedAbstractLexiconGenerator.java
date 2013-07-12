@@ -29,8 +29,17 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
-import edu.uw.cs.lil.tiny.data.IValidationDataItem;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
@@ -38,14 +47,6 @@ import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon.FactoredLexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.Lexeme;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.LexicalTemplate;
-import edu.uw.cs.lil.tiny.parser.ccg.genlex.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
@@ -77,21 +78,23 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		implements
-		ILexiconGenerator<IValidationDataItem<Pair<Sentence, STATE>, Pair<LogicalExpression, ERESULT>>, LogicalExpression> {
-	private static final ILogger													LOG	= LoggerFactory
-																								.create(JointTemplatedAbstractLexiconGenerator.class);
+		ILexiconGenerator<IDataItem<Pair<Sentence, STATE>>, LogicalExpression> {
+	private static final ILogger																	LOG	= LoggerFactory
+																												.create(JointTemplatedAbstractLexiconGenerator.class);
 	
-	private final Set<List<LogicalConstant>>										abstractConstantSeqs;
-	private final IParser<Sentence, LogicalExpression>								baseParser;
-	private final int																generationParsingBeam;
-	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
-	private final double															margin;
-	private final int																maxTokens;
+	private final Set<List<LogicalConstant>>														abstractConstantSeqs;
+	private final IParser<Sentence, LogicalExpression>												baseParser;
+	private final int																				generationParsingBeam;
+	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>					jointParser;
+	private final double																			margin;
+	private final int																				maxTokens;
 	
-	private final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>	model;
+	private final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>					model;
 	
-	private final Set<Pair<List<Type>, List<LogicalConstant>>>						potentialConstantSeqs;
-	private final Set<LexicalTemplate>												templates;
+	private final Set<Pair<List<Type>, List<LogicalConstant>>>										potentialConstantSeqs;
+	private final Set<LexicalTemplate>																templates;
+	
+	private final IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>>	validator;
 	
 	protected JointTemplatedAbstractLexiconGenerator(
 			Set<LexicalTemplate> templates,
@@ -102,7 +105,8 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			IParser<Sentence, LogicalExpression> baseParser,
 			int generationParsingBeam,
 			IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
-			double margin) {
+			double margin,
+			IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
 		this.abstractConstantSeqs = abstractConstantSeqs;
 		this.model = model;
@@ -110,6 +114,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		this.generationParsingBeam = generationParsingBeam;
 		this.jointParser = jointParser;
 		this.margin = margin;
+		this.validator = validator;
 		this.templates = Collections.unmodifiableSet(templates);
 		this.maxTokens = maxTokens;
 		LOG.info("Init %s", this.getClass().getName());
@@ -121,7 +126,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 	
 	@Override
 	public ILexicon<LogicalExpression> generate(
-			IValidationDataItem<Pair<Sentence, STATE>, Pair<LogicalExpression, ERESULT>> dataItem) {
+			IDataItem<Pair<Sentence, STATE>> dataItem) {
 		final List<String> tokens = dataItem.getSample().first().getTokens();
 		final int numTokens = tokens.size();
 		
@@ -131,8 +136,8 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 				.parse(dataItem, model.createJointDataItemModel(dataItem));
 		Double bestValidScore = null;
 		for (final IJointParse<LogicalExpression, ERESULT> parse : preModelParseOutput
-				.getAllJointParses()) {
-			if (dataItem.isValid(parse.getResult())) {
+				.getAllParses()) {
+			if (validator.isValid(dataItem, parse.getResult())) {
 				if (bestValidScore == null
 						|| parse.getBaseScore() > bestValidScore) {
 					bestValidScore = parse.getBaseScore();
@@ -271,32 +276,36 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 	}
 	
 	public static class Builder<STATE, ESTEP, ERESULT> {
-		private static final String															CONST_SEED_NAME	= "absconst";
+		private static final String																		CONST_SEED_NAME	= "absconst";
 		
-		protected final IParser<Sentence, LogicalExpression>								baseParser;
-		protected final Set<LogicalConstant>												constants		= new HashSet<LogicalConstant>();
-		protected final int																	generationParsingBeam;
-		protected final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
+		protected final IParser<Sentence, LogicalExpression>											baseParser;
+		protected final Set<LogicalConstant>															constants		= new HashSet<LogicalConstant>();
+		protected final int																				generationParsingBeam;
+		protected final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>				jointParser;
 		
-		protected double																	margin			= 0.0;
+		protected double																				margin			= 0.0;
 		
-		protected final int																	maxTokens;
+		protected final int																				maxTokens;
 		
-		protected final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>		model;
+		protected final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>					model;
 		
-		protected final Set<LexicalTemplate>												templates		= new HashSet<LexicalTemplate>();
+		protected final Set<LexicalTemplate>															templates		= new HashSet<LexicalTemplate>();
+		
+		protected final IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>>	validator;
 		
 		public Builder(
 				int maxTokens,
 				IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP> model,
 				IParser<Sentence, LogicalExpression> parser,
 				int generationParsingBeam,
-				IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser) {
+				IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
+				IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
 			this.maxTokens = maxTokens;
 			this.model = model;
 			this.baseParser = parser;
 			this.generationParsingBeam = generationParsingBeam;
 			this.jointParser = jointParser;
+			this.validator = validator;
 		}
 		
 		private static LogicalConstant createConstant(Type type) {
@@ -327,6 +336,18 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return this;
 		}
 		
+		public Builder<STATE, ESTEP, ERESULT> addTemplatesFromLexicon(
+				ILexicon<LogicalExpression> lexicon) {
+			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
+					.toCollection();
+			for (final LexicalEntry<LogicalExpression> entry : lexicalEntries) {
+				final FactoredLexicalEntry factored = FactoredLexicon
+						.factor(entry);
+				addTemplate(factored.getTemplate());
+			}
+			return this;
+		}
+		
 		public Builder<STATE, ESTEP, ERESULT> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
@@ -343,7 +364,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return new JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>(
 					templates, createPotentialLists(), createAbstractLists(),
 					maxTokens, model, baseParser, generationParsingBeam,
-					jointParser, margin);
+					jointParser, margin, validator);
 		}
 		
 		public Builder<STATE, ESTEP, ERESULT> setMargin(double margin) {

@@ -20,10 +20,12 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import java.util.LinkedHashSet;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
@@ -38,8 +40,10 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	
 	private final IExecResultWrapper<ERESULT>	execResult;
 	private final IParse<LF>					innerParse;
+	
 	private final Pair<LF, ERESULT>				resultPair;
 	private final double						score;
+	private IHashVectorImmutable				viterbiFeatures;
 	
 	public JointParse(IParse<LF> innerParse,
 			IExecResultWrapper<ERESULT> execResult) {
@@ -85,15 +89,23 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public IHashVector getAverageMaxFeatureVector() {
-		final IHashVector features = execResult.getFeatures();
-		innerParse.getAverageMaxFeatureVector().addTimesInto(1.0, features);
-		return features;
+	public IHashVectorImmutable getAverageMaxFeatureVector() {
+		if (viterbiFeatures == null) {
+			final IHashVector features = HashVectorFactory.create();
+			execResult.getFeatures().addTimesInto(1.0, features);
+			innerParse.getAverageMaxFeatureVector().addTimesInto(1.0, features);
+			this.viterbiFeatures = features;
+		}
+		return viterbiFeatures;
 	}
 	
 	@Override
 	public double getBaseScore() {
 		return innerParse.getScore();
+	}
+	
+	public IExecResultWrapper<ERESULT> getExecResult() {
+		return execResult;
 	}
 	
 	public ERESULT getFinalResult() {

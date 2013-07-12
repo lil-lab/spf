@@ -18,11 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.Lexeme;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexemeFeatureSet;
 import edu.uw.cs.utils.collections.IScorer;
 
@@ -31,14 +31,14 @@ import edu.uw.cs.utils.collections.IScorer;
  * 
  * @author Yoav Artzi
  */
-public class LexemeFeatureSetCreator<X> implements
-		IResourceObjectCreator<LexemeFeatureSet<X>> {
+public class LexemeFeatureSetCreator<SENT> implements
+		IResourceObjectCreator<LexemeFeatureSet<SENT>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexemeFeatureSet<X> create(Parameters parameters,
+	public LexemeFeatureSet<SENT> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final LexemeFeatureSet.Builder<X> builder = new LexemeFeatureSet.Builder<X>();
+		final LexemeFeatureSet.Builder<SENT> builder = new LexemeFeatureSet.Builder<SENT>();
 		
 		if (parameters.contains("scale")) {
 			builder.setScale(Double.valueOf(parameters.get("scale")));

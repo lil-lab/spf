@@ -21,7 +21,7 @@ Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semanti
 **Bibtex:**
 
     @article{artzi2013uwspf,
-        title={UW SPF: The University of Washington Semantic Parsing Framework},
+        title={{UW SPF: The University of Washington Semantic Parsing Framework}},
         author={Artzi, Yoav and Zettlemoyer, Luke},
         year={2013}
     }

@@ -20,27 +20,31 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky;
 
 import java.util.LinkedHashSet;
 
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
-public class CKYParse<LF> implements IParse<LF> {
-	private IHashVector					averageFeatureVector	= null;
-	private final Cell<LF>				cell;
-	private final IDataItemModel<LF>	model;
-	private final LF					semantics;
+/**
+ * A single CKY parse, marginalizes over all trees for a single logical form
+ * (e.g., semantics).
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ */
+public class CKYParse<MR> implements IGraphParse<MR> {
+	private IHashVectorImmutable	averageFeatureVector	= null;
+	private final Cell<MR>			cell;
+	private final MR				semantics;
 	
-	public CKYParse(Cell<LF> cell, IDataItemModel<LF> model) {
+	public CKYParse(Cell<MR> cell) {
 		this.cell = cell;
-		this.model = model;
 		this.semantics = cell.getCategroy().getSem();
 	}
 	
-	protected CKYParse(CKYParse<LF> parse) {
-		this(parse.cell, parse.model);
+	protected CKYParse(CKYParse<MR> parse) {
+		this(parse.cell);
 	}
 	
 	@Override
@@ -74,19 +78,24 @@ public class CKYParse<LF> implements IParse<LF> {
 	}
 	
 	@Override
-	public LinkedHashSet<LexicalEntry<LF>> getAllLexicalEntries() {
+	public LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntries() {
 		return cell.getAllLexicalEntriesRecursively();
 	}
 	
 	@Override
-	public IHashVector getAverageMaxFeatureVector() {
+	public IHashVectorImmutable getAverageMaxFeatureVector() {
 		if (averageFeatureVector == null) {
-			averageFeatureVector = cell.computeMaxAvgFeaturesRecursively(model);
+			averageFeatureVector = cell.computeMaxAvgFeaturesRecursively();
 		}
 		return averageFeatureVector;
 	}
 	
-	public LinkedHashSet<LexicalEntry<LF>> getMaxLexicalEntries() {
+	@Override
+	public double getInsideScore() {
+		return cell.getInsideScore();
+	}
+	
+	public LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries() {
 		return cell.getMaxLexicalEntriesRecursively();
 	}
 	
@@ -99,7 +108,7 @@ public class CKYParse<LF> implements IParse<LF> {
 		return cell.getViterbiScore();
 	}
 	
-	public LF getSemantics() {
+	public MR getSemantics() {
 		return semantics;
 	}
 	

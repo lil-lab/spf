@@ -87,7 +87,9 @@ public class OnlineLearningStats {
 				"Performed %d model parses with average time of %.4fsec\n",
 				modelParsingCounter, averageModelParsingTime / 1000.0));
 		ret.append("Gold standard as optimal model parse:\n");
-		final int[] counters = new int[numIterations];
+		final int[] goldIsOptimalCounters = new int[numIterations];
+		final int[] hasValidCounters = new int[numIterations];
+		final int[] hasValidNoUpdateCounters = new int[numIterations];
 		final int[] lexicalGenerationCounters = new int[numIterations];
 		for (int itemCounter = 0; itemCounter < numSamples; ++itemCounter) {
 			ret.append(
@@ -96,7 +98,12 @@ public class OnlineLearningStats {
 			int iterationCounter = 0;
 			for (final SampleStat stat : sampleStat[itemCounter]) {
 				ret.append(stat.toString());
-				counters[iterationCounter] += stat.goldIsOptimal ? 1 : 0;
+				goldIsOptimalCounters[iterationCounter] += stat.goldIsOptimal ? 1
+						: 0;
+				hasValidCounters[iterationCounter] += stat.hasValidParse ? 1
+						: 0;
+				hasValidNoUpdateCounters[iterationCounter] += stat.hasValidParse
+						&& !stat.triggeredUpdate ? 1 : 0;
 				lexicalGenerationCounters[iterationCounter] += stat.numNewLexicalEntries;
 				++iterationCounter;
 			}
@@ -105,8 +112,14 @@ public class OnlineLearningStats {
 		ret.append("New lexical entries per iteration: ")
 				.append(ArrayUtils.join(lexicalGenerationCounters, ", "))
 				.append("\n");
-		ret.append("Correct per iteration: ")
-				.append(ArrayUtils.join(counters, ", ")).append("\n");
+		ret.append("Valid (has a valid parse), per iteration: ")
+				.append(ArrayUtils.join(hasValidCounters, ", ")).append("\n");
+		ret.append("Valid and no update required, per iteration: ")
+				.append(ArrayUtils.join(hasValidNoUpdateCounters, ", "))
+				.append("\n");
+		ret.append("Correct (match gold debug) per iteration: ")
+				.append(ArrayUtils.join(goldIsOptimalCounters, ", "))
+				.append("\n");
 		
 		return ret.toString();
 	}

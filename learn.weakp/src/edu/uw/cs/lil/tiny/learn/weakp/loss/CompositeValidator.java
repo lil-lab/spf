@@ -22,6 +22,7 @@ import java.util.List;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.utils.IValidator;
 
 /**
  * Represents a conjunction between a list of validators.
@@ -29,17 +30,19 @@ import edu.uw.cs.lil.tiny.data.sentence.Sentence;
  * @author Yoav Artzi
  * @param <Y>
  */
-public class CompositeValidator<Y> implements IValidator<Y> {
+public class CompositeValidator<Y> implements
+		IValidator<IDataItem<Sentence>, Y> {
 	
-	private final List<IValidator<Y>>	validators;
+	private final List<IValidator<IDataItem<Sentence>, Y>>	validators;
 	
-	public CompositeValidator(List<IValidator<Y>> validators) {
+	public CompositeValidator(
+			List<IValidator<IDataItem<Sentence>, Y>> validators) {
 		this.validators = validators;
 	}
 	
 	@Override
 	public boolean isValid(IDataItem<Sentence> dataItem, Y label) {
-		for (final IValidator<Y> validator : validators) {
+		for (final IValidator<IDataItem<Sentence>, Y> validator : validators) {
 			if (!validator.isValid(dataItem, label)) {
 				return false;
 			}

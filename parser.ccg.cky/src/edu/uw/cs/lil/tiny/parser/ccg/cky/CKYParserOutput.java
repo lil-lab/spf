@@ -22,54 +22,49 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParse;
-import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.filter.IFilter;
 
 /**
- * Complete output of CKY parser, including the chart and all possible parses.
+ * Parser output of the CKY parser, including the chart and all possible parses.
  * 
+ * @param <MR>
+ *            Type of meaning representation
  * @author Yoav Artzi
  */
-public class CKYParserOutput<Y> implements IParserOutput<Y> {
+public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	
-	/** All parses */
-	private final List<IParse<Y>>	allParses;
+	/** All complete parses */
+	private final List<CKYParse<MR>>	allParses;
 	
-	/** Best parses */
-	private final List<IParse<Y>>	bestParses;
+	/** Max scoring complete parses */
+	private final List<CKYParse<MR>>	bestParses;
 	
-	/** The chart of this parse */
-	private final Chart<Y>				chart;
+	/** The CKY chart */
+	private final Chart<MR>				chart;
 	
+	/** Total parsing time */
 	private final long					parsingTime;
 	
-	public CKYParserOutput(Chart<Y> chart, IDataItemModel<Y> model,
-			long parsingTime) {
+	public CKYParserOutput(Chart<MR> chart, long parsingTime) {
 		this.chart = chart;
-		
-		// System.out.println(chart);
-		
 		this.parsingTime = parsingTime;
-		this.allParses = Collections.unmodifiableList(chart
-				.getParseResults(model));
+		this.allParses = Collections.unmodifiableList(chart.getParseResults());
 		this.bestParses = Collections
 				.unmodifiableList(findBestParses(allParses));
 	}
 	
-	private static <Y> List<IParse<Y>> findBestParses(
-			List<IParse<Y>> all) {
-		return findBestParses(all, null);
-	}
-	
-	private static <Y> List<IParse<Y>> findBestParses(
-			List<IParse<Y>> all, Y exp) {
-		final List<IParse<Y>> best = new LinkedList<IParse<Y>>();
+	private static <MR> List<CKYParse<MR>> findBestParses(
+			List<CKYParse<MR>> all, MR semantics) {
+		final List<CKYParse<MR>> best = new LinkedList<CKYParse<MR>>();
 		double bestScore = -Double.MAX_VALUE;
-		for (final IParse<Y> p : all) {
-			if ((exp == null || p.getSemantics().equals(exp))) {
+		for (final CKYParse<MR> p : all) {
+			if ((semantics == null || p.getSemantics().equals(semantics))) {
 				if (p.getScore() == bestScore) {
 					best.add(p);
 				}
@@ -83,39 +78,76 @@ public class CKYParserOutput<Y> implements IParserOutput<Y> {
 		return best;
 	}
 	
+	private static <Y> List<CKYParse<Y>> findBestParses(List<CKYParse<Y>> all) {
+		return findBestParses(all, null);
+	}
+	
 	@Override
-	public List<IParse<Y>> getAllParses() {
+	public IHashVector expectedFeatures() {
+		return expectedFeatures(new IFilter<MR>() {
+			
+			@Override
+			public boolean isValid(MR e) {
+				return true;
+			}
+		});
+	}
+	
+	@Override
+	public IHashVector expectedFeatures(IFilter<MR> filter) {
+		return chart.expectedFeatures(filter);
+	}
+	
+	@Override
+	public IHashVector expectedFeatures(IScorer<MR> initialScorer) {
+		return chart.expectedFeatures(initialScorer);
+	}
+	
+	@Override
+	public List<CKYParse<MR>> getAllParses() {
 		return allParses;
 	}
 	
-	public List<IParse<Y>> getBestParses() {
+	public List<CKYParse<MR>> getBestParses() {
 		return bestParses;
 	}
 	
-	public Chart<Y> getChart() {
+	public Chart<MR> getChart() {
 		return chart;
 	}
 	
-	/**
-	 * Finds the max lexical items used to produce the highest scoring parse
-	 * with the given semantics.
-	 */
 	@Override
-	public List<LexicalEntry<Y>> getMaxLexicalEntries(Y semantics) {
-		final List<LexicalEntry<Y>> result = new LinkedList<LexicalEntry<Y>>();
-		for (final IParse<Y> p : findBestParses(allParses, semantics)) {
-			result.addAll(p.getMaxLexicalEntries());
+	public List<LexicalEntry<MR>> getMaxLexicalEntries(MR semantics) {
+		final List<LexicalEntry<MR>> entries = new LinkedList<LexicalEntry<MR>>();
+		for (final IParse<MR> p : findBestParses(allParses, semantics)) {
+			entries.addAll(p.getMaxLexicalEntries());
 		}
-		return result;
+		return entries;
 	}
 	
 	@Override
-	public List<IParse<Y>> getMaxParses(Y label) {
-		return findBestParses(allParses, label);
+	public List<? extends IParse<MR>> getMaxParses(MR semantics) {
+		return findBestParses(allParses, semantics);
 	}
 	
 	@Override
 	public long getParsingTime() {
 		return parsingTime;
+	}
+	
+	@Override
+	public double norm() {
+		return norm(new IFilter<MR>() {
+			
+			@Override
+			public boolean isValid(MR e) {
+				return true;
+			}
+		});
+	}
+	
+	@Override
+	public double norm(IFilter<MR> filter) {
+		return chart.norm(filter);
 	}
 }

@@ -313,7 +313,7 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
-	public String printValues(IHashVector other) {
+	public String printValues(IHashVectorImmutable other) {
 		
 		if (other instanceof TroveHashVector) {
 			final TroveHashVector p = (TroveHashVector) other;

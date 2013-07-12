@@ -24,6 +24,8 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
@@ -35,16 +37,17 @@ import edu.uw.cs.lil.tiny.parser.Pruner;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -153,11 +156,11 @@ public class UBLPerceptron extends AbstractUBL {
 				
 				// TODO [yoav] [withluke] [posttyping] Ugly. Need to fix this.
 				// Not sure what exactly is going on here.
-				final IHashVector goodfeats = getSingleBestParseFor(
+				final IHashVectorImmutable goodfeats = getSingleBestParseFor(
 						dataItem.getLabel(),
 						(new CKYParserOutput<LogicalExpression>(
-								parserTrueSemOutput.getChart(), dataItemModel,
-								-1))).getAverageMaxFeatureVector();
+								parserTrueSemOutput.getChart(), -1)))
+						.getAverageMaxFeatureVector();
 				
 				// This parse is using the new expanded lexicon. Produces
 				// all possible parses, not constrained by the semantics.
@@ -170,14 +173,15 @@ public class UBLPerceptron extends AbstractUBL {
 				// Take the semantic form of the single best parse
 				// final LogicalExpression best = parserOutput
 				// .getBestSingleMeaningRepresentation();
-				final List<IParse<LogicalExpression>> bestList = parserOutput
+				final List<? extends IParse<LogicalExpression>> bestList = parserOutput
 						.getBestParses();
 				
 				// this just collates and outputs the training
 				// accuracy.
 				if (bestList.size() == 1
 						&& dataItem.isCorrect(bestList.get(0).getSemantics())) {
-					final LogicalExpression bestOutput = bestList.get(0).getSemantics();
+					final LogicalExpression bestOutput = bestList.get(0)
+							.getSemantics();
 					LOG.info("CORRECT: %s", bestOutput);
 					final List<LexicalEntry<LogicalExpression>> lexUsed = parserOutput
 							.getMaxLexicalEntries(bestOutput);
@@ -197,7 +201,8 @@ public class UBLPerceptron extends AbstractUBL {
 					for (final IParse<LogicalExpression> wrongOutput : bestList) {
 						LOG.info(wrongOutput.getSemantics().toString());
 						final List<LexicalEntry<LogicalExpression>> lexUsed = parserOutput
-								.getMaxLexicalEntries(wrongOutput.getSemantics());
+								.getMaxLexicalEntries(wrongOutput
+										.getSemantics());
 						
 						// we have to add these to the model so that they get in
 						// the lexicalentry feature sets
@@ -294,7 +299,7 @@ public class UBLPerceptron extends AbstractUBL {
 				}
 			}
 		}
-		chart.recomputeInsideScore(model.createDataItemModel(dataItem));
+		chart.recomputeInsideScore();
 	}
 	
 	private void splitMergeAddToChart(Cell<LogicalExpression> cell, int begin,
@@ -341,13 +346,15 @@ public class UBLPerceptron extends AbstractUBL {
 				// adding each potential option (or rebuilding the chart each
 				// time, etc)
 				
-				Cell<LogicalExpression> leftCell = cellFactory.create(leftLex,
-						begin, sp);
-				Cell<LogicalExpression> rightCell = cellFactory.create(
-						rightLex, sp + 1, end);
-				
 				final IDataItemModel<LogicalExpression> dataItemModel = model
 						.createDataItemModel(dataItem);
+				
+				Cell<LogicalExpression> leftCell = cellFactory.create(
+						new CKYLexicalStep<LogicalExpression>(leftLex, false,
+								dataItemModel), begin, sp);
+				Cell<LogicalExpression> rightCell = cellFactory.create(
+						new CKYLexicalStep<LogicalExpression>(rightLex, false,
+								dataItemModel), sp + 1, end);
 				
 				chart.add(leftCell, dataItemModel);
 				leftCell = chart.getCell(leftCell);
@@ -361,11 +368,13 @@ public class UBLPerceptron extends AbstractUBL {
 				}
 				
 				// now, make the new root cell
-				final Cell<LogicalExpression> r = cellFactory.create(rootCat,
-						leftCell, rightCell, "splitMerge");
+				final Cell<LogicalExpression> r = cellFactory.create(
+						new CKYParseStep<LogicalExpression>(rootCat, leftCell,
+								rightCell, cell.isFullParse(), "splitMerge",
+								dataItemModel), leftCell.getStart(), rightCell
+								.getEnd());
 				chart.add(r, dataItemModel);
 			}
 		}
 	}
-	
 }

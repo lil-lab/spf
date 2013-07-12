@@ -20,31 +20,54 @@ package edu.uw.cs.lil.tiny.parser;
 
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 
 /**
- * Parser for sentences {@link Sentence}.
+ * Parsing output. Packs all parses.
  * 
  * @author Yoav Artzi
- * @param <Y>
- *            The representation of the parser output
+ * @param <MR>
+ *            Meaning representation type.
  * @see IParser
  */
-public interface IParserOutput<Y> {
+public interface IParserOutput<MR> {
 	
 	/**
 	 * Get all complete parses.
 	 * 
 	 * @return
 	 */
-	List<IParse<Y>> getAllParses();
+	List<? extends IParse<MR>> getAllParses();
 	
-	List<IParse<Y>> getBestParses();
+	/**
+	 * Get highest scoring complete parses.
+	 * 
+	 * @return
+	 */
+	List<? extends IParse<MR>> getBestParses();
 	
-	List<LexicalEntry<Y>> getMaxLexicalEntries(Y label);
+	/**
+	 * Get all lexical entries participating in all max scoring parses for the
+	 * given semantics.
+	 * 
+	 * @param semantics
+	 * @return
+	 */
+	List<LexicalEntry<MR>> getMaxLexicalEntries(MR semantics);
 	
-	List<IParse<Y>> getMaxParses(Y label);
+	/**
+	 * Get all complete max scoring parses for the given semantics (can get
+	 * multiple parses, since syntax is not constrained).
+	 * 
+	 * @param semantics
+	 * @return
+	 */
+	List<? extends IParse<MR>> getMaxParses(MR semantics);
 	
+	/**
+	 * Return parsing time in milliseconds.
+	 * 
+	 * @return
+	 */
 	long getParsingTime();
 }

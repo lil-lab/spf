@@ -20,9 +20,17 @@ package edu.uw.cs.lil.tiny.data.utils;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 
-@Deprecated
-public interface IValidator<X, Z> {
+/**
+ * Validates a label using the data item.
+ * 
+ * @author Yoav Artzi
+ * @param <X>
+ *            Type of data item
+ * @param <Z>
+ *            Type of label
+ */
+public interface IValidator<X extends IDataItem<?>, Z> {
 	
-	boolean isValid(IDataItem<X> dataItem, Z label);
+	boolean isValid(X dataItem, Z label);
 	
 }

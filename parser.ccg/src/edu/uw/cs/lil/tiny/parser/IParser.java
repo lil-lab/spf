@@ -18,45 +18,49 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.utils.filter.IFilter;
 
 /**
  * A parser for sentences {@link Sentence}.
  * 
  * @author Yoav Artzi
  * @param <LANG>
- *            The representation of the input
- * @param <LF>
- *            The representation of the output of the parse.
+ *            Input representation.
+ * @param <MR>
+ *            Meaning representation.
  */
-public interface IParser<LANG, LF> {
+public interface IParser<LANG, MR> {
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, IDataItemModel<LF> model);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem, IDataItemModel<MR> model);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, IDataItemModel<LF> model,
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem, IDataItemModel<MR> model,
 			boolean allowWordSkipping);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, IDataItemModel<LF> model,
-			boolean allowWordSkipping, ILexicon<LF> tempLexicon);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, IDataItemModel<LF> model,
-			boolean allowWordSkipping, ILexicon<LF> tempLexicon, Integer beamSize);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
+			Integer beamSize);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, Pruner<LANG, LF> pruner,
-			IDataItemModel<LF> model);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> model);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, Pruner<LANG, LF> pruner,
-			IDataItemModel<LF> model, boolean allowWordSkipping);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
+			boolean allowWordSkipping);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, Pruner<LANG, LF> pruner,
-			IDataItemModel<LF> model, boolean allowWordSkipping,
-			ILexicon<LF> tempLexicon);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon);
 	
-	IParserOutput<LF> parse(IDataItem<LANG> dataItem, Pruner<LANG, LF> pruner,
-			IDataItemModel<LF> model, boolean allowWordSkipping,
-			ILexicon<LF> tempLexicon, Integer beamSize);
+	IParserOutput<MR> parse(IDataItem<LANG> dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
+			Integer beamSize);
 	
 }

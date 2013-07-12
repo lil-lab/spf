@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.lexical;
 
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSetImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 

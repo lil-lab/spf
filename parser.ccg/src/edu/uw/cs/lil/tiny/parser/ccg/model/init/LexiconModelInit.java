@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.init;
 
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 

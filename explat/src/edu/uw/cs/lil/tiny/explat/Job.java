@@ -21,6 +21,7 @@ package edu.uw.cs.lil.tiny.explat;
 import java.io.PrintStream;
 import java.util.Set;
 
+import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.log.Log;
 import edu.uw.cs.utils.log.thread.LoggingRunnable;
 
@@ -35,7 +36,7 @@ public abstract class Job extends LoggingRunnable {
 	public Job(String id, Set<String> dependencyIds, IJobListener jobListener,
 			PrintStream outputStream, Log log) {
 		super(log);
-		this.id = id;
+		this.id = Assert.ifNull(id);
 		this.dependencyIds = dependencyIds;
 		this.jobListener = jobListener;
 		this.outputStream = outputStream;

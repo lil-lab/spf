@@ -78,11 +78,11 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 						.createDataItemModel(dataItem);
 				final IParserOutput<Z> parserOutput = parser.parse(dataItem,
 						dataItemModel);
-				final List<IParse<Z>> bestParses = parserOutput
+				final List<? extends IParse<Z>> bestParses = parserOutput
 						.getBestParses();
 				
 				// Correct parse
-				final List<IParse<Z>> correctParses = parserOutput
+				final List<? extends IParse<Z>> correctParses = parserOutput
 						.getMaxParses(dataItem.getLabel());
 				
 				// Violating parses

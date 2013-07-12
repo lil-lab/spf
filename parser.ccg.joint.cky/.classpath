@@ -7,5 +7,6 @@
 	<classpathentry kind="src" path="/tinyutils"/>
 	<classpathentry kind="src" path="/parser.ccg.cky"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

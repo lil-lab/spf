@@ -27,17 +27,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.FactoredLexicon;
-import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.Lexeme;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.AbstractLexicalFeatureSet;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.parser.ccg.model.storage.IDecoder;
+import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
+import edu.uw.cs.lil.tiny.storage.DecoderHelper;
+import edu.uw.cs.lil.tiny.storage.DecoderServices;
+import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
@@ -47,8 +47,8 @@ import edu.uw.cs.utils.composites.Triplet;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
-public class LexemeFeatureSet<X> extends
-		AbstractLexicalFeatureSet<X, LogicalExpression> {
+public class LexemeFeatureSet<SENT> extends
+		AbstractLexicalFeatureSet<SENT, LogicalExpression> {
 	
 	/**
 	 * The name of the default (protected) feature.
