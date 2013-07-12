@@ -16,9 +16,8 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.learn.simple.genlex.resources;
+package edu.uw.cs.lil.tiny.learn.simple.genlex.resources;
 
-import edu.uw.cs.lil.learn.simple.genlex.FactoredGENLEXPerceptron;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
@@ -27,6 +26,7 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.lil.tiny.learn.simple.genlex.FactoredGENLEXPerceptron;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.test.Tester;

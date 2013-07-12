@@ -16,7 +16,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.learn.simple.genlex;
+package edu.uw.cs.lil.tiny.learn.simple.genlex;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
