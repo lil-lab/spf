@@ -1,4 +1,4 @@
-# [_**UW SPF v1.3**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.2
+# [_**UW SPF v1.3**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.3
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)
 
