@@ -24,23 +24,23 @@ import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
-public interface IDataItemModel<Y> {
+public interface IDataItemModel<MR> {
 	
-	IHashVector computeFeatures(IParseStep<Y> parseStep);
+	IHashVector computeFeatures(IParseStep<MR> parseStep);
 	
-	IHashVector computeFeatures(IParseStep<Y> parseStep, IHashVector features);
+	IHashVector computeFeatures(IParseStep<MR> parseStep, IHashVector features);
 	
-	IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry);
+	IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry);
 	
-	IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry,
+	IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry,
 			IHashVector features);
 	
-	ILexiconImmutable<Y> getLexicon();
+	ILexiconImmutable<MR> getLexicon();
 	
 	IHashVectorImmutable getTheta();
 	
-	double score(IParseStep<Y> parseStep);
+	double score(IParseStep<MR> parseStep);
 	
-	double score(LexicalEntry<Y> entry);
+	double score(LexicalEntry<MR> entry);
 	
 }

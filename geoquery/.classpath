@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="/explat"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry kind="src" path="/mr.lambda"/>
+	<classpathentry kind="src" path="/mr.lambda.ccg"/>
+	<classpathentry kind="src" path="/parser.ccg"/>
+	<classpathentry kind="src" path="/parser.ccg.factoredlex"/>
+	<classpathentry kind="src" path="/data.singlesentence"/>
+	<classpathentry kind="src" path="/data"/>
+	<classpathentry kind="src" path="/parser.ccg.features.basic"/>
+	<classpathentry kind="src" path="/parser.ccg.features.lambda"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon.factored.lambda"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg.template"/>
+	<classpathentry kind="src" path="/learn"/>
+	<classpathentry kind="src" path="/test"/>
+	<classpathentry kind="src" path="/parser.ccg.rules"/>
+	<classpathentry kind="src" path="/parser.ccg.cky"/>
+	<classpathentry kind="src" path="/learn.validation"/>
+	<classpathentry kind="src" path="/parser.ccg.rules.lambda"/>
+	<classpathentry kind="src" path="/genlex.ccg.unification"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

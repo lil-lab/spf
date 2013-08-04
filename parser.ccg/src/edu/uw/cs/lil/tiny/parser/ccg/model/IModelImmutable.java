@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
+import java.io.Serializable;
+
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
@@ -29,12 +31,13 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
  * Immutable parsing model.
  * 
  * @author Yoav Artzi
- * @param <X>
- *            type of sample
- * @param <Y>
+ * @param <DI>
+ *            type of data item
+ * @param <MR>
  *            Type of semantics.
  */
-public interface IModelImmutable<X, Y> {
+public interface IModelImmutable<DI extends IDataItem<?>, MR> extends
+		Serializable {
 	
 	/**
 	 * Compute features for a given parsing step
@@ -43,7 +46,7 @@ public interface IModelImmutable<X, Y> {
 	 *            Parsing step to compute features for.
 	 * @return
 	 */
-	IHashVector computeFeatures(IParseStep<Y> parseStep, IDataItem<X> dataItem);
+	IHashVector computeFeatures(IParseStep<MR> parseStep, DI dataItem);
 	
 	/**
 	 * Compute features for a given parsing step.
@@ -55,8 +58,8 @@ public interface IModelImmutable<X, Y> {
 	 *            added to the given vector.
 	 * @return 'features' vector
 	 */
-	IHashVector computeFeatures(IParseStep<Y> parseStep, IHashVector features,
-			IDataItem<X> dataItem);
+	IHashVector computeFeatures(IParseStep<MR> parseStep, IHashVector features,
+			DI dataItem);
 	
 	/**
 	 * Compute features for a lexical item,
@@ -65,7 +68,7 @@ public interface IModelImmutable<X, Y> {
 	 *            Lexical entry to compute features for.
 	 * @return
 	 */
-	IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry);
+	IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry);
 	
 	/**
 	 * Compute feature for a lexical item.
@@ -77,20 +80,20 @@ public interface IModelImmutable<X, Y> {
 	 *            added to the given vector.
 	 * @return the 'features' vector
 	 */
-	IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry,
+	IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry,
 			IHashVector features);
 	
-	IDataItemModel<Y> createDataItemModel(IDataItem<X> dataItem);
+	IDataItemModel<MR> createDataItemModel(DI dataItem);
 	
 	/** Return the lexicon of the model. The returned lexicon is immutable. */
-	ILexiconImmutable<Y> getLexicon();
+	ILexiconImmutable<MR> getLexicon();
 	
 	/**
 	 * @return Parameters vectors (immutable).
 	 */
 	IHashVectorImmutable getTheta();
 	
-	double score(IParseStep<Y> parseStep, IDataItem<X> dataItem);
+	double score(IParseStep<MR> parseStep, DI dataItem);
 	
-	double score(LexicalEntry<Y> entry);
+	double score(LexicalEntry<MR> entry);
 }

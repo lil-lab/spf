@@ -26,7 +26,6 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.lambda.Term;
@@ -132,11 +131,8 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 		// Append the argument to the list of arguments in the literal, verify
 		// that it doesn't contain any variables (identical objects) from the
 		// literal
-		newArgs.add(ReplaceVariablesIfPresent.of(arg, GetVariables.of(literal),
-				LogicLanguageServices.getTypeRepository()));
-		return new Literal(literal.getPredicate(), newArgs,
-				LogicLanguageServices.getTypeComparator(),
-				LogicLanguageServices.getTypeRepository());
+		newArgs.add(ReplaceVariablesIfPresent.of(arg, GetVariables.of(literal)));
+		return new Literal(literal.getPredicate(), newArgs);
 	}
 	
 	private static LogicalExpression termApplication(Term exp,
@@ -148,9 +144,7 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 		// variables (identical objects) from the given argument and create the
 		// new literal
 		return new Literal(GetVariables.of(arg).contains(exp) ? new Variable(
-				exp.getType()) : exp, arguments,
-				LogicLanguageServices.getTypeComparator(),
-				LogicLanguageServices.getTypeRepository());
+				exp.getType()) : exp, arguments);
 	}
 	
 	@Override

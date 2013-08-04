@@ -1,0 +1,22 @@
+include=../../default.params
+outputDir=logs3
+globalLog=logs3/global.log
+
+# Resources
+# Model
+include=../include.model.exp
+# Validation function
+include=../../include.validation.exp
+# Lexical generator
+include=../include.genlex.exp
+# Training and testing sets
+include=include.data.exp
+type=data.composite id=train sets=fold0,fold1,fold2,fold4,fold5,fold6,fold7,fold8,fold9
+type=data.composite id=test sets=fold3
+# Learner and tester
+include=../include.learn.exp
+# Initializars
+include=../include.init.exp
+
+# Jobs
+include=../../include.jobs.exp

@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
@@ -57,27 +58,32 @@ import edu.uw.cs.utils.composites.Triplet;
  * A complete parsing model, including features, parameters and a lexicon.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <LF>
+ * @param <DI>
+ * @param <MR>
  *            Type of semantics (output).
  */
-public class Model<X, LF> implements IModelImmutable<X, LF> {
-	private final List<IIndependentLexicalFeatureSet<X, LF>>	lexicalFeatures;
+public class Model<DI extends IDataItem<?>, MR> implements
+		IModelImmutable<DI, MR> {
+	private static final long									serialVersionUID	= -2202596624826388636L;
 	
-	private final ILexicon<LF>									lexicon;
+	private final List<IIndependentLexicalFeatureSet<DI, MR>>	lexicalFeatures;
 	
-	private final List<IParseFeatureSet<X, LF>>					parseFeatures;
+	private final ILexicon<MR>									lexicon;
+	
+	private final List<IParseFeatureSet<DI, MR>>				parseFeatures;
 	
 	private final IHashVector									theta;
 	
-	protected Model(List<IIndependentLexicalFeatureSet<X, LF>> lexicalFeatures,
-			List<IParseFeatureSet<X, LF>> parseFeatures, ILexicon<LF> lexicon) {
+	protected Model(
+			List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures,
+			List<IParseFeatureSet<DI, MR>> parseFeatures, ILexicon<MR> lexicon) {
 		this(lexicalFeatures, parseFeatures, lexicon, HashVectorFactory
 				.create());
 	}
 	
-	protected Model(List<IIndependentLexicalFeatureSet<X, LF>> lexicalFeatures,
-			List<IParseFeatureSet<X, LF>> parseFeatures, ILexicon<LF> lexicon,
+	protected Model(
+			List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures,
+			List<IParseFeatureSet<DI, MR>> parseFeatures, ILexicon<MR> lexicon,
 			IHashVector theta) {
 		this.lexicalFeatures = Collections.unmodifiableList(lexicalFeatures);
 		this.parseFeatures = Collections.unmodifiableList(parseFeatures);
@@ -85,18 +91,18 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		this.theta = theta;
 	}
 	
-	public static <X, Y> IDecoder<Model<X, Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<X, Y>(decoderHelper);
+	public static <DI extends IDataItem<?>, MR> IDecoder<Model<DI, MR>> getDecoder(
+			DecoderHelper<MR> decoderHelper) {
+		return new Decoder<DI, MR>(decoderHelper);
 	}
 	
-	public void addFixedLexicalEntries(Collection<LexicalEntry<LF>> entries) {
-		for (final LexicalEntry<LF> entry : entries) {
+	public void addFixedLexicalEntries(Collection<LexicalEntry<MR>> entries) {
+		for (final LexicalEntry<MR> entry : entries) {
 			addFixedLexicalEntry(entry);
 		}
 	}
 	
-	public void addFixedLexicalEntries(ILexicon<LF> entries) {
+	public void addFixedLexicalEntries(ILexicon<MR> entries) {
 		addFixedLexicalEntries(entries.toCollection());
 	}
 	
@@ -106,13 +112,13 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 	 * 
 	 * @param entries
 	 */
-	public void addLexEntries(Collection<LexicalEntry<LF>> entries) {
-		for (final LexicalEntry<LF> entry : entries) {
-			for (final IIndependentLexicalFeatureSet<X, LF> lfs : lexicalFeatures) {
+	public void addLexEntries(Collection<LexicalEntry<MR>> entries) {
+		for (final LexicalEntry<MR> entry : entries) {
+			for (final IIndependentLexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
 				lfs.addEntry(entry, theta);
 			}
 		}
-		for (final LexicalEntry<LF> entry : entries) {
+		for (final LexicalEntry<MR> entry : entries) {
 			lexicon.add(entry);
 		}
 	}
@@ -126,60 +132,62 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 	 *         to update the features without adding anything new to the
 	 *         lexicon.
 	 */
-	public boolean addLexEntry(LexicalEntry<LF> entry) {
-		for (final IIndependentLexicalFeatureSet<X, LF> lfs : lexicalFeatures) {
-			lfs.addEntry(entry, theta);
+	public boolean addLexEntry(LexicalEntry<MR> entry) {
+		final Set<LexicalEntry<MR>> addedEntries = lexicon.add(entry);
+		for (final LexicalEntry<MR> addedEntry : addedEntries) {
+			for (final IIndependentLexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
+				lfs.addEntry(addedEntry, theta);
+			}
 		}
-		return lexicon.add(entry);
+		return !addedEntries.isEmpty();
 	}
 	
 	@Override
-	public IHashVector computeFeatures(IParseStep<LF> parseStep,
-			IDataItem<X> dataItem) {
+	public IHashVector computeFeatures(IParseStep<MR> parseStep, DI dataItem) {
 		return computeFeatures(parseStep, HashVectorFactory.create(), dataItem);
 	}
 	
 	@Override
-	public IHashVector computeFeatures(IParseStep<LF> parseStep,
-			IHashVector features, IDataItem<X> dataItem) {
-		for (final IParseFeatureSetImmutable<X, LF> featureSet : parseFeatures) {
+	public IHashVector computeFeatures(IParseStep<MR> parseStep,
+			IHashVector features, DI dataItem) {
+		for (final IParseFeatureSetImmutable<DI, MR> featureSet : parseFeatures) {
 			featureSet.setFeats(parseStep, features, dataItem);
 		}
-		for (final IIndependentLexicalFeatureSet<X, LF> lfs : lexicalFeatures) {
+		for (final IIndependentLexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
 			lfs.setFeats(parseStep, features, dataItem);
 		}
 		return features;
 	}
 	
 	@Override
-	public IHashVector computeFeatures(LexicalEntry<LF> lexicalEntry) {
+	public IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry) {
 		return computeFeatures(lexicalEntry, HashVectorFactory.create());
 	}
 	
 	@Override
-	public IHashVector computeFeatures(LexicalEntry<LF> lexicalEntry,
+	public IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry,
 			IHashVector features) {
-		for (final IIndependentLexicalFeatureSet<X, LF> lfs : lexicalFeatures) {
+		for (final IIndependentLexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
 			lfs.setFeats(lexicalEntry, features);
 		}
 		return features;
 	}
 	
 	@Override
-	public IDataItemModel<LF> createDataItemModel(IDataItem<X> dataItem) {
-		return new DataItemModel<X, LF>(this, dataItem);
+	public IDataItemModel<MR> createDataItemModel(DI dataItem) {
+		return new DataItemModel<DI, MR>(this, dataItem);
 	}
 	
-	public List<IIndependentLexicalFeatureSet<X, LF>> getLexicalFeatures() {
+	public List<IIndependentLexicalFeatureSet<DI, MR>> getLexicalFeatures() {
 		return lexicalFeatures;
 	}
 	
 	@Override
-	public ILexicon<LF> getLexicon() {
+	public ILexicon<MR> getLexicon() {
 		return lexicon;
 	}
 	
-	public List<IParseFeatureSet<X, LF>> getParseFeatures() {
+	public List<IParseFeatureSet<DI, MR>> getParseFeatures() {
 		return parseFeatures;
 	}
 	
@@ -188,17 +196,13 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		return theta;
 	}
 	
-	public boolean hasLexEntry(LexicalEntry<LF> entry) {
-		return lexicon.contains(entry);
-	}
-	
 	public boolean isValidWeightVector(IHashVectorImmutable vector) {
-		for (final IIndependentLexicalFeatureSet<X, LF> set : lexicalFeatures) {
+		for (final IIndependentLexicalFeatureSet<DI, MR> set : lexicalFeatures) {
 			if (!set.isValidWeightVector(vector)) {
 				return false;
 			}
 		}
-		for (final IParseFeatureSet<X, LF> set : parseFeatures) {
+		for (final IParseFeatureSet<DI, MR> set : parseFeatures) {
 			if (!set.isValidWeightVector(vector)) {
 				return false;
 			}
@@ -207,23 +211,23 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 	}
 	
 	@Override
-	public double score(IParseStep<LF> parseStep, IDataItem<X> dataItem) {
+	public double score(IParseStep<MR> parseStep, DI dataItem) {
 		double score = 0.0;
 		// Parse features
-		for (final IParseFeatureSet<X, LF> featureSet : parseFeatures) {
+		for (final IParseFeatureSet<DI, MR> featureSet : parseFeatures) {
 			score += featureSet.score(parseStep, theta, dataItem);
 		}
 		// Lexical features
-		for (final IIndependentLexicalFeatureSet<X, LF> featureSet : lexicalFeatures) {
+		for (final IIndependentLexicalFeatureSet<DI, MR> featureSet : lexicalFeatures) {
 			score += featureSet.score(parseStep, theta, dataItem);
 		}
 		return score;
 	}
 	
 	@Override
-	public double score(LexicalEntry<LF> entry) {
+	public double score(LexicalEntry<MR> entry) {
 		double score = 0.0;
-		for (final IIndependentLexicalFeatureSet<X, LF> featureSet : lexicalFeatures) {
+		for (final IIndependentLexicalFeatureSet<DI, MR> featureSet : lexicalFeatures) {
 			score += featureSet.score(entry, theta);
 		}
 		return score;
@@ -233,11 +237,11 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 	public String toString() {
 		final StringBuilder ret = new StringBuilder();
 		ret.append("Lexical feature sets:\n");
-		for (final ILexicalFeatureSet<X, LF> featureSet : lexicalFeatures) {
+		for (final ILexicalFeatureSet<DI, MR> featureSet : lexicalFeatures) {
 			ret.append("\t").append(featureSet).append("\n");
 		}
 		ret.append("Parse feature sets:\n");
-		for (final IParseFeatureSet<X, LF> featureSet : parseFeatures) {
+		for (final IParseFeatureSet<DI, MR> featureSet : parseFeatures) {
 			ret.append("\t").append(featureSet).append("\n");
 		}
 		ret.append("Lexicon [size=").append(lexicon.size()).append("]\n");
@@ -247,18 +251,31 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		return ret.toString();
 	}
 	
-	private boolean addFixedLexicalEntry(LexicalEntry<LF> entry) {
-		for (final ILexicalFeatureSet<X, LF> lfs : lexicalFeatures) {
+	private boolean addFixedLexicalEntry(LexicalEntry<MR> entry) {
+		final Set<LexicalEntry<MR>> addedEntries = lexicon.add(entry);
+		
+		// Only the original entry is considered fixed
+		for (final ILexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
 			lfs.addFixedEntry(entry, theta);
 		}
-		return lexicon.add(entry);
+		
+		// The rest are updated as regular entries
+		for (final LexicalEntry<MR> addedEntry : addedEntries) {
+			if (!addedEntries.equals(entry)) {
+				for (final ILexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
+					lfs.addEntry(addedEntry, theta);
+				}
+			}
+		}
+		
+		return !addedEntries.isEmpty();
 	}
 	
-	private String lexiconToString(ILexicon<LF> lex) {
+	private String lexiconToString(ILexicon<MR> lex) {
 		final StringBuffer result = new StringBuffer();
-		final Iterator<LexicalEntry<LF>> i = lex.toCollection().iterator();
+		final Iterator<LexicalEntry<MR>> i = lex.toCollection().iterator();
 		while (i.hasNext()) {
-			final LexicalEntry<LF> entry = i.next();
+			final LexicalEntry<MR> entry = i.next();
 			result.append(entry);
 			result.append(" [").append(score(entry)).append("]");
 			
@@ -267,37 +284,37 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		return result.toString();
 	}
 	
-	public static class Builder<X, Y> {
-		private final List<IIndependentLexicalFeatureSet<X, Y>>	lexicalFeatures	= new LinkedList<IIndependentLexicalFeatureSet<X, Y>>();
-		private ILexicon<Y>										lexicon			= new Lexicon<Y>();
-		private final List<IParseFeatureSet<X, Y>>				parseFeatures	= new LinkedList<IParseFeatureSet<X, Y>>();
+	public static class Builder<DI extends IDataItem<?>, MR> {
+		private final List<IIndependentLexicalFeatureSet<DI, MR>>	lexicalFeatures	= new LinkedList<IIndependentLexicalFeatureSet<DI, MR>>();
+		private ILexicon<MR>										lexicon			= new Lexicon<MR>();
+		private final List<IParseFeatureSet<DI, MR>>				parseFeatures	= new LinkedList<IParseFeatureSet<DI, MR>>();
 		
-		public Builder<X, Y> addLexicalFeatureSet(
-				IIndependentLexicalFeatureSet<X, Y> featureSet) {
+		public Builder<DI, MR> addLexicalFeatureSet(
+				IIndependentLexicalFeatureSet<DI, MR> featureSet) {
 			lexicalFeatures.add(featureSet);
 			return this;
 		}
 		
-		public Builder<X, Y> addParseFeatureSet(
-				IParseFeatureSet<X, Y> featureSet) {
+		public Builder<DI, MR> addParseFeatureSet(
+				IParseFeatureSet<DI, MR> featureSet) {
 			parseFeatures.add(featureSet);
 			return this;
 		}
 		
-		public Model<X, Y> build() {
-			return new Model<X, Y>(
+		public Model<DI, MR> build() {
+			return new Model<DI, MR>(
 					Collections.unmodifiableList(lexicalFeatures),
 					Collections.unmodifiableList(parseFeatures), lexicon);
 		}
 		
-		public Builder<X, Y> setLexicon(ILexicon<Y> lexicon) {
+		public Builder<DI, MR> setLexicon(ILexicon<MR> lexicon) {
 			this.lexicon = lexicon;
 			return this;
 		}
 	}
 	
-	private static class Decoder<X, Y> extends
-			AbstractDecoderIntoDir<Model<X, Y>> {
+	private static class Decoder<DI extends IDataItem<?>, MR> extends
+			AbstractDecoderIntoDir<Model<DI, MR>> {
 		private static final String		LEXICAL_FEATURE_SET_FILE_EXTENSION	= ".lex.feat";
 		private static final String		LEXICON_FILE_NAME					= "lexicon";
 		
@@ -307,9 +324,9 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		
 		private static final String		WEIGHTS_FILE_NAME_EXTENSION			= ".weights";
 		
-		private final DecoderHelper<Y>	decoderHelper;
+		private final DecoderHelper<MR>	decoderHelper;
 		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
+		public Decoder(DecoderHelper<MR> decoderHelper) {
 			super(Model.class);
 			this.decoderHelper = decoderHelper;
 		}
@@ -319,36 +336,40 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			final IHashVector weights = HashVectorFactory.create();
 			final BufferedReader reader = new BufferedReader(new FileReader(
 					file));
-			String line;
-			while ((line = readTextLine(reader)) != null) {
-				final String[] split = line.split("\t");
-				final String[] keySplit = split[0].split("#");
-				switch (keySplit.length) {
-					case 1:
-						weights.set(keySplit[0], Double.valueOf(split[1]));
-						break;
-					case 2:
-						weights.set(keySplit[0], keySplit[1],
-								Double.valueOf(split[1]));
-						break;
-					case 3:
-						weights.set(keySplit[0], keySplit[1], keySplit[2],
-								Double.valueOf(split[1]));
-						break;
-					case 4:
-						weights.set(keySplit[0], keySplit[1], keySplit[2],
-								keySplit[3], Double.valueOf(split[1]));
-						break;
-					case 5:
-						weights.set(keySplit[0], keySplit[1], keySplit[2],
-								keySplit[3], keySplit[4],
-								Double.valueOf(split[1]));
-						break;
-					default:
-						throw new IllegalStateException(
-								"Invalid number of KeyArgs arguments: "
-										+ split[0]);
+			try {
+				String line;
+				while ((line = readTextLine(reader)) != null) {
+					final String[] split = line.split("\t");
+					final String[] keySplit = split[0].split("#");
+					switch (keySplit.length) {
+						case 1:
+							weights.set(keySplit[0], Double.valueOf(split[1]));
+							break;
+						case 2:
+							weights.set(keySplit[0], keySplit[1],
+									Double.valueOf(split[1]));
+							break;
+						case 3:
+							weights.set(keySplit[0], keySplit[1], keySplit[2],
+									Double.valueOf(split[1]));
+							break;
+						case 4:
+							weights.set(keySplit[0], keySplit[1], keySplit[2],
+									keySplit[3], Double.valueOf(split[1]));
+							break;
+						case 5:
+							weights.set(keySplit[0], keySplit[1], keySplit[2],
+									keySplit[3], keySplit[4],
+									Double.valueOf(split[1]));
+							break;
+						default:
+							throw new IllegalStateException(
+									"Invalid number of KeyArgs arguments: "
+											+ split[0]);
+					}
 				}
+			} finally {
+				reader.close();
 			}
 			return weights;
 		}
@@ -386,13 +407,13 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(Model<X, Y> object) {
+		protected Map<String, String> createAttributesMap(Model<DI, MR> object) {
 			// No attributes, return an empty map
 			return new HashMap<String, String>();
 		}
 		
 		@Override
-		protected Model<X, Y> decodeFromDir(Map<String, String> attributes,
+		protected Model<DI, MR> decodeFromDir(Map<String, String> attributes,
 				File dir) throws IOException {
 			
 			// Create lexical features from *.lex.feat files
@@ -405,11 +426,11 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 									.endsWith(LEXICAL_FEATURE_SET_FILE_EXTENSION);
 						}
 					});
-			final List<IIndependentLexicalFeatureSet<X, Y>> lexicalFeatures = new ArrayList<IIndependentLexicalFeatureSet<X, Y>>(
+			final List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures = new ArrayList<IIndependentLexicalFeatureSet<DI, MR>>(
 					lexicalFeatureSetFiles.length);
 			for (final String filename : lexicalFeatureSetFiles) {
 				@SuppressWarnings("unchecked")
-				final IIndependentLexicalFeatureSet<X, Y> featureSet = (IIndependentLexicalFeatureSet<X, Y>) (DecoderServices
+				final IIndependentLexicalFeatureSet<DI, MR> featureSet = (IIndependentLexicalFeatureSet<DI, MR>) (DecoderServices
 						.decode(getClassName(filename,
 								LEXICAL_FEATURE_SET_FILE_EXTENSION), new File(
 								dir, filename), decoderHelper));
@@ -426,11 +447,11 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 									.endsWith(PARSE_FEATURE_SET_FILE_EXTENSION);
 						}
 					});
-			final List<IParseFeatureSet<X, Y>> parseFeatures = new ArrayList<IParseFeatureSet<X, Y>>(
+			final List<IParseFeatureSet<DI, MR>> parseFeatures = new ArrayList<IParseFeatureSet<DI, MR>>(
 					parseFeatureSetFiles.length);
 			for (final String filename : parseFeatureSetFiles) {
 				@SuppressWarnings("unchecked")
-				final IParseFeatureSet<X, Y> featureSet = (IParseFeatureSet<X, Y>) DecoderServices
+				final IParseFeatureSet<DI, MR> featureSet = (IParseFeatureSet<DI, MR>) DecoderServices
 						.decode(getClassName(filename,
 								PARSE_FEATURE_SET_FILE_EXTENSION), new File(
 								dir, filename), decoderHelper);
@@ -438,7 +459,7 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			}
 			
 			// Create the lexicon from model.lex file
-			final ILexicon<Y> lexicon = DecoderServices.decode(new File(dir,
+			final ILexicon<MR> lexicon = DecoderServices.decode(new File(dir,
 					LEXICON_FILE_NAME), decoderHelper);
 			
 			// Read feature weights from all *.weights files (e.g.
@@ -458,17 +479,17 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 						theta);
 			}
 			
-			return new Model<X, Y>(lexicalFeatures, parseFeatures, lexicon,
+			return new Model<DI, MR>(lexicalFeatures, parseFeatures, lexicon,
 					theta);
 		}
 		
 		@Override
-		protected void writeFiles(Model<X, Y> object, File dir)
+		protected void writeFiles(Model<DI, MR> object, File dir)
 				throws IOException {
 			// For each parse feature set, write the feature set file. This file
 			// is
 			// used to create the feature set and doesn't contain the weights
-			for (final IParseFeatureSet<X, Y> featureSet : object.parseFeatures) {
+			for (final IParseFeatureSet<DI, MR> featureSet : object.parseFeatures) {
 				DecoderServices.encode(featureSet, new File(dir, featureSet
 						.getClass().getName()
 						+ PARSE_FEATURE_SET_FILE_EXTENSION), decoderHelper);
@@ -477,7 +498,7 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			// For each lexical feature set, write the feature set file. This
 			// file
 			// is used to create the feature set and doesn't contain the weights
-			for (final IIndependentLexicalFeatureSet<X, Y> featureSet : object.lexicalFeatures) {
+			for (final IIndependentLexicalFeatureSet<DI, MR> featureSet : object.lexicalFeatures) {
 				DecoderServices.encode(featureSet, new File(dir, featureSet
 						.getClass().getName()
 						+ LEXICAL_FEATURE_SET_FILE_EXTENSION), decoderHelper);
@@ -487,7 +508,7 @@ public class Model<X, LF> implements IModelImmutable<X, LF> {
 			// theta that are assigned to it, and dump them to a
 			// *.parse.feat.weights
 			// file
-			for (final IParseFeatureSet<X, Y> featureSet : object.parseFeatures) {
+			for (final IParseFeatureSet<DI, MR> featureSet : object.parseFeatures) {
 				writeWeightVector(new File(dir, featureSet.getClass().getName()
 						+ PARSE_FEATURE_SET_FILE_EXTENSION
 						+ WEIGHTS_FILE_NAME_EXTENSION), object.theta,

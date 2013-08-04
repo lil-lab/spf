@@ -23,7 +23,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.TestServices;
 
@@ -37,9 +36,7 @@ public class HasFreeVariablesTest {
 	@Test
 	public void test() {
 		final LogicalExpression exp = LogicalExpression
-				.parse("(lambda $0:e (pred1:<e,<e,t>> $0 (a:<<e,t>,e> (lambda $1:e (pred2:<e,t> $1)))))",
-						LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator());
+				.parse("(lambda $0:e (pred1:<e,<e,t>> $0 (a:<<e,t>,e> (lambda $1:e (pred2:<e,t> $1)))))");
 		Assert.assertFalse(HasFreeVariables.of(exp));
 		Assert.assertTrue(HasFreeVariables.of(((Lambda) exp).getBody()));
 	}

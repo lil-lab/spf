@@ -18,22 +18,28 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.language.type;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+
+import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
+
 /**
  * A language entity type.
  * 
  * @author Yoav Artzi
  */
-public abstract class Type {
+public abstract class Type implements Serializable {
+	private static final long	serialVersionUID	= 1758388007880855246L;
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
 	 * It mustn't be used when copying/comparing/storing/etc. the object.
 	 */
-	final private int		hashCodeCache;
+	final private int			hashCodeCache;
 	/**
 	 * The name of the type. This name must be unique. Meaning, we don't allow
 	 * function over-loading, for example.
 	 */
-	final private String	name;
+	final private String		name;
 	
 	Type(String name) {
 		this.name = name;
@@ -94,6 +100,18 @@ public abstract class Type {
 	
 	private int calcHashCode() {
 		return this.name.hashCode();
+	}
+	
+	/**
+	 * Used to resolve read serialized objects to the equivalent one in the
+	 * repository.
+	 * 
+	 * @return
+	 * @throws ObjectStreamException
+	 */
+	protected Object readResolve() throws ObjectStreamException {
+		return LogicLanguageServices.getTypeRepository().getTypeCreateIfNeeded(
+				name);
 	}
 	
 }

@@ -19,17 +19,16 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IFeatureSet;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointFeatureSetImmutable<LANG, STATE, LF, ESTEP> extends
-		IFeatureSet {
+public interface IJointFeatureSetImmutable<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, ESTEP>
+		extends IFeatureSet {
 	
-	double score(ESTEP executionStep, IHashVector theta,
-			IDataItem<Pair<LANG, STATE>> dataItem);
+	double score(ESTEP executionStep, IHashVector theta, DI dataItem);
 	
-	void setFeats(ESTEP executionStep, IHashVector feats,
-			IDataItem<Pair<LANG, STATE>> dataItem);
+	void setFeats(ESTEP executionStep, IHashVector feats, DI dataItem);
 	
 }

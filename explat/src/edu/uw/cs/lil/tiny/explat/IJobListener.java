@@ -24,7 +24,7 @@ package edu.uw.cs.lil.tiny.explat;
  * @author Yoav Artzi
  */
 public interface IJobListener {
-	public void jobCompleted(String jobId);
+	public void jobCompleted(Job job);
 	
-	public void jobException(String jobId, Exception e);
+	public void jobException(Job job, Exception e);
 }

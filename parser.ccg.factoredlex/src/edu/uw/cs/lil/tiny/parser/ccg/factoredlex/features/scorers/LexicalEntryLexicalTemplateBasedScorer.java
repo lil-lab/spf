@@ -23,10 +23,12 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 public class LexicalEntryLexicalTemplateBasedScorer implements
-		IScorer<LexicalEntry<LogicalExpression>> {
+		ISerializableScorer<LexicalEntry<LogicalExpression>> {
 	
+	private static final long				serialVersionUID	= 5970648805173831923L;
 	private final IScorer<LexicalTemplate>	templateScorer;
 	
 	public LexicalEntryLexicalTemplateBasedScorer(

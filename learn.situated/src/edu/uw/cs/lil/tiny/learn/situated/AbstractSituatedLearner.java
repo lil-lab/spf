@@ -22,13 +22,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
@@ -37,6 +38,7 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
+import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.ListUtils;
@@ -64,15 +66,21 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <ERESULT>
  *            Type of execution result.
  */
-public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
-		implements
-		ILearner<Sentence, MR, JointModel<Sentence, STATE, MR, ESTEP>> {
+public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
+		implements ILearner<DI, MR, JointModel<DI, STATE, MR, ESTEP>> {
 	private static final ILogger														LOG	= LoggerFactory
 																									.create(AbstractSituatedLearner.class);
+	private final ICategoryServices<MR>													categoryServices;
+	
 	/**
 	 * Number of training epochs.
 	 */
 	private final int																	epochs;
+	
+	/**
+	 * GENLEX procedure. If 'null' skip lexical induction.
+	 */
+	private final ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>>	genlex;
 	
 	/**
 	 * Parser beam size for lexical generation.
@@ -80,35 +88,28 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 	private final int																	lexiconGenerationBeamSize;
 	
 	/**
-	 * Enable lexicon learning.
-	 */
-	private final boolean																lexiconLearning;
-	
-	/**
-	 * Max sentence length to proecess. If longer, skip.
+	 * Max sentence length to process. If longer, skip.
 	 */
 	private final int																	maxSentenceLength;
 	
 	/**
 	 * Training data.
 	 */
-	private final IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>>	trainingData;
+	private final IDataCollection<DI>													trainingData;
 	
 	/**
 	 * Mapping of training data samples to their gold labels.
 	 */
-	private final Map<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>>				trainingDataDebug;
+	private final Map<DI, Pair<MR, ERESULT>>											trainingDataDebug;
 	
 	/**
 	 * Joint parser for inference.
 	 */
 	protected final IJointParser<Sentence, STATE, MR, ESTEP, ERESULT>					parser;
-	
 	/**
 	 * Parser output logger.
 	 */
 	protected final IJointOutputLogger<MR, ESTEP, ERESULT>								parserOutputLogger;
-	
 	/**
 	 * Learning statistics.
 	 */
@@ -116,24 +117,27 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 	
 	protected AbstractSituatedLearner(
 			int numIterations,
-			IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>> trainingData,
-			Map<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>> trainingDataDebug,
-			int maxSentenceLength, int lexiconGenerationBeamSize,
+			IDataCollection<DI> trainingData,
+			Map<DI, Pair<MR, ERESULT>> trainingDataDebug,
+			int maxSentenceLength,
+			int lexiconGenerationBeamSize,
 			IJointParser<Sentence, STATE, MR, ESTEP, ERESULT> parser,
-			boolean lexiconLearning,
-			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger) {
+			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>> genlex) {
 		this.epochs = numIterations;
 		this.trainingData = trainingData;
 		this.trainingDataDebug = trainingDataDebug;
 		this.maxSentenceLength = maxSentenceLength;
 		this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 		this.parser = parser;
-		this.lexiconLearning = lexiconLearning;
 		this.parserOutputLogger = parserOutputLogger;
+		this.categoryServices = categoryServices;
+		this.genlex = genlex;
 		this.stats = new OnlineLearningStats(numIterations, trainingData.size());
 	}
 	
-	public void train(JointModel<Sentence, STATE, MR, ESTEP> model) {
+	public void train(JointModel<DI, STATE, MR, ESTEP> model) {
 		// Epochs
 		for (int epochNumber = 0; epochNumber < epochs; ++epochNumber) {
 			// Training epoch, iterate over all training samples
@@ -143,7 +147,7 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 			int itemCounter = -1;
 			
 			// Iterating over training data
-			for (final ILexGenDataItem<Pair<Sentence, STATE>, MR> dataItem : trainingData) {
+			for (final DI dataItem : trainingData) {
 				// Process a single training sample
 				
 				// Record start time
@@ -170,7 +174,7 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 				// parse to prune them and update the lexicon.
 				// ///////////////////////////
 				
-				if (lexiconLearning) {
+				if (genlex != null) {
 					lexicalInduction(dataItem, dataItemModel, model,
 							itemCounter, epochNumber);
 				}
@@ -193,13 +197,13 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 		}
 	}
 	
-	private void lexicalInduction(
-			final ILexGenDataItem<Pair<Sentence, STATE>, MR> dataItem,
+	private void lexicalInduction(final DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<Sentence, STATE, MR, ESTEP> model, int dataItemNumber,
+			JointModel<DI, STATE, MR, ESTEP> model, int dataItemNumber,
 			int epochNumber) {
 		// Generate lexical entries
-		final ILexicon<MR> generatedLexicon = dataItem.generateLexicon();
+		final ILexicon<MR> generatedLexicon = genlex.generate(dataItem, model,
+				categoryServices);
 		LOG.info("Generated lexicon size = %d", generatedLexicon.size());
 		
 		if (generatedLexicon.size() > 0) {
@@ -303,8 +307,7 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 		}
 	}
 	
-	protected boolean isGoldDebugCorrect(
-			IDataItem<Pair<Sentence, STATE>> dataItem, Pair<MR, ERESULT> label) {
+	protected boolean isGoldDebugCorrect(DI dataItem, Pair<MR, ERESULT> label) {
 		if (trainingDataDebug.containsKey(dataItem)) {
 			return trainingDataDebug.get(dataItem).equals(label);
 		} else {
@@ -312,15 +315,14 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 		}
 	}
 	
-	protected void logParse(IDataItem<Pair<Sentence, STATE>> dataItem,
-			IJointParse<MR, ERESULT> parse, Boolean valid, boolean verbose,
-			IDataItemModel<MR> dataItemModel) {
+	protected void logParse(DI dataItem, IJointParse<MR, ERESULT> parse,
+			Boolean valid, boolean verbose, IDataItemModel<MR> dataItemModel) {
 		logParse(dataItem, parse, valid, verbose, null, dataItemModel);
 	}
 	
-	protected void logParse(IDataItem<Pair<Sentence, STATE>> dataItem,
-			IJointParse<MR, ERESULT> parse, Boolean valid, boolean verbose,
-			String tag, IDataItemModel<MR> dataItemModel) {
+	protected void logParse(DI dataItem, IJointParse<MR, ERESULT> parse,
+			Boolean valid, boolean verbose, String tag,
+			IDataItemModel<MR> dataItemModel) {
 		final boolean isGold;
 		if (isGoldDebugCorrect(dataItem, parse.getResult())) {
 			isGold = true;
@@ -348,21 +350,12 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT>
 	
 	/**
 	 * Parameter update method.
-	 * 
-	 * @param modelParserOutput
-	 * @param dataItem
-	 * @param dataItemModel
-	 * @param model
-	 * @param itemCounter
-	 * @param epochNumber
 	 */
-	protected abstract void parameterUpdate(
-			ILexGenDataItem<Pair<Sentence, STATE>, MR> dataItem,
+	protected abstract void parameterUpdate(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<Sentence, STATE, MR, ESTEP> model, int itemCounter,
+			JointModel<DI, STATE, MR, ESTEP> model, int itemCounter,
 			int epochNumber);
 	
-	abstract protected boolean validate(
-			IDataItem<Pair<Sentence, STATE>> dataItem,
+	abstract protected boolean validate(DI dataItem,
 			Pair<MR, ERESULT> hypothesis);
 }

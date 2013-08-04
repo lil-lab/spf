@@ -58,15 +58,18 @@ public class Ontology implements Iterable<LogicalConstant> {
 		// parse
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
 		final StringBuilder strippedFile = new StringBuilder();
-		String line = null;
-		while ((line = reader.readLine()) != null) {
-			line.trim();
-			line = line.split("\\s*//")[0];
-			if (!line.equals("")) {
-				strippedFile.append(line).append(" ");
+		try {
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				line = line.split("\\s*//")[0];
+				if (!line.equals("")) {
+					strippedFile.append(line).append(" ");
+				}
 			}
+		} finally {
+			reader.close();
 		}
-		reader.close();
 		
 		// Read the constants
 		final Set<LogicalConstant> constants = new HashSet<LogicalConstant>();
@@ -74,9 +77,7 @@ public class Ontology implements Iterable<LogicalConstant> {
 				strippedFile.toString()));
 		while (lispReader.hasNext()) {
 			final LogicalExpression exp = LogicalExpression.parse(
-					lispReader.next(),
-					LogicLanguageServices.getTypeRepository(),
-					LogicLanguageServices.getTypeComparator(), false);
+					lispReader.next(), false);
 			if (exp instanceof LogicalConstant) {
 				constants.add((LogicalConstant) exp);
 			} else {

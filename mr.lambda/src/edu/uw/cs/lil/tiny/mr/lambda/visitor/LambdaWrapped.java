@@ -59,24 +59,20 @@ public class LambdaWrapped implements ILogicalExpressionVisitor {
 				.getTypeRepository().generalizeType(exp.getType().getDomain()));
 		final List<LogicalExpression> args = new ArrayList<LogicalExpression>(1);
 		args.add(newVariable);
-		LogicalExpression newLiteral = new Literal(exp, args,
-				LogicLanguageServices.getTypeComparator(),
-				LogicLanguageServices.getTypeRepository());
+		LogicalExpression newLiteral = new Literal(exp, args);
 		if (newLiteral.getType().isComplex()) {
 			newLiteral = wrap(newLiteral);
 		} else {
 			newLiteral = Simplify.of(newLiteral);
 		}
-		return new Lambda(newVariable, newLiteral,
-				LogicLanguageServices.getTypeRepository());
+		return new Lambda(newVariable, newLiteral);
 	}
 	
 	@Override
 	public void visit(Lambda lambda) {
 		lambda.getBody().accept(this);
 		if (tempReturn != lambda.getBody()) {
-			tempReturn = new Lambda(lambda.getArgument(), tempReturn,
-					LogicLanguageServices.getTypeRepository());
+			tempReturn = new Lambda(lambda.getArgument(), tempReturn);
 		} else {
 			tempReturn = lambda;
 		}

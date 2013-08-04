@@ -19,20 +19,21 @@
 package edu.uw.cs.lil.tiny.parser.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.model.init.LexiconModelInit;
 
-public class LexiconModelInitCreator<X, Y> implements
-		IResourceObjectCreator<LexiconModelInit<X, Y>> {
+public class LexiconModelInitCreator<DI extends IDataItem<?>, MR> implements
+		IResourceObjectCreator<LexiconModelInit<DI, MR>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexiconModelInit<X, Y> create(Parameters params,
+	public LexiconModelInit<DI, MR> create(Parameters params,
 			IResourceRepository repo) {
-		return new LexiconModelInit<X, Y>((ILexicon<Y>) repo.getResource(params
+		return new LexiconModelInit<DI, MR>((ILexicon<MR>) repo.getResource(params
 				.get("lexicon")), "true".equals(params.get("fixed")));
 	}
 	

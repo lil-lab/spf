@@ -31,6 +31,7 @@ import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.DecoderServices;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Scores lexical entries by their origin.
@@ -38,8 +39,10 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Yoav Artzi
  * @param <Y>
  */
-public class OriginLexicalEntryScorer<Y> implements IScorer<LexicalEntry<Y>> {
+public class OriginLexicalEntryScorer<Y> implements
+		ISerializableScorer<LexicalEntry<Y>> {
 	
+	private static final long							serialVersionUID	= 1019435407737659964L;
 	private final IScorer<LexicalEntry<Y>>				defaultScorer;
 	private final Map<String, IScorer<LexicalEntry<Y>>>	originScorers;
 	

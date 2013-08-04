@@ -19,8 +19,8 @@
 package edu.uw.cs.lil.tiny.test.stats;
 
 
-public abstract class AbstractTestingStatistics<X, Y> implements
-		ITestingStatistics<X, Y> {
+public abstract class AbstractTestingStatistics<SAMPLE, LABEL> implements
+		ITestingStatistics<SAMPLE, LABEL> {
 	
 	private final String	metricName;
 	private final String	prefix;

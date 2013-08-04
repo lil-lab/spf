@@ -45,27 +45,30 @@ public abstract class AbstractDecoderIntoFile<C> extends AbstractDecoder<C> {
 	@Override
 	public final C decode(File file) throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
-		
-		// Read the attributes map
-		final Map<String, String> attributes = readValueAttributeHeader(reader);
-		
-		// Read saved dependent files into a key->file mapping
-		final Map<String, File> dependentFiles = new HashMap<String, File>();
-		final Iterator<Entry<String, String>> iterator = attributes.entrySet()
-				.iterator();
-		while (iterator.hasNext()) {
-			final Entry<String, String> entry = iterator.next();
-			if (entry.getKey().startsWith(DEPENDENT_FILE_KEY_PREFIX)) {
-				dependentFiles.put(
-						entry.getKey().substring(
-								DEPENDENT_FILE_KEY_PREFIX.length()), new File(
-								file.getParentFile(), entry.getValue()));
-				iterator.remove();
+		try {
+			// Read the attributes map
+			final Map<String, String> attributes = readValueAttributeHeader(reader);
+			
+			// Read saved dependent files into a key->file mapping
+			final Map<String, File> dependentFiles = new HashMap<String, File>();
+			final Iterator<Entry<String, String>> iterator = attributes
+					.entrySet().iterator();
+			while (iterator.hasNext()) {
+				final Entry<String, String> entry = iterator.next();
+				if (entry.getKey().startsWith(DEPENDENT_FILE_KEY_PREFIX)) {
+					dependentFiles.put(
+							entry.getKey().substring(
+									DEPENDENT_FILE_KEY_PREFIX.length()),
+							new File(file.getParentFile(), entry.getValue()));
+					iterator.remove();
+				}
 			}
+			
+			// Read the rest of the data, create the object and return it
+			return doDecode(attributes, dependentFiles, reader);
+		} finally {
+			reader.close();
 		}
-		
-		// Read the rest of the data, create the object and return it
-		return doDecode(attributes, dependentFiles, reader);
 	}
 	
 	@Override

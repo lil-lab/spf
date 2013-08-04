@@ -24,15 +24,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenLossDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.learn.weakp.loss.parser.IScoreFunction;
@@ -65,36 +66,39 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * </p>
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public class LossSensitivePerceptronCKY<Y> implements
-		ILearner<Sentence, Y, Model<Sentence, Y>> {
-	private static final ILogger													LOG	= LoggerFactory
-																								.create(LossSensitivePerceptronCKY.class
-																										.getName());
-	private final IScoreFunction<Y>													lexicalGenerationSecondaryPruningFunction;
+public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, MR>>
+		implements
+		ILearner<IDataItem<Sentence>, MR, Model<IDataItem<Sentence>, MR>> {
+	private static final ILogger											LOG	= LoggerFactory
+																						.create(LossSensitivePerceptronCKY.class
+																								.getName());
+	private final ICategoryServices<MR>										categoryServices;
+	private final ILexiconGenerator<DI, MR, Model<IDataItem<Sentence>, MR>>	genlex;
+	private final IScoreFunction<MR>										lexicalGenerationSecondaryPruningFunction;
 	/**
 	 * Generator for lexical entries from evidence.
 	 */
-	private final int																lexiconGenerationBeamSize;
-	private final IValidator<Sentence, Y>											lexiconGenerationValidator;
-	private final double															margin;
-	private final int																maxSentenceLength;
-	private final int																numIterations;
-	private final AbstractCKYParser<Y>												parser;
-	private final OnlineLearningStats												stats;
-	private final IDataCollection<? extends ILexGenLossDataItem<Sentence, Y, Y>>	trainingData;
-	private final Map<Sentence, Y>													trainingDataDebug;
+	private final int														lexiconGenerationBeamSize;
+	private final IValidator<Sentence, MR>									lexiconGenerationValidator;
+	private final double													margin;
+	private final int														maxSentenceLength;
+	private final int														numIterations;
+	private final AbstractCKYParser<MR>										parser;
+	private final OnlineLearningStats										stats;
+	private final IDataCollection<DI>										trainingData;
+	private final Map<Sentence, MR>											trainingDataDebug;
 	
-	public LossSensitivePerceptronCKY(
-			int numIterations,
-			double margin,
-			IDataCollection<? extends ILexGenLossDataItem<Sentence, Y, Y>> trainingData,
-			Map<Sentence, Y> trainingDataDebug, int maxSentenceLength,
+	public LossSensitivePerceptronCKY(int numIterations, double margin,
+			IDataCollection<DI> trainingData,
+			Map<Sentence, MR> trainingDataDebug, int maxSentenceLength,
 			int lexiconGenerationBeamSize,
-			IScoreFunction<Y> lexicalGenerationSecondaryPruningFunction,
-			IValidator<Sentence, Y> lexiconGenerationValidator,
-			AbstractCKYParser<Y> parser) {
+			IScoreFunction<MR> lexicalGenerationSecondaryPruningFunction,
+			IValidator<Sentence, MR> lexiconGenerationValidator,
+			AbstractCKYParser<MR> parser,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, Model<IDataItem<Sentence>, MR>> genlex) {
 		this.numIterations = numIterations;
 		this.margin = margin;
 		this.trainingData = trainingData;
@@ -104,6 +108,8 @@ public class LossSensitivePerceptronCKY<Y> implements
 		this.lexiconGenerationValidator = lexiconGenerationValidator;
 		this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 		this.parser = parser;
+		this.categoryServices = categoryServices;
+		this.genlex = genlex;
 		this.stats = new OnlineLearningStats(numIterations, trainingData.size());
 		LOG.info(
 				"Init LossSensitivePerceptron: numIterations=%d, margin=%f, trainingData.size()=%d, trainingDataDebug.size()=%d, maxSentenceLength=%d ...",
@@ -117,7 +123,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 	}
 	
 	@Override
-	public void train(Model<Sentence, Y> model) {
+	public void train(Model<IDataItem<Sentence>, MR> model) {
 		for (int iterationNumber = 0; iterationNumber < numIterations; ++iterationNumber) {
 			// Training iteration, go over all training samples
 			LOG.info("=========================");
@@ -125,7 +131,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 			LOG.info("=========================");
 			int itemCounter = -1;
 			
-			for (final ILexGenLossDataItem<Sentence, Y, Y> dataItem : trainingData) {
+			for (final DI dataItem : trainingData) {
 				// Process a specific training sample
 				
 				final long startTime = System.currentTimeMillis();
@@ -140,23 +146,22 @@ public class LossSensitivePerceptronCKY<Y> implements
 					continue;
 				}
 				
-				final IDataItemModel<Y> dataItemModel = model
+				final IDataItemModel<MR> dataItemModel = model
 						.createDataItemModel(dataItem);
 				
 				// First parse: parse with a generated lexicon and add the best
 				// parses to the lexicon.
 				
 				// Generate lexical entries
-				final Lexicon<Y> generatedLexicon = new Lexicon<Y>(
-						dataItem.generateLexicon());
-				LOG.info("Generated lexicon size = %d", generatedLexicon.size());
+				final ILexicon<MR> generatedLexicon = genlex.generate(dataItem,
+						model, categoryServices);
 				
 				// Cell factory for this parse
-				final AbstractCellFactory<Y> lexiconGenerationCellFactory = new ScoreSensitiveCellFactory<Y>(
+				final AbstractCellFactory<MR> lexiconGenerationCellFactory = new ScoreSensitiveCellFactory<MR>(
 						lexicalGenerationSecondaryPruningFunction, false,
 						dataItem.getSample().getTokens().size());
 				
-				final IParserOutput<Y> generateLexiconParserOutput = parser
+				final IParserOutput<MR> generateLexiconParserOutput = parser
 						.parse(dataItem, Pruner.create(dataItem),
 								dataItemModel, false, generatedLexicon,
 								lexiconGenerationBeamSize,
@@ -164,7 +169,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 				
 				stats.recordGenerationParsing(generateLexiconParserOutput
 						.getParsingTime());
-				final List<? extends IParse<Y>> allGenerationParses = generateLexiconParserOutput
+				final List<? extends IParse<MR>> allGenerationParses = generateLexiconParserOutput
 						.getAllParses();
 				
 				LOG.info("Lexicon generation parsing time: %.4fsec",
@@ -174,11 +179,11 @@ public class LossSensitivePerceptronCKY<Y> implements
 						allGenerationParses.size());
 				
 				// Collect all valid parses and their scores
-				final List<IParse<Y>> validBestGenerationParses = new LinkedList<IParse<Y>>();
+				final List<IParse<MR>> validBestGenerationParses = new LinkedList<IParse<MR>>();
 				double currentMinLoss = Double.MAX_VALUE;
 				double currentMaxModelScore = -Double.MAX_VALUE;
 				LOG.info("Generation parses:");
-				for (final IParse<Y> parse : allGenerationParses) {
+				for (final IParse<MR> parse : allGenerationParses) {
 					// Check if parse is valid -- different handling for
 					// supervised samples
 					final boolean isValid;
@@ -217,14 +222,14 @@ public class LossSensitivePerceptronCKY<Y> implements
 				// Log lexicon generation parses
 				LOG.info("%d valid best parses for lexical generation:",
 						validBestGenerationParses.size());
-				for (final IParse<Y> parse : validBestGenerationParses) {
+				for (final IParse<MR> parse : validBestGenerationParses) {
 					logParse(dataItem, parse,
 							dataItem.calculateLoss(parse.getSemantics()), true,
 							dataItemModel);
 					LOG.info("Feature weights: %s", model.getTheta()
 							.printValues(parse.getAverageMaxFeatureVector()));
 				}
-				for (final IParse<Y> parse : allGenerationParses) {
+				for (final IParse<MR> parse : allGenerationParses) {
 					if (!validBestGenerationParses.contains(parse)
 							&& isGoldDebugCorrect(dataItem.getSample(),
 									parse.getSemantics())) {
@@ -234,7 +239,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 								true, dataItemModel);
 						LOG.info("Features: %s",
 								parse.getAverageMaxFeatureVector());
-						for (final IParse<Y> bestParse : validBestGenerationParses) {
+						for (final IParse<MR> bestParse : validBestGenerationParses) {
 							final IHashVector diff = parse
 									.getAverageMaxFeatureVector()
 									.addTimes(
@@ -254,14 +259,14 @@ public class LossSensitivePerceptronCKY<Y> implements
 				// lexical
 				// generation and were included in the optimal parses
 				int newLexicalEntries = 0;
-				for (final IParse<Y> parse : validBestGenerationParses) {
-					for (final LexicalEntry<Y> entry : parse
+				for (final IParse<MR> parse : validBestGenerationParses) {
+					for (final LexicalEntry<MR> entry : parse
 							.getMaxLexicalEntries()) {
 						if (model.addLexEntry(entry)) {
 							++newLexicalEntries;
 						}
 						// Add the linked entries
-						for (final LexicalEntry<Y> linkedEntry : entry
+						for (final LexicalEntry<MR> linkedEntry : entry
 								.getLinkedEntries()) {
 							if (model.addLexEntry(linkedEntry)) {
 								++newLexicalEntries;
@@ -275,10 +280,10 @@ public class LossSensitivePerceptronCKY<Y> implements
 				// Second parse: using the model with current lexicon. Prune
 				// based on the model. Create optimal/non-optimal sets and
 				// update on violations.
-				final IParserOutput<Y> modelParserOutput = parser.parse(
+				final IParserOutput<MR> modelParserOutput = parser.parse(
 						dataItem, dataItemModel);
 				stats.recordModelParsing(modelParserOutput.getParsingTime());
-				final Collection<? extends IParse<Y>> modelParses = modelParserOutput
+				final Collection<? extends IParse<MR>> modelParses = modelParserOutput
 						.getAllParses();
 				
 				LOG.info("Created %d model parses for training sample",
@@ -287,7 +292,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 						modelParserOutput.getParsingTime() / 1000.0);
 				
 				// Record if the best is the gold standard, if known
-				final List<? extends IParse<Y>> bestModelParses = modelParserOutput
+				final List<? extends IParse<MR>> bestModelParses = modelParserOutput
 						.getBestParses();
 				if (bestModelParses.size() == 1
 						&& isGoldDebugCorrect(dataItem.getSample(),
@@ -302,11 +307,11 @@ public class LossSensitivePerceptronCKY<Y> implements
 				
 				// Create the good and bad sets. Each set includes pairs of
 				// (loss, parse)
-				final Pair<List<Pair<Double, IParse<Y>>>, List<Pair<Double, IParse<Y>>>> goodBadSetsPair = createOptimalNonOptimalSets(
+				final Pair<List<Pair<Double, IParse<MR>>>, List<Pair<Double, IParse<MR>>>> goodBadSetsPair = createOptimalNonOptimalSets(
 						dataItem, modelParses);
-				final List<Pair<Double, IParse<Y>>> optimalParses = goodBadSetsPair
+				final List<Pair<Double, IParse<MR>>> optimalParses = goodBadSetsPair
 						.first();
-				final List<Pair<Double, IParse<Y>>> nonOptimalParses = goodBadSetsPair
+				final List<Pair<Double, IParse<MR>>> nonOptimalParses = goodBadSetsPair
 						.second();
 				
 				if (!optimalParses.isEmpty()) {
@@ -317,13 +322,13 @@ public class LossSensitivePerceptronCKY<Y> implements
 						optimalParses.size(), nonOptimalParses.size());
 				
 				LOG.info("Optimal parses:");
-				for (final Pair<Double, IParse<Y>> pair : optimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : optimalParses) {
 					logParse(dataItem, pair.second(), pair.first(), false,
 							dataItemModel);
 				}
 				
 				LOG.info("Non-optimal parses:");
-				for (final Pair<Double, IParse<Y>> pair : nonOptimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : nonOptimalParses) {
 					logParse(dataItem, pair.second(), pair.first(), false,
 							dataItemModel);
 				}
@@ -338,8 +343,8 @@ public class LossSensitivePerceptronCKY<Y> implements
 						optimalParses.get(0).first());
 				
 				// Create the violating sets
-				final List<Pair<Double, IParse<Y>>> violatingOptimalParses = new LinkedList<Pair<Double, IParse<Y>>>();
-				final List<Pair<Double, IParse<Y>>> violatingNonOptimalParses = new LinkedList<Pair<Double, IParse<Y>>>();
+				final List<Pair<Double, IParse<MR>>> violatingOptimalParses = new LinkedList<Pair<Double, IParse<MR>>>();
+				final List<Pair<Double, IParse<MR>>> violatingNonOptimalParses = new LinkedList<Pair<Double, IParse<MR>>>();
 				
 				// These flags are used to mark that we inserted a parse into
 				// the violating sets, so no need to check for its violation
@@ -349,9 +354,9 @@ public class LossSensitivePerceptronCKY<Y> implements
 				final boolean[] nonOptimalParsesFlags = new boolean[nonOptimalParses
 						.size()];
 				int optimalParsesCounter = 0;
-				for (final Pair<Double, IParse<Y>> optimalParse : optimalParses) {
+				for (final Pair<Double, IParse<MR>> optimalParse : optimalParses) {
 					int nonOptimalParsesCounter = 0;
-					for (final Pair<Double, IParse<Y>> nonOptimalParse : nonOptimalParses) {
+					for (final Pair<Double, IParse<MR>> nonOptimalParse : nonOptimalParses) {
 						if (!optimalParsesFlags[optimalParsesCounter]
 								|| !nonOptimalParsesFlags[nonOptimalParsesCounter]) {
 							// Create the delta vector if needed, we do it only
@@ -420,19 +425,19 @@ public class LossSensitivePerceptronCKY<Y> implements
 				}
 				
 				LOG.info("Violating optimal parses: ");
-				for (final Pair<Double, IParse<Y>> pair : violatingOptimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : violatingOptimalParses) {
 					logParse(dataItem, pair.second(), pair.first(), true,
 							dataItemModel);
 				}
 				
 				LOG.info("Violating non-optimal parses: ");
-				for (final Pair<Double, IParse<Y>> pair : violatingNonOptimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : violatingNonOptimalParses) {
 					logParse(dataItem, pair.second(), pair.first(), false,
 							dataItemModel);
 				}
 				
 				// Create tau function
-				final IUpdateWeightFunction<Y> tauFunction = new UniformWeightFunction<Y>(
+				final IUpdateWeightFunction<MR> tauFunction = new UniformWeightFunction<MR>(
 						violatingOptimalParses.size(),
 						violatingNonOptimalParses.size());
 				
@@ -440,7 +445,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 				final IHashVector update = HashVectorFactory.create();
 				
 				// Get the update for optimal violating samples
-				for (final Pair<Double, IParse<Y>> pair : violatingOptimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : violatingOptimalParses) {
 					pair.second()
 							.getAverageMaxFeatureVector()
 							.addTimesInto(tauFunction.evalOptimalParse(pair),
@@ -448,7 +453,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 				}
 				
 				// Get the update for the non-optimal violating samples
-				for (final Pair<Double, IParse<Y>> pair : violatingNonOptimalParses) {
+				for (final Pair<Double, IParse<MR>> pair : violatingNonOptimalParses) {
 					pair.second()
 							.getAverageMaxFeatureVector()
 							.addTimesInto(
@@ -492,13 +497,13 @@ public class LossSensitivePerceptronCKY<Y> implements
 	 * @param parseResults
 	 * @return Pair of (good parses, bad parses)
 	 */
-	private Pair<List<Pair<Double, IParse<Y>>>, List<Pair<Double, IParse<Y>>>> createOptimalNonOptimalSets(
-			ILossDataItem<Sentence, Y> dataItem,
-			Collection<? extends IParse<Y>> parseResults) {
+	private Pair<List<Pair<Double, IParse<MR>>>, List<Pair<Double, IParse<MR>>>> createOptimalNonOptimalSets(
+			ILossDataItem<Sentence, MR> dataItem,
+			Collection<? extends IParse<MR>> parseResults) {
 		double minLoss = Double.MAX_VALUE;
-		final List<Pair<Double, IParse<Y>>> optimalParses = new LinkedList<Pair<Double, IParse<Y>>>();
-		final List<Pair<Double, IParse<Y>>> nonOptimalParses = new LinkedList<Pair<Double, IParse<Y>>>();
-		for (final IParse<Y> parseResult : parseResults) {
+		final List<Pair<Double, IParse<MR>>> optimalParses = new LinkedList<Pair<Double, IParse<MR>>>();
+		final List<Pair<Double, IParse<MR>>> nonOptimalParses = new LinkedList<Pair<Double, IParse<MR>>>();
+		for (final IParse<MR> parseResult : parseResults) {
 			
 			// Calculate the loss, accumulated from all given loss functions
 			final double parseLoss = dataItem.calculateLoss(parseResult
@@ -518,7 +523,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 		return Pair.of(optimalParses, nonOptimalParses);
 	}
 	
-	private boolean isGoldDebugCorrect(Sentence sentence, Y label) {
+	private boolean isGoldDebugCorrect(Sentence sentence, MR label) {
 		if (trainingDataDebug.containsKey(sentence)) {
 			return trainingDataDebug.get(sentence).equals(label);
 		} else {
@@ -526,15 +531,15 @@ public class LossSensitivePerceptronCKY<Y> implements
 		}
 	}
 	
-	private void logParse(IDataItem<Sentence> dataItem, IParse<Y> parse,
+	private void logParse(IDataItem<Sentence> dataItem, IParse<MR> parse,
 			Double loss, boolean logLexicalItems,
-			IDataItemModel<Y> dataItemModel) {
+			IDataItemModel<MR> dataItemModel) {
 		logParse(dataItem, parse, loss, logLexicalItems, null, dataItemModel);
 	}
 	
-	private void logParse(IDataItem<Sentence> dataItem, IParse<Y> parse,
+	private void logParse(IDataItem<Sentence> dataItem, IParse<MR> parse,
 			Double loss, boolean logLexicalItems, String tag,
-			IDataItemModel<Y> dataItemModel) {
+			IDataItemModel<MR> dataItemModel) {
 		final boolean isGold;
 		if (isGoldDebugCorrect(dataItem.getSample(), parse.getSemantics())) {
 			isGold = true;
@@ -545,7 +550,7 @@ public class LossSensitivePerceptronCKY<Y> implements
 				: tag + " ", parse.getScore(),
 				loss == null ? "" : String.format(", L%.2f", loss), parse);
 		if (logLexicalItems) {
-			for (final LexicalEntry<Y> entry : parse.getMaxLexicalEntries()) {
+			for (final LexicalEntry<MR> entry : parse.getMaxLexicalEntries()) {
 				LOG.info("\t[%f] %s", dataItemModel.score(entry), entry);
 			}
 		}
@@ -556,120 +561,133 @@ public class LossSensitivePerceptronCKY<Y> implements
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public static class Builder<Y> {
+	public static class Builder<MR, DI extends ILossDataItem<Sentence, MR>> {
+		private final ICategoryServices<MR>									categoryServices;
+		
+		private ILexiconGenerator<DI, MR, Model<IDataItem<Sentence>, MR>>	genlex										= null;
+		
 		/**
 		 * Used to break ties during lexical generation parse.
 		 */
-		private IScoreFunction<Y>														lexicalGenerationSecondaryPruningFunction	= new IScoreFunction<Y>() {
-																																		
-																																		@Override
-																																		public double score(
-																																				Y label) {
-																																			return 0;
-																																		};
-																																		
-																																		@Override
-																																		public String toString() {
-																																			return "DEFAULT_STUB";
-																																		}
-																																	};
+		private IScoreFunction<MR>											lexicalGenerationSecondaryPruningFunction	= new IScoreFunction<MR>() {
+																															
+																															@Override
+																															public double score(
+																																	MR label) {
+																																return 0;
+																															};
+																															
+																															@Override
+																															public String toString() {
+																																return "DEFAULT_STUB";
+																															}
+																														};
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																		lexiconGenerationBeamSize					= 20;
+		private int															lexiconGenerationBeamSize					= 20;
 		
 		/**
 		 * Validator to validate lexical generation parses.
 		 */
-		private IValidator<Sentence, Y>													lexiconGenerationValidator					= new IValidator<Sentence, Y>() {
-																																		
-																																		@Override
-																																		public boolean isValid(
-																																				Sentence dataItem,
-																																				Y label) {
-																																			return true;
-																																		};
-																																		
-																																		@Override
-																																		public String toString() {
-																																			return "STUB_DEFAULT";
-																																		}
-																																	};
+		private IValidator<Sentence, MR>									lexiconGenerationValidator					= new IValidator<Sentence, MR>() {
+																															
+																															@Override
+																															public boolean isValid(
+																																	Sentence dataItem,
+																																	MR label) {
+																																return true;
+																															};
+																															
+																															@Override
+																															public String toString() {
+																																return "STUB_DEFAULT";
+																															}
+																														};
 		
 		/** Margin to scale the relative loss function */
-		private double																	margin										= 1.0;
+		private double														margin										= 1.0;
 		
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private int																		maxSentenceLength							= 50;
+		private int															maxSentenceLength							= 50;
 		
 		/** Number of training iterations */
-		private int																		numTrainingIterations						= 4;
+		private int															numTrainingIterations						= 4;
 		
-		private final AbstractCKYParser<Y>												parser;
-		
+		private final AbstractCKYParser<MR>									parser;
 		/** Data used for training */
-		private final IDataCollection<? extends ILexGenLossDataItem<Sentence, Y, Y>>	trainingData;
+		private final IDataCollection<DI>									trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<Sentence, Y>														trainingDataDebug							= new HashMap<Sentence, Y>();
+		private Map<Sentence, MR>											trainingDataDebug							= new HashMap<Sentence, MR>();
 		
-		public Builder(
-				IDataCollection<? extends ILexGenLossDataItem<Sentence, Y, Y>> trainingData,
-				AbstractCKYParser<Y> parser) {
+		public Builder(IDataCollection<DI> trainingData,
+				AbstractCKYParser<MR> parser,
+				ICategoryServices<MR> categoryServices) {
 			this.trainingData = trainingData;
 			this.parser = parser;
+			this.categoryServices = categoryServices;
 		}
 		
-		public LossSensitivePerceptronCKY<Y> build() {
-			return new LossSensitivePerceptronCKY<Y>(numTrainingIterations,
-					margin, trainingData, trainingDataDebug, maxSentenceLength,
+		public LossSensitivePerceptronCKY<MR, DI> build() {
+			return new LossSensitivePerceptronCKY<MR, DI>(
+					numTrainingIterations, margin, trainingData,
+					trainingDataDebug, maxSentenceLength,
 					lexiconGenerationBeamSize,
 					lexicalGenerationSecondaryPruningFunction,
-					lexiconGenerationValidator, parser);
+					lexiconGenerationValidator, parser, categoryServices,
+					genlex);
 		}
 		
-		public Builder<Y> setLexicalGenerationSecondaryPruningFunction(
-				IScoreFunction<Y> lexicalGenerationSecondaryPruningFunction) {
+		public Builder<MR, DI> setGenlex(
+				ILexiconGenerator<DI, MR, Model<IDataItem<Sentence>, MR>> genlex) {
+			this.genlex = genlex;
+			return this;
+		}
+		
+		public Builder<MR, DI> setLexicalGenerationSecondaryPruningFunction(
+				IScoreFunction<MR> lexicalGenerationSecondaryPruningFunction) {
 			this.lexicalGenerationSecondaryPruningFunction = lexicalGenerationSecondaryPruningFunction;
 			return this;
 		}
 		
-		public Builder<Y> setLexiconGenerationBeamSize(
+		public Builder<MR, DI> setLexiconGenerationBeamSize(
 				int lexiconGenerationBeamSize) {
 			this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 			return this;
 		}
 		
-		public Builder<Y> setLexiconGenerationValidator(
-				IValidator<Sentence, Y> lexiconGenerationValidator) {
+		public Builder<MR, DI> setLexiconGenerationValidator(
+				IValidator<Sentence, MR> lexiconGenerationValidator) {
 			this.lexiconGenerationValidator = lexiconGenerationValidator;
 			return this;
 		}
 		
-		public Builder<Y> setMargin(double margin) {
+		public Builder<MR, DI> setMargin(double margin) {
 			this.margin = margin;
 			return this;
 		}
 		
-		public Builder<Y> setMaxSentenceLength(int maxSentenceLength) {
+		public Builder<MR, DI> setMaxSentenceLength(int maxSentenceLength) {
 			this.maxSentenceLength = maxSentenceLength;
 			return this;
 		}
 		
-		public Builder<Y> setNumTrainingIterations(int numTrainingIterations) {
+		public Builder<MR, DI> setNumTrainingIterations(
+				int numTrainingIterations) {
 			this.numTrainingIterations = numTrainingIterations;
 			return this;
 		}
 		
-		public Builder<Y> setTrainingDataDebug(
-				Map<Sentence, Y> trainingDataDebug) {
+		public Builder<MR, DI> setTrainingDataDebug(
+				Map<Sentence, MR> trainingDataDebug) {
 			this.trainingDataDebug = trainingDataDebug;
 			return this;
 		}

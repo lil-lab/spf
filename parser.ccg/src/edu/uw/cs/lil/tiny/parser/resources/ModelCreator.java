@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.parser.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
@@ -29,31 +30,32 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model.Builder;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 
-public class ModelCreator<X, Y> implements IResourceObjectCreator<Model<X, Y>> {
+public class ModelCreator<DI extends IDataItem<?>, MR> implements
+		IResourceObjectCreator<Model<DI, MR>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public Model<X, Y> create(Parameters parameters,
+	public Model<DI, MR> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final Builder<X, Y> builder = new Model.Builder<X, Y>();
+		final Builder<DI, MR> builder = new Model.Builder<DI, MR>();
 		
 		// Lexicon
-		builder.setLexicon((ILexicon<Y>) resourceRepo.getResource(parameters
+		builder.setLexicon((ILexicon<MR>) resourceRepo.getResource(parameters
 				.get("lexicon")));
 		
 		// Lexical feature sets
 		for (final String setId : parameters.getSplit("lexicalFeatures")) {
-			builder.addLexicalFeatureSet((IIndependentLexicalFeatureSet<X, Y>) resourceRepo
+			builder.addLexicalFeatureSet((IIndependentLexicalFeatureSet<DI, MR>) resourceRepo
 					.getResource(setId));
 		}
 		
 		// Parse feature sets
 		for (final String setId : parameters.getSplit("parseFeatures")) {
-			builder.addParseFeatureSet((IParseFeatureSet<X, Y>) resourceRepo
+			builder.addParseFeatureSet((IParseFeatureSet<DI, MR>) resourceRepo
 					.getResource(setId));
 		}
 		
-		final Model<X, Y> model = builder.build();
+		final Model<DI, MR> model = builder.build();
 		
 		return model;
 	}
@@ -76,9 +78,9 @@ public class ModelCreator<X, Y> implements IResourceObjectCreator<Model<X, Y>> {
 				.build();
 	}
 	
-	protected ILexicon<Y> createLexicon(String lexiconType) {
+	protected ILexicon<MR> createLexicon(String lexiconType) {
 		if ("conventional".equals(lexiconType)) {
-			return new Lexicon<Y>();
+			return new Lexicon<MR>();
 		} else {
 			throw new IllegalArgumentException("Invalid lexicon type: "
 					+ lexiconType);

@@ -30,7 +30,6 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.data.DatasetException;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
@@ -55,49 +54,50 @@ public class SingleSentenceDataset implements IDataCollection<SingleSentence> {
 			// Open the file
 			final BufferedReader in = new BufferedReader(new FileReader(f));
 			final List<SingleSentence> data = new LinkedList<SingleSentence>();
-			
-			String line;
-			String currentSentence = null;
-			int readLineCounter = 0;
-			while ((line = in.readLine()) != null) {
-				++readLineCounter;
-				if (line.startsWith("//") || line.equals("")) {
-					// Case comment or empty line, skip
-					continue;
-				}
-				line = line.trim();
-				if (currentSentence == null) {
-					// Case we don't have a sentence, so we are supposed to get
-					// a sentence
-					currentSentence = textFilter.filter(line);
-				} else {
-					// Case we don't have a logical expression, so we are
-					// supposed to get it and create the data item
-					final LogicalExpression exp;
-					try {
-						exp = Simplify.of(LogicalExpression.parse(line,
-								LogicLanguageServices.getTypeRepository(),
-								LogicLanguageServices.getTypeComparator(),
-								lockConstants));
-					} catch (final LogicalExpressionRuntimeException e) {
-						// wrap with a dataset exception and throw
-						in.close();
-						throw new DatasetException(e, readLineCounter,
-								f.getName());
+			try {
+				
+				String line;
+				String currentSentence = null;
+				int readLineCounter = 0;
+				while ((line = in.readLine()) != null) {
+					++readLineCounter;
+					if (line.startsWith("//") || line.equals("")) {
+						// Case comment or empty line, skip
+						continue;
 					}
-					if (!IsWellTyped.of(exp)) {
-						// Throw exception
-						in.close();
-						throw new DatasetException(
-								"Expression not well-typed: " + exp,
-								readLineCounter, f.getName());
+					line = line.trim();
+					if (currentSentence == null) {
+						// Case we don't have a sentence, so we are supposed to
+						// get
+						// a sentence
+						currentSentence = textFilter.filter(line);
+					} else {
+						// Case we don't have a logical expression, so we are
+						// supposed to get it and create the data item
+						final LogicalExpression exp;
+						try {
+							exp = Simplify.of(LogicalExpression.parse(line,
+									lockConstants));
+						} catch (final LogicalExpressionRuntimeException e) {
+							// wrap with a dataset exception and throw
+							in.close();
+							throw new DatasetException(e, readLineCounter,
+									f.getName());
+						}
+						if (!IsWellTyped.of(exp)) {
+							// Throw exception
+							throw new DatasetException(
+									"Expression not well-typed: " + exp,
+									readLineCounter, f.getName());
+						}
+						data.add(new SingleSentence(new Sentence(
+								currentSentence), exp));
+						currentSentence = null;
 					}
-					data.add(new SingleSentence(new Sentence(currentSentence),
-							exp));
-					currentSentence = null;
 				}
+			} finally {
+				in.close();
 			}
-			in.close();
 			return new SingleSentenceDataset(data);
 		} catch (final IOException e) {
 			// Wrap with dataset exception and throw

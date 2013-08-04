@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.PerceptronServices;
 import edu.uw.cs.lil.tiny.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
@@ -38,6 +38,7 @@ import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.ITester;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -59,49 +60,55 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <MR>
  *            Meaning representation type.
  */
-public class ValidationPerceptron<MR> extends
-		AbstractLearner<IParserOutput<MR>, MR> {
-	private static final ILogger						LOG	= LoggerFactory
-																	.create(ValidationPerceptron.class);
+public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
+		extends AbstractLearner<SAMPLE, DI, IParserOutput<MR>, MR> {
+	private static final ILogger		LOG	= LoggerFactory
+													.create(ValidationPerceptron.class);
 	/**
 	 * Only consider highest scoring valid parses for correct parses for
 	 * parameter update.
 	 */
-	private final boolean								hardUpdates;
+	private final boolean				hardUpdates;
 	
 	/**
 	 * Update criterion margin.
 	 */
-	private final double								margin;
-	private final IParser<Sentence, MR>					parser;
-	private final IValidator<IDataItem<Sentence>, MR>	validator;
+	private final double				margin;
+	private final IParser<SAMPLE, MR>	parser;
+	private final IValidator<DI, MR>	validator;
 	
 	private ValidationPerceptron(
 			int numIterations,
-			double margin,
-			IDataCollection<? extends ILexGenDataItem<Sentence, MR>> trainingData,
-			Map<IDataItem<Sentence>, MR> trainingDataDebug,
-			int maxSentenceLength, int lexiconGenerationBeamSize,
-			IParser<Sentence, MR> parser, boolean hardUpdates,
-			boolean lexiconLearning, IOutputLogger<MR> parserOutputLogger,
-			IValidator<IDataItem<Sentence>, MR> validator,
-			ITester<Sentence, MR> tester, boolean conflateGenlexAndPrunedParses) {
+			IDataCollection<DI> trainingData,
+			Map<DI, MR> trainingDataDebug,
+			int lexiconGenerationBeamSize,
+			IParser<SAMPLE, MR> parser,
+			IOutputLogger<MR> parserOutputLogger,
+			ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses,
+			boolean errorDriven,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			double margin, boolean hardUpdates, IValidator<DI, MR> validator,
+			IFilter<DI> processingFilter) {
 		super(numIterations, trainingData, trainingDataDebug,
-				maxSentenceLength, lexiconGenerationBeamSize, parser,
-				lexiconLearning, parserOutputLogger, tester,
-				conflateGenlexAndPrunedParses);
+				lexiconGenerationBeamSize, parserOutputLogger, tester,
+				conflateGenlexAndPrunedParses, errorDriven, categoryServices,
+				genlex, processingFilter);
 		this.margin = margin;
 		this.parser = parser;
 		this.hardUpdates = hardUpdates;
 		this.validator = validator;
 		LOG.info(
-				"Init ValidationPerceptron: numIterations=%d, margin=%f, trainingData.size()=%d, trainingDataDebug.size()=%d, maxSentenceLength=%d ...",
+				"Init ValidationPerceptron: numIterations=%d, margin=%f, trainingData.size()=%d, trainingDataDebug.size()=%d  ...",
 				numIterations, margin, trainingData.size(),
-				trainingDataDebug.size(), maxSentenceLength);
+				trainingDataDebug.size());
 		LOG.info("Init ValidationPerceptron: ... lexiconGenerationBeamSize=%d",
 				lexiconGenerationBeamSize);
-		LOG.info("Init ValidationPerceptron: ... conflateParses=%s",
-				conflateGenlexAndPrunedParses ? "true" : "false");
+		LOG.info(
+				"Init ValidationPerceptron: ... conflateParses=%s, errorDriven=%s",
+				conflateGenlexAndPrunedParses ? "true" : "false",
+				errorDriven ? "true" : "false");
 	}
 	
 	/**
@@ -113,8 +120,8 @@ public class ValidationPerceptron<MR> extends
 	 * @return
 	 */
 	private Pair<List<IParse<MR>>, List<IParse<MR>>> createValidInvalidSets(
-			ILexGenDataItem<Sentence, MR> dataItem,
-			IParserOutput<MR> realOutput, IParserOutput<MR> goodOutput) {
+			DI dataItem, IParserOutput<MR> realOutput,
+			IParserOutput<MR> goodOutput) {
 		
 		final List<IParse<MR>> validParses = new LinkedList<IParse<MR>>();
 		final List<IParse<MR>> invalidParses = new LinkedList<IParse<MR>>();
@@ -156,9 +163,9 @@ public class ValidationPerceptron<MR> extends
 	}
 	
 	@Override
-	protected void parameterUpdate(ILexGenDataItem<Sentence, MR> dataItem,
-			IParserOutput<MR> realOutput, IParserOutput<MR> goodOutput,
-			Model<Sentence, MR> model, int itemCounter, int epochNumber) {
+	protected void parameterUpdate(DI dataItem, IParserOutput<MR> realOutput,
+			IParserOutput<MR> goodOutput, Model<IDataItem<SAMPLE>, MR> model,
+			int itemCounter, int epochNumber) {
 		
 		final IDataItemModel<MR> dataItemModel = model
 				.createDataItemModel(dataItem);
@@ -208,12 +215,6 @@ public class ValidationPerceptron<MR> extends
 			logParse(dataItem, parse, false, true, dataItemModel);
 		}
 		
-		// TODO Verify that all used lexical entries have features in the
-		// model. To do that, simply re-add them all to the model.
-		// for (final IParse<MR> parse : modelParses) {
-		// model.addLexEntries(parse.getMaxLexicalEntries());
-		// }
-		
 		// Construct weight update vector
 		final IHashVector update = PerceptronServices.constructUpdate(
 				violatingValidParses, violatingInvalidParses, model);
@@ -226,26 +227,27 @@ public class ValidationPerceptron<MR> extends
 	}
 	
 	@Override
-	protected IParserOutput<MR> parse(ILexGenDataItem<Sentence, MR> dataItem,
+	protected IParserOutput<MR> parse(DI dataItem,
 			IDataItemModel<MR> dataItemModel) {
 		return parser.parse(dataItem, dataItemModel);
 	}
 	
 	@Override
-	protected IParserOutput<MR> parse(ILexGenDataItem<Sentence, MR> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel) {
+	protected IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> dataItemModel) {
 		return parser.parse(dataItem, pruningFilter, dataItemModel);
 	}
 	
 	@Override
-	protected IParserOutput<MR> parse(ILexGenDataItem<Sentence, MR> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel,
-			ILexicon<MR> generatedLexicon, int beamSize) {
-		return parser.parse(dataItem, dataItemModel, false, generatedLexicon);
+	protected IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> dataItemModel, ILexicon<MR> generatedLexicon,
+			int beamSize) {
+		return parser.parse(dataItem, dataItemModel, false, generatedLexicon,
+				beamSize);
 	}
 	
 	@Override
-	protected boolean validate(IDataItem<Sentence> dataItem, MR hypothesis) {
+	protected boolean validate(DI dataItem, MR hypothesis) {
 		return validator.isValid(dataItem, hypothesis);
 	}
 	
@@ -254,133 +256,155 @@ public class ValidationPerceptron<MR> extends
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public static class Builder<MR> {
+	public static class Builder<SAMPLE, DI extends IDataItem<SAMPLE>, MR> {
+		
+		/**
+		 * Required for lexicon learning.
+		 */
+		private ICategoryServices<MR>												categoryServices				= null;
 		
 		/**
 		 * Recycle the lexical induction parser output as the pruned one for
 		 * parameter update.
 		 */
-		private boolean															conflateGenlexAndPrunedParses	= false;
+		private boolean																conflateGenlexAndPrunedParses	= false;
+		
+		private boolean																errorDriven						= false;
+		
+		/**
+		 * GENLEX procedure. If 'null' skips lexicon induction.
+		 */
+		private ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex							= null;
 		
 		/**
 		 * Use hard updates. Meaning: consider only highest-scored valid parses
 		 * for parameter updates, instead of all valid parses.
 		 */
-		private boolean															hardUpdates						= false;
+		private boolean																hardUpdates						= false;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																lexiconGenerationBeamSize		= 20;
-		
-		/**
-		 * Learn a lexicon.
-		 */
-		private boolean															lexiconLearning					= true;
+		private int																	lexiconGenerationBeamSize		= 20;
 		
 		/** Margin to scale the relative loss function */
-		private double															margin							= 1.0;
-		
-		/**
-		 * Max sentence length. Sentence longer than this value will be skipped
-		 * during training
-		 */
-		private int																maxSentenceLength				= Integer.MAX_VALUE;
+		private double																margin							= 1.0;
 		
 		/** Number of training iterations */
-		private int																numIterations					= 4;
+		private int																	numIterations					= 4;
 		
-		private final IParser<Sentence, MR>										parser;
-		private IOutputLogger<MR>												parserOutputLogger				= new IOutputLogger<MR>() {
-																													
-																													public void log(
-																															IParserOutput<MR> output,
-																															IDataItemModel<MR> dataItemModel) {
-																														// Stub
+		private final IParser<SAMPLE, MR>											parser;
+		private IOutputLogger<MR>													parserOutputLogger				= new IOutputLogger<MR>() {
 																														
-																													}
-																												};
+																														public void log(
+																																IParserOutput<MR> output,
+																																IDataItemModel<MR> dataItemModel) {
+																															// Stub
+																															
+																														}
+																													};
 		
-		private ITester<Sentence, MR>											tester							= null;
+		/**
+		 * Processing filter, if 'false', skip sample.
+		 */
+		private IFilter<DI>															processingFilter				= new IFilter<DI>() {
+																														
+																														@Override
+																														public boolean isValid(
+																																DI e) {
+																															return true;
+																														}
+																													};
+		
+		private ITester<SAMPLE, MR>													tester							= null;
 		
 		/** Training data */
-		private final IDataCollection<? extends ILexGenDataItem<Sentence, MR>>	trainingData;
+		private final IDataCollection<DI>											trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<IDataItem<Sentence>, MR>									trainingDataDebug				= new HashMap<IDataItem<Sentence>, MR>();
+		private Map<DI, MR>															trainingDataDebug				= new HashMap<DI, MR>();
 		
-		private final IValidator<IDataItem<Sentence>, MR>						validator;
+		private final IValidator<DI, MR>											validator;
 		
-		public Builder(
-				IDataCollection<? extends ILexGenDataItem<Sentence, MR>> trainingData,
-				IParser<Sentence, MR> parser,
-				IValidator<IDataItem<Sentence>, MR> validator) {
+		public Builder(IDataCollection<DI> trainingData,
+				IParser<SAMPLE, MR> parser, IValidator<DI, MR> validator) {
 			this.trainingData = trainingData;
 			this.parser = parser;
 			this.validator = validator;
 		}
 		
-		public ValidationPerceptron<MR> build() {
-			return new ValidationPerceptron<MR>(numIterations, margin,
-					trainingData, trainingDataDebug, maxSentenceLength,
-					lexiconGenerationBeamSize, parser, hardUpdates,
-					lexiconLearning, parserOutputLogger, validator, tester,
-					conflateGenlexAndPrunedParses);
+		public ValidationPerceptron<SAMPLE, DI, MR> build() {
+			return new ValidationPerceptron<SAMPLE, DI, MR>(numIterations,
+					trainingData, trainingDataDebug, lexiconGenerationBeamSize,
+					parser, parserOutputLogger, tester,
+					conflateGenlexAndPrunedParses, errorDriven,
+					categoryServices, genlex, margin, hardUpdates, validator,
+					processingFilter);
 		}
 		
-		public Builder<MR> setConflateGenlexAndPrunedParses(
+		public Builder<SAMPLE, DI, MR> setConflateGenlexAndPrunedParses(
 				boolean conflateGenlexAndPrunedParses) {
 			this.conflateGenlexAndPrunedParses = conflateGenlexAndPrunedParses;
 			return this;
 		}
 		
-		public Builder<MR> setHardUpdates(boolean hardUpdates) {
+		public Builder<SAMPLE, DI, MR> setErrorDriven(boolean errorDriven) {
+			this.errorDriven = errorDriven;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setGenlex(
+				ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+				ICategoryServices<MR> categoryServices) {
+			this.genlex = genlex;
+			this.categoryServices = categoryServices;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setHardUpdates(boolean hardUpdates) {
 			this.hardUpdates = hardUpdates;
 			return this;
 		}
 		
-		public Builder<MR> setLexiconGenerationBeamSize(
+		public Builder<SAMPLE, DI, MR> setLexiconGenerationBeamSize(
 				int lexiconGenerationBeamSize) {
 			this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 			return this;
 		}
 		
-		public Builder<MR> setLexiconLearning(boolean lexiconLearning) {
-			this.lexiconLearning = lexiconLearning;
-			return this;
-		}
-		
-		public Builder<MR> setMargin(double margin) {
+		public Builder<SAMPLE, DI, MR> setMargin(double margin) {
 			this.margin = margin;
 			return this;
 		}
 		
-		public Builder<MR> setMaxSentenceLength(int maxSentenceLength) {
-			this.maxSentenceLength = maxSentenceLength;
-			return this;
-		}
-		
-		public Builder<MR> setNumTrainingIterations(int numTrainingIterations) {
+		public Builder<SAMPLE, DI, MR> setNumTrainingIterations(
+				int numTrainingIterations) {
 			this.numIterations = numTrainingIterations;
 			return this;
 		}
 		
-		public Builder<MR> setParserOutputLogger(
+		public Builder<SAMPLE, DI, MR> setParserOutputLogger(
 				IOutputLogger<MR> parserOutputLogger) {
 			this.parserOutputLogger = parserOutputLogger;
 			return this;
 		}
 		
-		public Builder<MR> setTester(ITester<Sentence, MR> tester) {
+		public Builder<SAMPLE, DI, MR> setProcessingFilter(
+				IFilter<DI> processingFilter) {
+			this.processingFilter = processingFilter;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setTester(ITester<SAMPLE, MR> tester) {
 			this.tester = tester;
 			return this;
 		}
 		
-		public Builder<MR> setTrainingDataDebug(
-				Map<IDataItem<Sentence>, MR> trainingDataDebug) {
+		public Builder<SAMPLE, DI, MR> setTrainingDataDebug(
+				Map<DI, MR> trainingDataDebug) {
 			this.trainingDataDebug = trainingDataDebug;
 			return this;
 		}

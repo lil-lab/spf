@@ -18,16 +18,18 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
+
 /**
  * Given a model, post processes it.
  * 
  * @author Yoav Artzi
  */
-public interface IModelPostProcessor<X, Y> {
+public interface IModelPostProcessor<DI extends IDataItem<?>, MR> {
 	/**
 	 * Process the given mode. Modify it if needed.
 	 * 
 	 * @param model
 	 */
-	void process(Model<X, Y> model);
+	void process(Model<DI, MR> model);
 }

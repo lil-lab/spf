@@ -18,8 +18,10 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.genlex.ccg;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 
 /**
  * Lexical entries generator.
@@ -30,8 +32,9 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
  * @param <MR>
  *            Type of meaning representation.
  */
-public interface ILexiconGenerator<SAMPLE extends IDataItem<?>, MR> {
+public interface ILexiconGenerator<SAMPLE extends IDataItem<?>, MR, MODEL extends IModelImmutable<?, ?>> {
 	public static final String	GENLEX_LEXICAL_ORIGIN	= "genlex";
 	
-	ILexicon<MR> generate(SAMPLE dataItem);
+	ILexicon<MR> generate(SAMPLE dataItem, MODEL model,
+			ICategoryServices<MR> categoryServices);
 }

@@ -22,7 +22,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.TestServices;
 
@@ -35,9 +34,8 @@ public class ReplaceBoundVariablesTest {
 	
 	@Test
 	public void test() {
-		final LogicalExpression exp = LogicalExpression.parse(
-				"(lambda $0:e $0)", LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator());
+		final LogicalExpression exp = LogicalExpression
+				.parse("(lambda $0:e $0)");
 		final LogicalExpression result = ReplaceBoundVariables.of(exp);
 		Assert.assertEquals(exp, result);
 		Assert.assertNotSame(((Lambda) exp).getArgument(),

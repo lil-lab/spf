@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.explat;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.Set;
 
@@ -31,15 +33,33 @@ public abstract class Job extends LoggingRunnable {
 	private final Set<String>	dependencyIds;
 	private final String		id;
 	private final IJobListener	jobListener;
+	private final boolean		openedOutputStream;
 	private final PrintStream	outputStream;
 	
 	public Job(String id, Set<String> dependencyIds, IJobListener jobListener,
-			PrintStream outputStream, Log log) {
+			File outputFile, File logFile) throws FileNotFoundException {
+		super(logFile);
+		this.outputStream = new PrintStream(outputFile);
+		this.openedOutputStream = true;
+		this.id = id;
+		this.jobListener = jobListener;
+		this.dependencyIds = dependencyIds;
+	}
+	
+	public Job(String id, Set<String> dependencyIds, IJobListener jobListener,
+			Log log) {
 		super(log);
+		this.outputStream = System.out;
+		this.openedOutputStream = false;
 		this.id = Assert.ifNull(id);
 		this.dependencyIds = dependencyIds;
 		this.jobListener = jobListener;
-		this.outputStream = outputStream;
+	}
+	
+	public void close() {
+		if (openedOutputStream) {
+			outputStream.close();
+		}
 	}
 	
 	public Set<String> getDependencyIds() {
@@ -64,15 +84,18 @@ public abstract class Job extends LoggingRunnable {
 		try {
 			doJob();
 		} catch (final Exception e) {
-			jobListener.jobException(id, e);
+			jobListener.jobException(this, e);
 			return;
 		}
 		
 		// Mark job as completed
 		completed = true;
 		
+		// Close output and log streams, if non standard
+		outputStream.close();
+		
 		// Signal job completed
-		jobListener.jobCompleted(id);
+		jobListener.jobCompleted(this);
 	}
 	
 	protected abstract void doJob();

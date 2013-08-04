@@ -21,63 +21,70 @@ package edu.uw.cs.lil.tiny.test.stats;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 
 /**
  * Composition of few testing statistics.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Y>
+ * @param <SAMPLE>
+ * @param <LABEL>
  */
-public class CompositeTestingStatistics<X, Y> implements
-		ITestingStatistics<X, Y> {
+public class CompositeTestingStatistics<SAMPLE, LABEL> implements
+		ITestingStatistics<SAMPLE, LABEL> {
 	
-	private final List<ITestingStatistics<X, Y>>	stats;
+	private final List<ITestingStatistics<SAMPLE, LABEL>>	stats;
 	
-	public CompositeTestingStatistics(List<ITestingStatistics<X, Y>> stats) {
+	public CompositeTestingStatistics(
+			List<ITestingStatistics<SAMPLE, LABEL>> stats) {
 		this.stats = stats;
 	}
 	
 	@Override
-	public void recordNoParse(IDataItem<X> dataItem, Y gold) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordNoParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordNoParse(dataItem, gold);
 		}
 	}
 	
 	@Override
-	public void recordNoParseWithSkipping(IDataItem<X> dataItem, Y gold) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordNoParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordNoParseWithSkipping(dataItem, gold);
 		}
 	}
 	
 	@Override
-	public void recordParse(IDataItem<X> dataItem, Y gold, Y label) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, LABEL label) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordParse(dataItem, gold, label);
 		}
 	}
 	
 	@Override
-	public void recordParses(IDataItem<X> dataItem, Y gold, List<Y> labels) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordParses(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, List<LABEL> labels) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordParses(dataItem, gold, labels);
 		}
 	}
 	
 	@Override
-	public void recordParsesWithSkipping(IDataItem<X> dataItem, Y gold,
-			List<Y> labels) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordParsesWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold,
+			List<LABEL> labels) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordParsesWithSkipping(dataItem, gold, labels);
 		}
 	}
 	
 	@Override
-	public void recordParseWithSkipping(IDataItem<X> dataItem, Y gold, Y label) {
-		for (final ITestingStatistics<X, Y> stat : stats) {
+	public void recordParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold, LABEL label) {
+		for (final ITestingStatistics<SAMPLE, LABEL> stat : stats) {
 			stat.recordParseWithSkipping(dataItem, gold, label);
 		}
 	}
@@ -85,7 +92,8 @@ public class CompositeTestingStatistics<X, Y> implements
 	@Override
 	public String toString() {
 		final StringBuilder ret = new StringBuilder();
-		final Iterator<ITestingStatistics<X, Y>> iterator = stats.iterator();
+		final Iterator<ITestingStatistics<SAMPLE, LABEL>> iterator = stats
+				.iterator();
 		while (iterator.hasNext()) {
 			ret.append(iterator.next().toString());
 			if (iterator.hasNext()) {
@@ -98,7 +106,8 @@ public class CompositeTestingStatistics<X, Y> implements
 	@Override
 	public String toTabDelimitedString() {
 		final StringBuilder ret = new StringBuilder();
-		final Iterator<ITestingStatistics<X, Y>> iterator = stats.iterator();
+		final Iterator<ITestingStatistics<SAMPLE, LABEL>> iterator = stats
+				.iterator();
 		while (iterator.hasNext()) {
 			ret.append(iterator.next().toTabDelimitedString());
 			if (iterator.hasNext()) {

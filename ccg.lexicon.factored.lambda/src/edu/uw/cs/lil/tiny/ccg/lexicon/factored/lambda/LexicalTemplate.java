@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,7 +49,9 @@ import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.counter.Counter;
 
-public class LexicalTemplate {
+public class LexicalTemplate implements Serializable {
+	
+	private static final long					serialVersionUID	= 7466276751228011529L;
 	
 	private final List<LogicalConstant>			arguments;
 	
@@ -299,11 +302,8 @@ public class LexicalTemplate {
 					if (newBody == lambda.getBody()) {
 						iterator.set(Pair.of(pair.first(), lambda));
 					} else {
-						iterator.set(Pair.of(
-								pair.first(),
-								new Lambda(lambda.getArgument(), newBody,
-										LogicLanguageServices
-												.getTypeRepository())));
+						iterator.set(Pair.of(pair.first(),
+								new Lambda(lambda.getArgument(), newBody)));
 					}
 					
 				}
@@ -374,18 +374,11 @@ public class LexicalTemplate {
 					++i;
 				}
 				if (argsChanged || predPair.second() != literal.getPredicate()) {
-					tempReturn
-							.add(Pair.of(
-									placeholder,
-									new Literal(
-											predPair.second() == literal
-													.getPredicate() ? literal
-													.getPredicate() : predPair
-													.second(), newArgs,
-											LogicLanguageServices
-													.getTypeComparator(),
-											LogicLanguageServices
-													.getTypeRepository())));
+					tempReturn.add(Pair.of(
+							placeholder,
+							new Literal(predPair.second() == literal
+									.getPredicate() ? literal.getPredicate()
+									: predPair.second(), newArgs)));
 				} else {
 					tempReturn.add(Pair.of(placeholder, literal));
 				}
@@ -431,11 +424,7 @@ public class LexicalTemplate {
 																.getPredicate()
 																: predPair
 																		.second(),
-														newArgs,
-														LogicLanguageServices
-																.getTypeComparator(),
-														LogicLanguageServices
-																.getTypeRepository())));
+														newArgs)));
 							} else {
 								tempReturn.add(Pair.of(placeholder, literal));
 							}

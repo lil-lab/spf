@@ -18,9 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.learn.situated.resources;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
@@ -28,15 +28,17 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.situated.perceptron.SituatedValidationPerceptron;
 import edu.uw.cs.lil.tiny.learn.situated.perceptron.SituatedValidationPerceptron.Builder;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
+import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.utils.composites.Pair;
 
-public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT>
+public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
 		implements
-		IResourceObjectCreator<SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT>> {
+		IResourceObjectCreator<SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI>> {
 	
 	private final String	name;
 	
@@ -50,18 +52,18 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT>
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT> create(
+	public SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI> create(
 			Parameters params, IResourceRepository repo) {
 		
-		final IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>> trainingData = repo
-				.getResource(params.get("data"));
+		final IDataCollection<DI> trainingData = repo.getResource(params
+				.get("data"));
 		
-		final Builder<STATE, MR, ESTEP, ERESULT> builder = new SituatedValidationPerceptron.Builder<STATE, MR, ESTEP, ERESULT>(
+		final Builder<STATE, MR, ESTEP, ERESULT, DI> builder = new SituatedValidationPerceptron.Builder<STATE, MR, ESTEP, ERESULT, DI>(
 				trainingData,
 				(IJointParser<Sentence, STATE, MR, ESTEP, ERESULT>) repo
 						.getResource(ParameterizedExperiment.PARSER_RESOURCE),
-				(IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>>) repo
-						.getResource(params.get("validator")));
+				(IValidator<DI, Pair<MR, ERESULT>>) repo.getResource(params
+						.get("validator")));
 		
 		if ("true".equals(params.get("hard"))) {
 			builder.setHardUpdates(true);
@@ -72,8 +74,12 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT>
 					.getResource(params.get("parseLogger")));
 		}
 		
-		if ("false".equals(params.get("lexiconlearn"))) {
-			builder.setLexiconLearning(false);
+		if (params.contains("genlex")) {
+			builder.setGenlex(
+					(ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>>) repo
+							.getResource(params.get("genlex")),
+					(ICategoryServices<MR>) repo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));
 		}
 		
 		if (params.contains("genlexbeam")) {
@@ -108,16 +114,14 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT>
 				SituatedValidationPerceptron.class)
 				.setDescription(
 						"Validation senstive perceptron for situated learning of models with situated inference (cite: Artzi and Zettlemoyer 2013)")
-				.addParam("data", "id",
-						"Training data (lexical generation + validation data)")
+				.addParam("data", "id", "Training data")
 				.addParam(
 						"hard",
 						"boolean",
 						"Use hard updates (i.e., only use max scoring valid parses/evaluation as positive samples). Options: true, false. Default: false")
 				.addParam("parseLogger", "id",
 						"Parse logger for debug detailed logging of parses")
-				.addParam("lexiconlearn", "boolean",
-						"Do lexicon learning. Options: true, false. Default: true")
+				.addParam("genlex", "ILexiconGenerator", "GENLEX procedure")
 				.addParam("genlexbeam", "int",
 						"Beam to use for GENLEX inference (parsing).")
 				.addParam("margin", "double",

@@ -24,7 +24,9 @@ package edu.uw.cs.lil.tiny.mr.language.type;
  * @author Yoav Artzi
  */
 public class ArrayType extends Type {
-	public static final String	ARRAY_SUFFIX	= "[]";
+	public static final String	ARRAY_SUFFIX		= "[]";
+	
+	private static final long	serialVersionUID	= 888739870983897365L;
 	
 	private final Type			baseType;
 	private final Type			parent;

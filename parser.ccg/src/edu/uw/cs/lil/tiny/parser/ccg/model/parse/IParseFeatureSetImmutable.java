@@ -23,9 +23,10 @@ import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IFeatureSet;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
-public interface IParseFeatureSetImmutable<X, Y> extends IFeatureSet {
+public interface IParseFeatureSetImmutable<DI extends IDataItem<?>, MR> extends
+		IFeatureSet {
 	
-	double score(IParseStep<Y> obj, IHashVector theta, IDataItem<X> dataItem);
+	double score(IParseStep<MR> obj, IHashVector theta, DI dataItem);
 	
-	void setFeats(IParseStep<Y> obj, IHashVector feats, IDataItem<X> dataItem);
+	void setFeats(IParseStep<MR> obj, IHashVector feats, DI dataItem);
 }

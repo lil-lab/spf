@@ -32,15 +32,16 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class Variable extends Term {
-	public static final String		PREFIX	= "$";
-	private static final ILogger	LOG		= LoggerFactory
-													.create(Variable.class);
+	public static final String		PREFIX				= "$";
+	private static final ILogger	LOG					= LoggerFactory
+																.create(Variable.class);
+	private static final long		serialVersionUID	= -2489052410662325680L;
 	
 	public Variable(Type type) {
 		super(type);
 	}
 	
-	protected static Variable parse(String string,
+	protected static Variable doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository) {
 		try {
 			final String[] split = string.split(Term.TYPE_SEPARATOR);
@@ -94,24 +95,14 @@ public class Variable extends Term {
 		if (variablesMapping.containsKey(this)) {
 			// Comparison through mapping of variables
 			return variablesMapping.get(this) == obj;
-		}
-		
-		if (obj == null || obj.getClass() != getClass()) {
+		} else if (!variablesMapping.containsKey(this)
+				&& !variablesMapping.values().contains(obj)) {
+			// Case both are not mapped, do instance comparison for free
+			// variables
+			return obj == this;
+		} else {
+			// Not equal
 			return false;
 		}
-		
-		final Variable other = (Variable) obj;
-		
-		if (!variablesMapping.containsKey(this)
-				&& !variablesMapping.values().contains(other)
-				&& other.getType().equals(getType())) {
-			// Case 'this' is a free variable, and 'other' is a free variable,
-			// both of them are not mapped, add a mapping between them and
-			// return true
-			variablesMapping.put(this, other);
-			return true;
-		}
-		
-		return false;
 	}
 }

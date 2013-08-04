@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.categories.syntax;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,27 +31,28 @@ import java.util.Map;
  * 
  * @author Yoav Artzi
  */
-public abstract class Syntax {
-	public static final SimpleSyntax				ADJ		= new SimpleSyntax(
-																	"ADJ");
-	public static final SimpleSyntax				AP		= new SimpleSyntax(
-																	"AP");
-	public static final SimpleSyntax				C		= new SimpleSyntax(
-																	"C");
-	public static final SimpleSyntax				DEG		= new SimpleSyntax(
-																	"DEG");
+public abstract class Syntax implements Serializable {
+	public static final SimpleSyntax				ADJ					= new SimpleSyntax(
+																				"ADJ");
+	public static final SimpleSyntax				AP					= new SimpleSyntax(
+																				"AP");
+	public static final SimpleSyntax				C					= new SimpleSyntax(
+																				"C");
+	public static final SimpleSyntax				DEG					= new SimpleSyntax(
+																				"DEG");
+	public static final SimpleSyntax				EMPTY				= new SimpleSyntax(
+																				"EMPTY");
 	
-	public static final SimpleSyntax				EMPTY	= new SimpleSyntax(
-																	"EMPTY");
-	public static final SimpleSyntax				N		= new SimpleSyntax(
-																	"N");
-	public static final SimpleSyntax				NP		= new SimpleSyntax(
-																	"NP");
+	public static final SimpleSyntax				N					= new SimpleSyntax(
+																				"N");
+	public static final SimpleSyntax				NP					= new SimpleSyntax(
+																				"NP");
+	public static final SimpleSyntax				PP					= new SimpleSyntax(
+																				"PP");
 	
-	public static final SimpleSyntax				PP		= new SimpleSyntax(
-																	"PP");
-	public static final SimpleSyntax				S		= new SimpleSyntax(
-																	"S");
+	public static final SimpleSyntax				S					= new SimpleSyntax(
+																				"S");
+	private static final long						serialVersionUID	= -3852094966016976417L;
 	
 	private static final Map<String, SimpleSyntax>	STRING_MAPPING;
 	
@@ -93,10 +96,11 @@ public abstract class Syntax {
 	public abstract String toString();
 	
 	public static class SimpleSyntax extends Syntax {
-		private final int		hashCode;
-		private final String	label;
+		private static final long	serialVersionUID	= -4823302344425065888L;
+		private final int			hashCode;
+		private final String		label;
 		
-		public SimpleSyntax(String label) {
+		private SimpleSyntax(String label) {
 			this.label = label;
 			this.hashCode = calcHashCode();
 		}
@@ -143,6 +147,16 @@ public abstract class Syntax {
 			int result = 1;
 			result = prime * result + ((label == null) ? 0 : label.hashCode());
 			return result;
+		}
+		
+		/**
+		 * Resolve to one of the enumerated static members.
+		 * 
+		 * @return
+		 * @throws ObjectStreamException
+		 */
+		protected Object readResolve() throws ObjectStreamException {
+			return valueOf(toString());
 		}
 	}
 	

@@ -50,16 +50,33 @@ import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 
+/**
+ * Factored lexicon. Added lexical entries are factored and stored decomposed to
+ * lexemes and lexical templates. See Kwiatkowski et al. 2011 for details.
+ * 
+ * @author Yoav Artzi
+ * @author Luke Zettlemoyer
+ */
 public class FactoredLexicon implements ILexicon<LogicalExpression> {
 	public static final String							FACTORING_LEXICAL_ORIGIN	= "factoring";
 	
+	private static final long							serialVersionUID			= -9133601778066386561L;
+	
 	private final String								entriesOrigin;
 	
-	// lexemes are grouped by their strings, for quick indexing
+	/** Lexemes are grouped by their strings, for quick indexing */
 	private final Map<List<String>, Set<Lexeme>>		lexemes						= new HashMap<List<String>, Set<Lexeme>>();
 	
-	// templates are group by the types of their input arguments, for quick
-	// indexing
+	/**
+	 * Maintain all lexemes indexed by type for quick access for a given
+	 * template
+	 */
+	private final Map<List<Type>, Set<Lexeme>>			lexemesByType				= new HashMap<List<Type>, Set<Lexeme>>();
+	
+	/**
+	 * Templates are group by the types of their input arguments, for quick
+	 * indexing
+	 */
 	private final Map<List<Type>, Set<LexicalTemplate>>	templates					= new HashMap<List<Type>, Set<LexicalTemplate>>();
 	
 	public FactoredLexicon() {
@@ -124,37 +141,55 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 	}
 	
 	@Override
-	public boolean add(LexicalEntry<LogicalExpression> entry) {
+	public Set<LexicalEntry<LogicalExpression>> add(
+			LexicalEntry<LogicalExpression> entry) {
 		final FactoredLexicalEntry factoredEntry = factor(entry);
-		boolean added = false;
-		added |= addLexeme(factoredEntry.getLexeme());
-		added |= addTemplate(factoredEntry.getTemplate());
+		final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
+		added.addAll(addLexeme(factoredEntry.getLexeme()));
+		added.addAll(addTemplate(factoredEntry.getTemplate()));
 		return added;
 	}
 	
 	@Override
-	public boolean addAll(Collection<LexicalEntry<LogicalExpression>> entries) {
+	public Set<LexicalEntry<LogicalExpression>> addAll(
+			Collection<LexicalEntry<LogicalExpression>> entries) {
+		final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
 		for (final LexicalEntry<LogicalExpression> lex : entries) {
-			add(lex);
+			added.addAll(add(lex));
 		}
-		return true;
+		return added;
 	}
 	
 	@Override
-	public boolean addAll(ILexicon<LogicalExpression> lexicon) {
+	public Set<LexicalEntry<LogicalExpression>> addAll(
+			ILexicon<LogicalExpression> lexicon) {
+		final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
 		if (lexicon instanceof FactoredLexicon) {
 			final FactoredLexicon flex = (FactoredLexicon) lexicon;
-			lexemes.putAll(flex.lexemes);
-			templates.putAll(flex.templates);
-			return true;
+			
+			// Add lexemes
+			for (final Set<Lexeme> set : flex.lexemes.values()) {
+				for (final Lexeme lexeme : set) {
+					added.addAll(addLexeme(lexeme));
+				}
+			}
+			
+			// Add templates
+			for (final Set<LexicalTemplate> set : flex.templates.values()) {
+				for (final LexicalTemplate template : set) {
+					added.addAll(addTemplate(template));
+				}
+			}
+			return added;
 		}
 		return addAll(lexicon.toCollection());
 	}
 	
-	public void addEntriesFromFile(File file,
+	@Override
+	public Set<LexicalEntry<LogicalExpression>> addEntriesFromFile(File file,
 			ICategoryServices<LogicalExpression> categoryServices, String origin) {
-		addEntriesFromFile(file, new StubStringFilter(), categoryServices,
-				origin);
+		return addEntriesFromFile(file, new StubStringFilter(),
+				categoryServices, origin);
 	}
 	
 	/**
@@ -165,9 +200,11 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 	 * </pre>
 	 */
 	@Override
-	public void addEntriesFromFile(File file, IStringFilter textFilter,
+	public Set<LexicalEntry<LogicalExpression>> addEntriesFromFile(File file,
+			IStringFilter textFilter,
 			ICategoryServices<LogicalExpression> categoryServices, String origin) {
 		try {
+			final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
 			final BufferedReader in = new BufferedReader(new FileReader(file));
 			int lineCounter = 0;
 			try {
@@ -178,8 +215,8 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 					line = line.trim();
 					// Ignore blank lines and comments
 					if (!line.equals("") && !line.startsWith("//")) {
-						add(LexicalEntry.parse(line, textFilter,
-								categoryServices, origin));
+						added.addAll(add(LexicalEntry.parse(line, textFilter,
+								categoryServices, origin)));
 					}
 				}
 			} catch (final RuntimeException e) {
@@ -189,6 +226,7 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 			} finally {
 				in.close();
 			}
+			return added;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -361,29 +399,71 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 		return ret.toString();
 	}
 	
-	private boolean addLexeme(Lexeme lexeme) {
+	private Set<LexicalEntry<LogicalExpression>> addLexeme(Lexeme lexeme) {
 		Set<Lexeme> lexemeSet = lexemes.get(lexeme.getTokens());
+		final boolean addedLexeme;
 		if (lexemeSet != null) {
-			return lexemeSet.add(lexeme);
+			addedLexeme = lexemeSet.add(lexeme);
 		} else {
 			lexemeSet = new HashSet<Lexeme>();
 			lexemeSet.add(lexeme);
 			lexemes.put(lexeme.getTokens(), lexemeSet);
-			return true;
+			addedLexeme = true;
 		}
+		
+		final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
+		if (addedLexeme) {
+			// Update lexeme indexing by type signature
+			final List<Type> typeSignature = lexeme.getTypeSignature();
+			if (!lexemesByType.containsKey(typeSignature)) {
+				lexemesByType.put(typeSignature, new HashSet<Lexeme>());
+			}
+			lexemesByType.get(typeSignature).add(lexeme);
+			
+			// Get all new lexical entries
+			if (templates.containsKey(typeSignature)) {
+				for (final LexicalTemplate template : templates
+						.get(typeSignature)) {
+					final FactoredLexicalEntry entry = applyTemplate(template,
+							lexeme);
+					if (entry != null) {
+						added.add(entry);
+					}
+				}
+			}
+		}
+		return added;
 	}
 	
-	private boolean addTemplate(LexicalTemplate template) {
+	private Set<LexicalEntry<LogicalExpression>> addTemplate(
+			LexicalTemplate template) {
 		Set<LexicalTemplate> templateSet = templates.get(template
 				.getTypeSignature());
+		final boolean addedTemplate;
 		if (templateSet != null) {
-			return templateSet.add(template);
+			addedTemplate = templateSet.add(template);
 		} else {
 			templateSet = new HashSet<LexicalTemplate>();
 			templateSet.add(template);
 			templates.put(template.getTypeSignature(), templateSet);
-			return true;
+			addedTemplate = true;
 		}
+		
+		final Set<LexicalEntry<LogicalExpression>> added = new HashSet<LexicalEntry<LogicalExpression>>();
+		if (addedTemplate) {
+			// Get all new lexical entries
+			if (lexemesByType.containsKey(template.getTypeSignature())) {
+				for (final Lexeme lexeme : lexemesByType.get(template
+						.getTypeSignature())) {
+					final FactoredLexicalEntry entry = applyTemplate(template,
+							lexeme);
+					if (entry != null) {
+						added.add(entry);
+					}
+				}
+			}
+		}
+		return added;
 	}
 	
 	private FactoredLexicalEntry applyTemplate(LexicalTemplate template,
@@ -400,6 +480,7 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 	public static class FactoredLexicalEntry extends
 			LexicalEntry<LogicalExpression> {
 		
+		private static final long		serialVersionUID	= -2547759640580678562L;
 		private final Lexeme			lexeme;
 		private final LexicalTemplate	template;
 		

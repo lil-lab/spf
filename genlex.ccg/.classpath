@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="src" path="/data"/>
+	<classpathentry kind="src" path="/parser.ccg"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

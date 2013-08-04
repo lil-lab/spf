@@ -21,16 +21,17 @@ package edu.uw.cs.lil.tiny.learn.validation.stocgrad;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
@@ -47,34 +48,42 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  * @param <MR>
  */
-public class ValidationStocGrad<MR> extends
-		AbstractLearner<IGraphParserOutput<MR>, MR> {
-	private static final ILogger						LOG						= LoggerFactory
-																						.create(ValidationStocGrad.class);
+public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
+		extends AbstractLearner<SAMPLE, DI, IGraphParserOutput<MR>, MR> {
+	private static final ILogger			LOG						= LoggerFactory
+																			.create(ValidationStocGrad.class);
 	
-	private final double								alpha0;
+	private final double					alpha0;
 	
-	private final double								c;
+	private final double					c;
 	
-	private final IGraphParser<Sentence, MR>			parser;
+	private final IGraphParser<SAMPLE, MR>	parser;
 	
-	private int											stocGradientNumUpdates	= 0;
+	private int								stocGradientNumUpdates	= 0;
 	
-	private final IValidator<IDataItem<Sentence>, MR>	validator;
+	private final IValidator<DI, MR>		validator;
 	
 	private ValidationStocGrad(
 			int numIterations,
-			IDataCollection<? extends ILexGenDataItem<Sentence, MR>> trainingData,
-			Map<IDataItem<Sentence>, MR> trainingDataDebug,
-			int maxSentenceLength, int lexiconGenerationBeamSize,
-			IGraphParser<Sentence, MR> parser, boolean lexiconLearning,
-			IOutputLogger<MR> parserOutputLogger, double alpha0, double c,
-			IValidator<IDataItem<Sentence>, MR> validator,
-			ITester<Sentence, MR> tester, boolean conflateGenlexAndPrunedParses) {
+			IDataCollection<DI> trainingData,
+			Map<DI, MR> trainingDataDebug,
+			int maxSentenceLength,
+			int lexiconGenerationBeamSize,
+			IGraphParser<SAMPLE, MR> parser,
+			IOutputLogger<MR> parserOutputLogger,
+			double alpha0,
+			double c,
+			IValidator<DI, MR> validator,
+			ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses,
+			boolean errorDriven,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			IFilter<DI> processingFilter) {
 		super(numIterations, trainingData, trainingDataDebug,
-				maxSentenceLength, lexiconGenerationBeamSize, parser,
-				lexiconLearning, parserOutputLogger, tester,
-				conflateGenlexAndPrunedParses);
+				lexiconGenerationBeamSize, parserOutputLogger, tester,
+				conflateGenlexAndPrunedParses, errorDriven, categoryServices,
+				genlex, processingFilter);
 		this.parser = parser;
 		this.alpha0 = alpha0;
 		this.c = c;
@@ -85,23 +94,24 @@ public class ValidationStocGrad<MR> extends
 				maxSentenceLength);
 		LOG.info("Init ValidationPerceptron: ... lexiconGenerationBeamSize=%d",
 				lexiconGenerationBeamSize);
-		LOG.info("Init ValidationPerceptron: ... conflateParses=%s",
-				conflateGenlexAndPrunedParses ? "true" : "false");
+		LOG.info(
+				"Init ValidationPerceptron: ... conflateParses=%s, erroDriven=%s",
+				conflateGenlexAndPrunedParses ? "true" : "false",
+				errorDriven ? "true" : "false");
 		LOG.info("Init ValidationPerceptron: ... c=%f, alpha0=%f", c, alpha0);
 	}
 	
 	@Override
-	public void train(Model<Sentence, MR> model) {
+	public void train(Model<IDataItem<SAMPLE>, MR> model) {
 		stocGradientNumUpdates = 0;
 		super.train(model);
 	}
 	
 	@Override
-	protected void parameterUpdate(
-			final ILexGenDataItem<Sentence, MR> dataItem,
+	protected void parameterUpdate(final DI dataItem,
 			IGraphParserOutput<MR> realOutput,
-			IGraphParserOutput<MR> goodOutput, Model<Sentence, MR> model,
-			int itemCounter, int epochNumber) {
+			IGraphParserOutput<MR> goodOutput,
+			Model<IDataItem<SAMPLE>, MR> model, int itemCounter, int epochNumber) {
 		
 		if (realOutput.getAllParses().isEmpty()
 				|| goodOutput.getAllParses().isEmpty()) {
@@ -109,11 +119,6 @@ public class ValidationStocGrad<MR> extends
 			LOG.info("Skipping parameter update, no parses");
 			return;
 		}
-		
-		// TODO Solve the case of some lexical entries (in the factored case)
-		// not in the model, so they don't have features. However, just adding
-		// them is not enough, because the chart caches the previous features.
-		// This is true for other learners as well.
 		
 		// Create the update
 		final IHashVector update = HashVectorFactory.create();
@@ -137,7 +142,6 @@ public class ValidationStocGrad<MR> extends
 			final IHashVector expectedFeatures = goodOutput
 					.expectedFeatures(filter);
 			expectedFeatures.divideBy(conditionedNorm);
-			expectedFeatures.dropSmallEntries();
 			LOG.info("Positive update: %s", expectedFeatures);
 			expectedFeatures.addTimesInto(1.0, update);
 			stats.hasValidParse(itemCounter, epochNumber);
@@ -150,7 +154,6 @@ public class ValidationStocGrad<MR> extends
 			// Case have complete parses
 			final IHashVector expectedFeatures = realOutput.expectedFeatures();
 			expectedFeatures.divideBy(norm);
-			expectedFeatures.dropSmallEntries();
 			LOG.info("Negative update: %s", expectedFeatures);
 			expectedFeatures.addTimesInto(-1.0, update);
 		} else {
@@ -193,162 +196,186 @@ public class ValidationStocGrad<MR> extends
 	}
 	
 	@Override
-	protected IGraphParserOutput<MR> parse(
-			ILexGenDataItem<Sentence, MR> dataItem,
+	protected IGraphParserOutput<MR> parse(DI dataItem,
 			IDataItemModel<MR> dataItemModel) {
 		return parser.parse(dataItem, dataItemModel);
 	}
 	
 	@Override
-	protected IGraphParserOutput<MR> parse(
-			ILexGenDataItem<Sentence, MR> dataItem, IFilter<MR> pruningFilter,
-			IDataItemModel<MR> dataItemModel) {
+	protected IGraphParserOutput<MR> parse(DI dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel) {
 		return parser.parse(dataItem, pruningFilter, dataItemModel);
 	}
 	
 	@Override
-	protected IGraphParserOutput<MR> parse(
-			ILexGenDataItem<Sentence, MR> dataItem, IFilter<MR> pruningFilter,
-			IDataItemModel<MR> dataItemModel, ILexicon<MR> generatedLexicon,
-			int beamSize) {
-		return parser.parse(dataItem, dataItemModel, false, generatedLexicon);
+	protected IGraphParserOutput<MR> parse(DI dataItem,
+			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel,
+			ILexicon<MR> generatedLexicon, int beamSize) {
+		return parser.parse(dataItem, dataItemModel, false, generatedLexicon,
+				beamSize);
 	}
 	
 	@Override
-	protected boolean validate(IDataItem<Sentence> dataItem, MR hypothesis) {
+	protected boolean validate(DI dataItem, MR hypothesis) {
 		return validator.isValid(dataItem, hypothesis);
 	}
 	
-	public static class Builder<MR> {
+	public static class Builder<SAMPLE, DI extends IDataItem<SAMPLE>, MR> {
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double															alpha0							= 0.1;
+		private double																alpha0							= 1.0;
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double															c								= 0.0001;
+		private double																c								= 0.0001;
+		
+		/**
+		 * Required for lexicon learning.
+		 */
+		private ICategoryServices<MR>												categoryServices				= null;
 		
 		/**
 		 * Recycle the lexical induction parser output as the pruned one for
 		 * parameter update.
 		 */
-		private boolean															conflateGenlexAndPrunedParses	= false;
+		private boolean																conflateGenlexAndPrunedParses	= false;
+		private boolean																errorDriven						= false;
+		
+		/**
+		 * Processing filter, if 'false', skip sample.
+		 */
+		private IFilter<DI>															filter							= new IFilter<DI>() {
+																														
+																														@Override
+																														public boolean isValid(
+																																DI e) {
+																															return true;
+																														}
+																													};
+		
+		/**
+		 * GENLEX procedure. If 'null' skips lexicon induction.
+		 */
+		private ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																lexiconGenerationBeamSize		= 20;
-		/**
-		 * Learn a lexicon.
-		 */
-		private boolean															lexiconLearning					= true;
+		private int																	lexiconGenerationBeamSize		= 20;
 		
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private int																maxSentenceLength				= Integer.MAX_VALUE;
+		private final int															maxSentenceLength				= Integer.MAX_VALUE;
 		
 		/** Number of training iterations */
-		private int																numIterations					= 4;
+		private int																	numIterations					= 4;
 		
-		private final IGraphParser<Sentence, MR>								parser;
+		private final IGraphParser<SAMPLE, MR>										parser;
 		
-		private IOutputLogger<MR>												parserOutputLogger				= new IOutputLogger<MR>() {
-																													
-																													public void log(
-																															IParserOutput<MR> output,
-																															IDataItemModel<MR> dataItemModel) {
-																														// Stub
+		private IOutputLogger<MR>													parserOutputLogger				= new IOutputLogger<MR>() {
 																														
-																													}
-																												};
+																														public void log(
+																																IParserOutput<MR> output,
+																																IDataItemModel<MR> dataItemModel) {
+																															// Stub
+																															
+																														}
+																													};
 		
-		private ITester<Sentence, MR>											tester							= null;
+		private ITester<SAMPLE, MR>													tester							= null;
 		
 		/** Training data */
-		private final IDataCollection<? extends ILexGenDataItem<Sentence, MR>>	trainingData;
+		private final IDataCollection<DI>											trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<IDataItem<Sentence>, MR>									trainingDataDebug				= new HashMap<IDataItem<Sentence>, MR>();
+		private Map<DI, MR>															trainingDataDebug				= new HashMap<DI, MR>();
 		
-		private final IValidator<IDataItem<Sentence>, MR>						validator;
+		private final IValidator<DI, MR>											validator;
 		
-		public Builder(
-				IDataCollection<? extends ILexGenDataItem<Sentence, MR>> trainingData,
-				IGraphParser<Sentence, MR> parser,
-				IValidator<IDataItem<Sentence>, MR> validator) {
+		public Builder(IDataCollection<DI> trainingData,
+				IGraphParser<SAMPLE, MR> parser, IValidator<DI, MR> validator) {
 			this.trainingData = trainingData;
 			this.parser = parser;
 			this.validator = validator;
 		}
 		
-		public ValidationStocGrad<MR> build() {
-			return new ValidationStocGrad<MR>(numIterations, trainingData,
-					trainingDataDebug, maxSentenceLength,
-					lexiconGenerationBeamSize, parser, lexiconLearning,
-					parserOutputLogger, alpha0, c, validator, tester,
-					conflateGenlexAndPrunedParses);
+		public ValidationStocGrad<SAMPLE, DI, MR> build() {
+			return new ValidationStocGrad<SAMPLE, DI, MR>(numIterations,
+					trainingData, trainingDataDebug, maxSentenceLength,
+					lexiconGenerationBeamSize, parser, parserOutputLogger,
+					alpha0, c, validator, tester,
+					conflateGenlexAndPrunedParses, errorDriven,
+					categoryServices, genlex, filter);
 		}
 		
-		public Builder<MR> setAlpha0(double alpha0) {
+		public Builder<SAMPLE, DI, MR> setAlpha0(double alpha0) {
 			this.alpha0 = alpha0;
 			return this;
 		}
 		
-		public Builder<MR> setC(double c) {
+		public Builder<SAMPLE, DI, MR> setC(double c) {
 			this.c = c;
 			return this;
 		}
 		
-		public Builder<MR> setConflateGenlexAndPrunedParses(
+		public Builder<SAMPLE, DI, MR> setConflateGenlexAndPrunedParses(
 				boolean conflateGenlexAndPrunedParses) {
 			this.conflateGenlexAndPrunedParses = conflateGenlexAndPrunedParses;
 			return this;
 		}
 		
-		public Builder<MR> setLexiconGenerationBeamSize(
+		public Builder<SAMPLE, DI, MR> setErrorDriven(boolean errorDriven) {
+			this.errorDriven = errorDriven;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setGenlex(
+				ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+				ICategoryServices<MR> categoryServices) {
+			this.genlex = genlex;
+			this.categoryServices = categoryServices;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setLexiconGenerationBeamSize(
 				int lexiconGenerationBeamSize) {
 			this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 			return this;
 		}
 		
-		public Builder<MR> setLexiconLearning(boolean lexiconLearning) {
-			this.lexiconLearning = lexiconLearning;
-			return this;
-		}
-		
-		public Builder<MR> setMaxSentenceLength(int maxSentenceLength) {
-			this.maxSentenceLength = maxSentenceLength;
-			return this;
-		}
-		
-		public Builder<MR> setNumIterations(int numIterations) {
+		public Builder<SAMPLE, DI, MR> setNumIterations(int numIterations) {
 			this.numIterations = numIterations;
 			return this;
 		}
 		
-		public Builder<MR> setParserOutputLogger(
+		public Builder<SAMPLE, DI, MR> setParserOutputLogger(
 				IOutputLogger<MR> parserOutputLogger) {
 			this.parserOutputLogger = parserOutputLogger;
 			return this;
 		}
 		
-		public Builder<MR> setTester(ITester<Sentence, MR> tester) {
+		public Builder<SAMPLE, DI, MR> setProcessingFilter(IFilter<DI> filter) {
+			this.filter = filter;
+			return this;
+		}
+		
+		public Builder<SAMPLE, DI, MR> setTester(ITester<SAMPLE, MR> tester) {
 			this.tester = tester;
 			return this;
 		}
 		
-		public Builder<MR> setTrainingDataDebug(
-				Map<IDataItem<Sentence>, MR> trainingDataDebug) {
+		public Builder<SAMPLE, DI, MR> setTrainingDataDebug(
+				Map<DI, MR> trainingDataDebug) {
 			this.trainingDataDebug = trainingDataDebug;
 			return this;
 		}

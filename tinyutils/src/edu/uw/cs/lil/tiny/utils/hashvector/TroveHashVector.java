@@ -34,7 +34,8 @@ import java.util.Iterator;
  * @author Yoav Artzi
  */
 class TroveHashVector implements IHashVector {
-	private final TObjectDoubleHashMap<KeyArgs>	values	= new TObjectDoubleHashMap<KeyArgs>();
+	private static final long					serialVersionUID	= -8168101355823745381L;
+	private final TObjectDoubleHashMap<KeyArgs>	values				= new TObjectDoubleHashMap<KeyArgs>();
 	
 	TroveHashVector() {
 	}
@@ -123,6 +124,28 @@ class TroveHashVector implements IHashVector {
 				return Math.abs(b) >= NOISE;
 			}
 		});
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final TroveHashVector other = (TroveHashVector) obj;
+		if (values == null) {
+			if (other.values != null) {
+				return false;
+			}
+		} else if (!values.equals(other.values)) {
+			return false;
+		}
+		return true;
 	}
 	
 	@Override
@@ -250,6 +273,14 @@ class TroveHashVector implements IHashVector {
 				return true;
 			}
 		});
+		return result;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((values == null) ? 0 : values.hashCode());
 		return result;
 	}
 	

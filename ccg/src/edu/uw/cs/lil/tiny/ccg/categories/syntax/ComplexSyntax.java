@@ -20,20 +20,22 @@ package edu.uw.cs.lil.tiny.ccg.categories.syntax;
 
 public class ComplexSyntax extends Syntax {
 	
-	private final int		hashCode;
+	private static final long	serialVersionUID	= 2647447680294080606L;
 	
-	private final Syntax	left;
+	private final int			hashCode;
 	
-	private final int		numSlahes;
+	private final Syntax		left;
 	
-	private final Syntax	right;
-	private final Slash		slash;
+	private final int			numSlahes;
+	
+	private final Syntax		right;
+	private final Slash			slash;
 	/**
 	 * String representation of the object. The string is computed on
 	 * instantiation to avoid recursion. This representation is complete, and
 	 * therefore it's used for equals().
 	 */
-	private final String	string;
+	private final String		string;
 	
 	public ComplexSyntax(Syntax left, Syntax right, Slash slash) {
 		this.left = left;

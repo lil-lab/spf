@@ -18,11 +18,12 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.learn;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 
 /**
  * @author Yoav Artzi
  */
-public interface ILearner<LANG, MR, MODEL extends Model<LANG, MR>> {
+public interface ILearner<DI extends IDataItem<?>, MR, MODEL extends Model<DI, MR>> {
 	void train(MODEL model);
 }

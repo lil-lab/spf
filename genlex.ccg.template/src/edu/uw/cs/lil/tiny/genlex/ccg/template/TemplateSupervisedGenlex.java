@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
@@ -54,7 +55,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class TemplateSupervisedGenlex
 		implements
-		ILexiconGenerator<ILabeledDataItem<Sentence, LogicalExpression>, LogicalExpression> {
+		ILexiconGenerator<ILabeledDataItem<Sentence, LogicalExpression>, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
 	private static final List<LogicalConstant>	EMPTY_LIST	= Collections
 																	.emptyList();
 	
@@ -81,7 +82,9 @@ public class TemplateSupervisedGenlex
 	
 	@Override
 	public ILexicon<LogicalExpression> generate(
-			ILabeledDataItem<Sentence, LogicalExpression> dataItem) {
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
+			IModelImmutable<Sentence, LogicalExpression> model,
+			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getSample().getTokens();
 		final int numTokens = tokens.size();
 		
@@ -126,8 +129,8 @@ public class TemplateSupervisedGenlex
 					.cartesianProduct(setsOfConsts)) {
 				for (int i = 0; i < numTokens; ++i) {
 					for (int j = i; j < numTokens && j - i + 1 < maxTokens; ++j) {
-						lexemes.add(new Lexeme(tokens.subList(i, j + 1),
-								constantsList,
+						lexemes.add(new Lexeme(CollectionUtils.subList(tokens,
+								i, j + 1), constantsList,
 								ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
 					}
 				}
@@ -138,8 +141,9 @@ public class TemplateSupervisedGenlex
 			
 			for (int i = 0; i < numTokens; ++i) {
 				for (int j = i; j < numTokens && j - i + 1 < maxTokens; ++j) {
-					lexemes.add(new Lexeme(tokens.subList(i, j + 1),
-							EMPTY_LIST, ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
+					lexemes.add(new Lexeme(CollectionUtils.subList(tokens, i,
+							j + 1), EMPTY_LIST,
+							ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
 				}
 			}
 		}

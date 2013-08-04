@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser.ccg.model.lexical;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
@@ -27,7 +28,8 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
  * 
  * @author Yoav Artzi
  */
-public interface ILexicalFeatureSet<X, Y> extends IParseFeatureSet<X, Y> {
+public interface ILexicalFeatureSet<DI extends IDataItem<?>, MR> extends
+		IParseFeatureSet<DI, MR> {
 	/**
 	 * Add an initialize a lexical entry.
 	 * 
@@ -35,7 +37,7 @@ public interface ILexicalFeatureSet<X, Y> extends IParseFeatureSet<X, Y> {
 	 * @param prametersVector
 	 * @return
 	 */
-	public boolean addEntry(LexicalEntry<Y> entry, IHashVector prametersVector);
+	public boolean addEntry(LexicalEntry<MR> entry, IHashVector prametersVector);
 	
 	/**
 	 * Add and initialize a fixed lexical entry.
@@ -44,6 +46,6 @@ public interface ILexicalFeatureSet<X, Y> extends IParseFeatureSet<X, Y> {
 	 * @param prametersVector
 	 * @return
 	 */
-	public boolean addFixedEntry(LexicalEntry<Y> entry,
+	public boolean addFixedEntry(LexicalEntry<MR> entry,
 			IHashVector prametersVector);
 }

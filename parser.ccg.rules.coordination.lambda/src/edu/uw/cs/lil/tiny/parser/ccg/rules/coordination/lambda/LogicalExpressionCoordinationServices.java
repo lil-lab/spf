@@ -114,8 +114,7 @@ public class LogicalExpressionCoordinationServices implements
 		
 		// Create a Lambda expression using only the outer Lambda operator and
 		// the found truth-type expression as body
-		final Lambda reducedFunction = new Lambda(outerMostVariable, innerBody,
-				LogicLanguageServices.getTypeRepository());
+		final Lambda reducedFunction = new Lambda(outerMostVariable, innerBody);
 		
 		// Apply the recently created expression to all arguments
 		final List<LogicalExpression> coordinationItems = new ArrayList<LogicalExpression>(
@@ -123,8 +122,7 @@ public class LogicalExpressionCoordinationServices implements
 		for (final LogicalExpression coordinate : literal.getArguments()) {
 			final LogicalExpression application = ApplyAndSimplify.of(
 					reducedFunction, ReplaceVariablesIfPresent.of(coordinate,
-							sharedVariablesSet,
-							LogicLanguageServices.getTypeRepository()));
+							sharedVariablesSet));
 			if (application == null) {
 				return null;
 			} else {
@@ -138,16 +136,12 @@ public class LogicalExpressionCoordinationServices implements
 		if (isConjunctionCoordinator((LogicalConstant) literal.getPredicate())) {
 			coordinationLiteral = new Literal(
 					LogicLanguageServices.getConjunctionPredicate(),
-					coordinationItems,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository());
+					coordinationItems);
 		} else if (isDisjunctionCoordinator((LogicalConstant) literal
 				.getPredicate())) {
 			coordinationLiteral = new Literal(
 					LogicLanguageServices.getDisjunctionPredicate(),
-					coordinationItems,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository());
+					coordinationItems);
 		} else {
 			throw new IllegalStateException("invalid coordinator: "
 					+ literal.getPredicate());
@@ -160,8 +154,7 @@ public class LogicalExpressionCoordinationServices implements
 				.listIterator(sharedVariables.size());
 		while (iterator.hasPrevious()) {
 			wrappedCoordination = new Lambda(iterator.previous(),
-					wrappedCoordination,
-					LogicLanguageServices.getTypeRepository());
+					wrappedCoordination);
 		}
 		
 		return Simplify.of(wrappedCoordination);
@@ -191,9 +184,7 @@ public class LogicalExpressionCoordinationServices implements
 		arguments.add(variable);
 		arguments.add(coordinated);
 		return new Lambda(variable, new Literal(coordinationPredicate,
-				arguments, LogicLanguageServices.getTypeComparator(),
-				LogicLanguageServices.getTypeRepository()),
-				LogicLanguageServices.getTypeRepository());
+				arguments));
 	}
 	
 	@Override
@@ -225,9 +216,7 @@ public class LogicalExpressionCoordinationServices implements
 					2);
 			args.add(variable);
 			args.add(coordinated);
-			return Simplify.of(new Literal(coordinationPredicate, args,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository()));
+			return Simplify.of(new Literal(coordinationPredicate, args));
 		}
 		
 		return null;
@@ -301,9 +290,7 @@ public class LogicalExpressionCoordinationServices implements
 			expandedArgs.addAll(literal.getArguments());
 			return new Literal(createPredicate(
 					(LogicalConstant) literal.getPredicate(), literal
-							.getArguments().size() + 1, argType), expandedArgs,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository());
+							.getArguments().size() + 1, argType), expandedArgs);
 		} else {
 			return null;
 		}

@@ -19,9 +19,16 @@
 package edu.uw.cs.lil.tiny.utils.hashvector;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import junit.framework.Assert;
 
@@ -119,6 +126,61 @@ public class TreeHashVectorTest {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	@Test
+	public void testSerialization() {
+		final TreeHashVector vector = new TreeHashVector();
+		final Random random = new Random();
+		for (int i = 0; i < 1000; ++i) {
+			switch (random.nextInt() % 5) {
+				case 0:
+					vector.set(Integer.toString(random.nextInt()),
+							random.nextDouble());
+					break;
+				case 1:
+					vector.set(Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							random.nextDouble());
+					break;
+				case 2:
+					vector.set(Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							random.nextDouble());
+					break;
+				case 3:
+					vector.set(Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							random.nextDouble());
+					break;
+				case 4:
+					vector.set(Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							Integer.toString(random.nextInt()),
+							random.nextDouble());
+					break;
+			}
+		}
+		
+		try {
+			final ByteArrayOutputStream out = new ByteArrayOutputStream();
+			new ObjectOutputStream(out).writeObject(vector);
+			final TreeHashVector object = (TreeHashVector) new ObjectInputStream(
+					new ByteArrayInputStream(out.toByteArray())).readObject();
+			Assert.assertEquals(vector, object);
+		} catch (final IOException e) {
+			e.printStackTrace();
+			fail();
+		} catch (final ClassNotFoundException e) {
+			e.printStackTrace();
+			fail();
+		}
+		
 	}
 	
 	private static class Test3Task implements Runnable {

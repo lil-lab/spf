@@ -29,20 +29,22 @@ import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
  * @author Yoav Artzi
  */
 public abstract class Term extends LogicalExpression {
-	public static final String	TYPE_SEPARATOR	= ":";
+	public static final String	TYPE_SEPARATOR		= ":";
+	private static final long	serialVersionUID	= -5545012754214908898L;
 	private final Type			type;
 	
 	public Term(Type type) {
 		this.type = type;
 	}
 	
-	protected static Term parse(String string, Map<String, Variable> variables,
-			TypeRepository typeRepository, ITypeComparator typeComparator,
-			boolean lockOntology) {
+	protected static Term doParse(String string,
+			Map<String, Variable> variables, TypeRepository typeRepository,
+			ITypeComparator typeComparator, boolean lockOntology) {
 		if (string.startsWith(Variable.PREFIX)) {
-			return Variable.parse(string, variables, typeRepository);
+			return Variable.doParse(string, variables, typeRepository);
 		} else {
-			return LogicalConstant.parse(string, typeRepository, lockOntology);
+			return LogicalConstant
+					.doParse(string, typeRepository, lockOntology);
 		}
 	}
 	

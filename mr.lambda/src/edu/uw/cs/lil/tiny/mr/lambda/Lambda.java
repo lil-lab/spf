@@ -41,18 +41,24 @@ public class Lambda extends LogicalExpression {
 	/**
 	 * The head string for a lambda expression.
 	 */
-	public static final String		HEAD_STRING	= "lambda";
+	public static final String		HEAD_STRING			= "lambda";
 	
-	public static final String		PREFIX		= LogicalExpression.PARENTHESIS_OPEN
-														+ HEAD_STRING;
-	private static final ILogger	LOG			= LoggerFactory
-														.create(Lambda.class);
+	public static final String		PREFIX				= LogicalExpression.PARENTHESIS_OPEN
+																+ HEAD_STRING;
+	
+	private static final ILogger	LOG					= LoggerFactory
+																.create(Lambda.class);
+	private static final long		serialVersionUID	= -9074603389979811699L;
 	private final Variable			argument;
 	private final LogicalExpression	body;
 	
 	private final ComplexType		type;
 	
-	public Lambda(Variable argument, LogicalExpression body,
+	public Lambda(Variable argument, LogicalExpression body) {
+		this(argument, body, LogicLanguageServices.getTypeRepository());
+	}
+	
+	private Lambda(Variable argument, LogicalExpression body,
 			TypeRepository typeRepository) {
 		this.argument = argument;
 		this.body = body;
@@ -70,7 +76,7 @@ public class Lambda extends LogicalExpression {
 	 * @param string
 	 * @return
 	 */
-	protected static Lambda parse(String string,
+	protected static Lambda doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
 			ITypeComparator typeComparator, boolean lockOntology) {
 		try {
@@ -86,7 +92,7 @@ public class Lambda extends LogicalExpression {
 			final int variablesOrgSize = variables.size();
 			
 			// The second argument is the name of the variable introduces
-			final LogicalExpression varExpression = LogicalExpression.parse(
+			final LogicalExpression varExpression = LogicalExpression.doParse(
 					lispReader.next(), variables, typeRepository,
 					typeComparator, lockOntology);
 			
@@ -107,7 +113,7 @@ public class Lambda extends LogicalExpression {
 			}
 			
 			// The next argument is the body expression
-			final LogicalExpression lambdaBody = LogicalExpression.parse(
+			final LogicalExpression lambdaBody = LogicalExpression.doParse(
 					lispReader.next(), variables, typeRepository,
 					typeComparator, lockOntology);
 			
@@ -137,7 +143,7 @@ public class Lambda extends LogicalExpression {
 								+ string);
 			}
 			
-			return new Lambda(variable, lambdaBody, typeRepository);
+			return new Lambda(variable, lambdaBody);
 		} catch (final RuntimeException e) {
 			LOG.error("Lambda syntax error: %s", string);
 			throw e;

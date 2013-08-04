@@ -18,19 +18,20 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.RuleUsageFeatureSet;
 
-public class RuleUsageFeatureSetCreator<X, Y> implements
-		IResourceObjectCreator<RuleUsageFeatureSet<X, Y>> {
+public class RuleUsageFeatureSetCreator<DI extends IDataItem<?>, MR> implements
+		IResourceObjectCreator<RuleUsageFeatureSet<DI, MR>> {
 	
 	@Override
-	public RuleUsageFeatureSet<X, Y> create(Parameters params,
+	public RuleUsageFeatureSet<DI, MR> create(Parameters params,
 			IResourceRepository repo) {
-		return new RuleUsageFeatureSet<X, Y>(
+		return new RuleUsageFeatureSet<DI, MR>(
 				params.contains("scale") ? Double.valueOf(params.get("scale"))
 						: 1.0);
 	}

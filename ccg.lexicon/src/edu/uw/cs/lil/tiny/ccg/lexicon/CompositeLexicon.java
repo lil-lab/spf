@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -47,12 +48,13 @@ import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
  * 
  * @author Luke Zettlemoyer
  */
-public class CompositeLexicon<Y> implements ILexicon<Y> {
-	private final ILexicon<Y>		masterLexicon;
-	private final List<ILexicon<Y>>	subLexicons;
+public class CompositeLexicon<MR> implements ILexicon<MR> {
+	private static final long			serialVersionUID	= -2289410658817517272L;
+	private final ILexicon<MR>			masterLexicon;
+	private final List<ILexicon<MR>>	subLexicons;
 	
-	public CompositeLexicon(ILexicon<Y> masterLexicon,
-			List<ILexicon<Y>> subLexicons) {
+	public CompositeLexicon(ILexicon<MR> masterLexicon,
+			List<ILexicon<MR>> subLexicons) {
 		this.masterLexicon = masterLexicon;
 		this.subLexicons = subLexicons;
 	}
@@ -63,46 +65,47 @@ public class CompositeLexicon<Y> implements ILexicon<Y> {
 	}
 	
 	@Override
-	public boolean add(LexicalEntry<Y> lex) {
+	public Set<LexicalEntry<MR>> add(LexicalEntry<MR> lex) {
 		if (contains(lex)) {
-			return false;
+			return Collections.emptySet();
 		}
 		return masterLexicon.add(lex);
 	}
 	
 	@Override
-	public boolean addAll(Collection<LexicalEntry<Y>> newEntries) {
-		// return masterLexicon.addAll(newEntries);
-		boolean addedAll = true;
-		for (final LexicalEntry<Y> lex : newEntries) {
-			addedAll &= add(lex);
+	public Set<LexicalEntry<MR>> addAll(Collection<LexicalEntry<MR>> newEntries) {
+		final Set<LexicalEntry<MR>> addedEntries = new HashSet<LexicalEntry<MR>>();
+		for (final LexicalEntry<MR> lex : newEntries) {
+			addedEntries.addAll(add(lex));
 		}
-		return addedAll;
+		return addedEntries;
 	}
 	
-	public boolean addAll(ILexicon<Y> lexicon) {
+	public Set<LexicalEntry<MR>> addAll(ILexicon<MR> lexicon) {
 		return addAll(lexicon.toCollection());
 	}
 	
-	public void addEntriesFromFile(File file,
-			ICategoryServices<Y> categoryServices, String origin) {
-		masterLexicon.addEntriesFromFile(file, new StubStringFilter(),
+	@Override
+	public Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			ICategoryServices<MR> categoryServices, String origin) {
+		return masterLexicon.addEntriesFromFile(file, new StubStringFilter(),
 				categoryServices, origin);
 	}
 	
 	@Override
-	public void addEntriesFromFile(File file, IStringFilter textFilter,
-			ICategoryServices<Y> categoryServices, String origin) {
-		masterLexicon.addEntriesFromFile(file, textFilter, categoryServices,
-				origin);
+	public Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			IStringFilter textFilter, ICategoryServices<MR> categoryServices,
+			String origin) {
+		return masterLexicon.addEntriesFromFile(file, textFilter,
+				categoryServices, origin);
 	}
 	
 	@Override
-	public boolean contains(LexicalEntry<Y> lex) {
+	public boolean contains(LexicalEntry<MR> lex) {
 		if (masterLexicon.contains(lex)) {
 			return true;
 		}
-		for (final ILexicon<Y> lexicon : subLexicons) {
+		for (final ILexicon<MR> lexicon : subLexicons) {
 			if (lexicon.contains(lex)) {
 				return true;
 			}
@@ -110,8 +113,8 @@ public class CompositeLexicon<Y> implements ILexicon<Y> {
 		return false;
 	}
 	
-	public CompositeLexicon<Y> copy() {
-		return new CompositeLexicon<Y>(masterLexicon.copy(), subLexicons);
+	public CompositeLexicon<MR> copy() {
+		return new CompositeLexicon<MR>(masterLexicon.copy(), subLexicons);
 	}
 	
 	/**
@@ -120,37 +123,37 @@ public class CompositeLexicon<Y> implements ILexicon<Y> {
 	 * @param words
 	 * @return
 	 */
-	public List<LexicalEntry<Y>> getLexEntries(List<String> words) {
-		final List<LexicalEntry<Y>> matchingEntries = new LinkedList<LexicalEntry<Y>>();
+	public List<LexicalEntry<MR>> getLexEntries(List<String> words) {
+		final List<LexicalEntry<MR>> matchingEntries = new LinkedList<LexicalEntry<MR>>();
 		matchingEntries.addAll(masterLexicon.getLexEntries(words));
-		for (final ILexicon<Y> lexicon : subLexicons) {
+		for (final ILexicon<MR> lexicon : subLexicons) {
 			matchingEntries.addAll(lexicon.getLexEntries(words));
 		}
 		return matchingEntries;
 	}
 	
 	@Override
-	public boolean retainAll(Collection<LexicalEntry<Y>> toKeepEntries) {
+	public boolean retainAll(Collection<LexicalEntry<MR>> toKeepEntries) {
 		return masterLexicon.retainAll(toKeepEntries);
 	}
 	
 	@Override
-	public boolean retainAll(ILexicon<Y> entries) {
+	public boolean retainAll(ILexicon<MR> entries) {
 		return masterLexicon.retainAll(entries);
 	}
 	
 	public int size() {
 		int size = masterLexicon.size();
-		for (final ILexicon<Y> lexicon : subLexicons) {
+		for (final ILexicon<MR> lexicon : subLexicons) {
 			size += lexicon.size();
 		}
 		return size;
 	}
 	
-	public Collection<LexicalEntry<Y>> toCollection() {
-		final Set<LexicalEntry<Y>> result = new HashSet<LexicalEntry<Y>>();
+	public Collection<LexicalEntry<MR>> toCollection() {
+		final Set<LexicalEntry<MR>> result = new HashSet<LexicalEntry<MR>>();
 		result.addAll(masterLexicon.toCollection());
-		for (final ILexicon<Y> lexicon : subLexicons) {
+		for (final ILexicon<MR> lexicon : subLexicons) {
 			result.addAll(lexicon.toCollection());
 		}
 		return result;
@@ -162,7 +165,7 @@ public class CompositeLexicon<Y> implements ILexicon<Y> {
 		output.append("MASTER LEXICON");
 		output.append(masterLexicon.toString());
 		int i = 0;
-		for (final ILexicon<Y> lexicon : subLexicons) {
+		for (final ILexicon<MR> lexicon : subLexicons) {
 			output.append("LEXICON").append(i);
 			output.append(lexicon.toString());
 			i++;

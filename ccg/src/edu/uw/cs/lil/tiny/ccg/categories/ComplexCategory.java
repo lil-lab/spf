@@ -24,17 +24,18 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Slash;
 /**
  * Complex syntactic category.
  */
-public class ComplexCategory<Y> extends Category<Y> {
+public class ComplexCategory<MR> extends Category<MR> {
+	private static final long	serialVersionUID	= -6816584146794811796L;
 	private final boolean		fromLeftComp;
 	private final boolean		fromRightComp;
 	
 	private final ComplexSyntax	syntax;
 	
-	public ComplexCategory(ComplexSyntax syntax, Y semantics) {
+	public ComplexCategory(ComplexSyntax syntax, MR semantics) {
 		this(syntax, semantics, false, false);
 	}
 	
-	public ComplexCategory(ComplexSyntax syntax, Y semantics,
+	public ComplexCategory(ComplexSyntax syntax, MR semantics,
 			boolean fromLeftComp, boolean fromRightComp) {
 		super(semantics);
 		this.syntax = syntax;
@@ -43,8 +44,8 @@ public class ComplexCategory<Y> extends Category<Y> {
 	}
 	
 	@Override
-	public Category<Y> cloneWithNewSemantics(Y newSemantics) {
-		return new ComplexCategory<Y>(syntax, newSemantics);
+	public Category<MR> cloneWithNewSemantics(MR newSemantics) {
+		return new ComplexCategory<MR>(syntax, newSemantics);
 	}
 	
 	@Override
@@ -104,11 +105,11 @@ public class ComplexCategory<Y> extends Category<Y> {
 	}
 	
 	@Override
-	public boolean matches(Category<Y> other) {
+	public boolean matches(Category<MR> other) {
 		if (!(other instanceof ComplexCategory)) {
 			return false;
 		}
-		final ComplexCategory<Y> cc = (ComplexCategory<Y>) other;
+		final ComplexCategory<MR> cc = (ComplexCategory<MR>) other;
 		if (cc.syntax.getSlash() != syntax.getSlash()
 				&& syntax.getSlash() != Slash.VERTICAL
 				&& cc.syntax.getSlash() != Slash.VERTICAL) {
@@ -125,7 +126,7 @@ public class ComplexCategory<Y> extends Category<Y> {
 	}
 	
 	@Override
-	public boolean matchesNoSem(Category<Y> other) {
+	public boolean matchesNoSem(Category<MR> other) {
 		if (!(other instanceof ComplexCategory)) {
 			return false;
 		}

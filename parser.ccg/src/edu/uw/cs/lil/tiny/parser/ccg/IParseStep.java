@@ -25,12 +25,12 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
  * created them and a full-parse flag.
  * 
  * @author Luke Zettlemoyer
- * @param <Y>
+ * @param <MR>
  */
-public interface IParseStep<Y> {
-	Category<Y> getChild(int i);
+public interface IParseStep<MR> {
+	Category<MR> getChild(int i);
 	
-	Category<Y> getRoot();
+	Category<MR> getRoot();
 	
 	String getRuleName();
 	

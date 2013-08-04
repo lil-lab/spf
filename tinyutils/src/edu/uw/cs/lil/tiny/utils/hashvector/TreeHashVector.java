@@ -33,7 +33,8 @@ import edu.uw.cs.utils.composites.Pair;
  * @author Yoav Artzi
  */
 class TreeHashVector implements IHashVector {
-	private final TreeMap<KeyArgs, Double>	values	= new TreeMap<KeyArgs, Double>();
+	private static final long				serialVersionUID	= 4294341073950816236L;
+	private final TreeMap<KeyArgs, Double>	values				= new TreeMap<KeyArgs, Double>();
 	
 	TreeHashVector() {
 	}
@@ -116,6 +117,28 @@ class TreeHashVector implements IHashVector {
 				iterator.remove();
 			}
 		}
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final TreeHashVector other = (TreeHashVector) obj;
+		if (values == null) {
+			if (other.values != null) {
+				return false;
+			}
+		} else if (!values.equals(other.values)) {
+			return false;
+		}
+		return true;
 	}
 	
 	@Override
@@ -229,6 +252,14 @@ class TreeHashVector implements IHashVector {
 				result.values.put(key, entry.getValue());
 			}
 		}
+		return result;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((values == null) ? 0 : values.hashCode());
 		return result;
 	}
 	

@@ -1,0 +1,3 @@
+## Model initializers
+type=init.lex   id=initSeedLex lexicon=seedLexicon fixed=true
+type=init.lex	id=initNPs	lexicon=npLexicon	fixed=true

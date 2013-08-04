@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
@@ -51,8 +52,9 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class TemplateGenlex implements
-		ILexiconGenerator<Sentence, LogicalExpression> {
+public class TemplateGenlex
+		implements
+		ILexiconGenerator<Sentence, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
 	private static final ILogger				LOG	= LoggerFactory
 															.create(TemplateGenlex.class);
 	
@@ -71,7 +73,9 @@ public class TemplateGenlex implements
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(Sentence dataItem) {
+	public ILexicon<LogicalExpression> generate(Sentence dataItem,
+			IModelImmutable<Sentence, LogicalExpression> model,
+			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getTokens();
 		final int numTokens = tokens.size();
 		
@@ -80,7 +84,8 @@ public class TemplateGenlex implements
 		for (int i = 0; i < numTokens; ++i) {
 			for (int j = i; j < numTokens && j - i + 1 < maxTokens; ++j) {
 				for (final List<LogicalConstant> constants : potentialConstantSeqs) {
-					lexemes.add(new Lexeme(tokens.subList(i, j + 1), constants,
+					lexemes.add(new Lexeme(CollectionUtils.subList(tokens, i,
+							j + 1), constants,
 							ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
 				}
 			}
@@ -200,4 +205,5 @@ public class TemplateGenlex implements
 							potentialConstantSeqs));
 		}
 	}
+	
 }

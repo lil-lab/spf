@@ -54,16 +54,17 @@ import edu.uw.cs.utils.composites.Triplet;
  * @author Luke Zettlemoyer
  * @author Yoav Artzi
  */
-public class LogicalExpressionTypeFeatureSet<X> implements
-		IParseFeatureSet<X, LogicalExpression> {
-	private static final String	FEATURE_TAG	= "LIT_TYPE";
-	private static final double	SCALE		= 1.0;
+public class LogicalExpressionTypeFeatureSet<DI extends IDataItem<?>>
+		implements IParseFeatureSet<DI, LogicalExpression> {
+	private static final String	FEATURE_TAG			= "LIT_TYPE";
+	private static final double	SCALE				= 1.0;
+	private static final long	serialVersionUID	= 4606128349923926260L;
 	
 	public LogicalExpressionTypeFeatureSet() {
 	}
 	
-	public static <X> IDecoder<LogicalExpressionTypeFeatureSet<X>> getDecoder() {
-		return new Decoder<X>();
+	public static <DI extends IDataItem<?>> IDecoder<LogicalExpressionTypeFeatureSet<DI>> getDecoder() {
+		return new Decoder<DI>();
 	}
 	
 	@Override
@@ -85,7 +86,7 @@ public class LogicalExpressionTypeFeatureSet<X> implements
 	
 	@Override
 	public double score(IParseStep<LogicalExpression> parseStep,
-			IHashVector theta, IDataItem<X> dataItem) {
+			IHashVector theta, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only score logical expression features of the final logical
 			// form
@@ -98,7 +99,7 @@ public class LogicalExpressionTypeFeatureSet<X> implements
 	
 	@Override
 	public void setFeats(IParseStep<LogicalExpression> parseStep,
-			IHashVector feats, IDataItem<X> dataItem) {
+			IHashVector feats, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only generate logical expression features of the final logical
 			// form
@@ -115,8 +116,8 @@ public class LogicalExpressionTypeFeatureSet<X> implements
 		return feats;
 	}
 	
-	private static class Decoder<X> extends
-			AbstractDecoderIntoFile<LogicalExpressionTypeFeatureSet<X>> {
+	private static class Decoder<DI extends IDataItem<?>> extends
+			AbstractDecoderIntoFile<LogicalExpressionTypeFeatureSet<DI>> {
 		
 		private static final int	VERSION	= 1;
 		
@@ -131,27 +132,27 @@ public class LogicalExpressionTypeFeatureSet<X> implements
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				LogicalExpressionTypeFeatureSet<X> object) {
+				LogicalExpressionTypeFeatureSet<DI> object) {
 			return new HashMap<String, String>();
 		}
 		
 		@Override
-		protected LogicalExpressionTypeFeatureSet<X> doDecode(
+		protected LogicalExpressionTypeFeatureSet<DI> doDecode(
 				Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
-			return new LogicalExpressionTypeFeatureSet<X>();
+			return new LogicalExpressionTypeFeatureSet<DI>();
 		}
 		
 		@Override
-		protected void doEncode(LogicalExpressionTypeFeatureSet<X> object,
+		protected void doEncode(LogicalExpressionTypeFeatureSet<DI> object,
 				BufferedWriter writer) throws IOException {
 			// Nothing to do here
 		}
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				LogicalExpressionTypeFeatureSet<X> object, File directory,
+				LogicalExpressionTypeFeatureSet<DI> object, File directory,
 				File parentFile) throws IOException {
 			// No dependent files
 			return new HashMap<String, File>();

@@ -24,7 +24,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Map;
 
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -66,10 +65,14 @@ public class DecoderServices {
 		} else {
 			throw new IOException("File not found");
 		}
-		final Map<String, String> attributes = AbstractDecoder
-				.readValueAttributeHeader(reader);
-		return decode(attributes.get(AbstractDecoder.CLASS_ATTRIBUTE_NAME),
-				file, decoderHelper);
+		try {
+			return decode(
+					AbstractDecoder.readValueAttributeHeader(reader).get(
+							AbstractDecoder.CLASS_ATTRIBUTE_NAME), file,
+					decoderHelper);
+		} finally {
+			reader.close();
+		}
 	}
 	
 	/**

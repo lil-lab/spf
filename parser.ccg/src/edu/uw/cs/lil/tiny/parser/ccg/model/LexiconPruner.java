@@ -40,44 +40,45 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * items are retained for this sample.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public class LexiconPruner<Y> implements IModelPostProcessor<Sentence, Y> {
-	private static final ILogger						LOG	= LoggerFactory
-																	.create(LexiconPruner.class
-																			.getName());
+public class LexiconPruner<DI extends IDataItem<Sentence>, MR> implements
+		IModelPostProcessor<DI, MR> {
+	private static final ILogger		LOG	= LoggerFactory
+													.create(LexiconPruner.class
+															.getName());
 	
-	private final IDataCollection<IDataItem<Sentence>>	data;
+	private final IDataCollection<DI>	data;
 	/**
 	 * A set of lexical item to retain regardless of their usage in optimal
 	 * parses.
 	 */
-	private final Lexicon<Y>							fixed;
-	private final IParser<Sentence, Y>					parser;
+	private final Lexicon<MR>			fixed;
+	private final IParser<Sentence, MR>	parser;
 	
-	public LexiconPruner(IDataCollection<IDataItem<Sentence>> data,
-			IParser<Sentence, Y> parser, Lexicon<Y> fixed) {
+	public LexiconPruner(IDataCollection<DI> data,
+			IParser<Sentence, MR> parser, Lexicon<MR> fixed) {
 		this.data = data;
 		this.parser = parser;
 		this.fixed = fixed;
 	}
 	
 	@Override
-	public void process(Model<Sentence, Y> model) {
-		LOG.info("Lexicon pruning...");
-		final Set<LexicalEntry<Y>> usedEntries = new HashSet<LexicalEntry<Y>>(
+	public void process(Model<DI, MR> model) {
+		LOG.info("Pruning lexicon ...");
+		final Set<LexicalEntry<MR>> usedEntries = new HashSet<LexicalEntry<MR>>(
 				fixed.toCollection());
-		final Set<LexicalEntry<Y>> seenEntries = new HashSet<LexicalEntry<Y>>();
-		for (final IDataItem<Sentence> dataItem : data) {
-			final IParserOutput<Y> parserOutput = parser.parse(dataItem,
+		final Set<LexicalEntry<MR>> seenEntries = new HashSet<LexicalEntry<MR>>();
+		for (final DI dataItem : data) {
+			final IParserOutput<MR> parserOutput = parser.parse(dataItem,
 					model.createDataItemModel(dataItem));
-			final List<? extends IParse<Y>> bestParses = parserOutput
+			final List<? extends IParse<MR>> bestParses = parserOutput
 					.getBestParses();
 			if (!bestParses.isEmpty()) {
-				for (final IParse<Y> parse : bestParses) {
-					final LinkedHashSet<LexicalEntry<Y>> parseLexicalEntries = parse
+				for (final IParse<MR> parse : bestParses) {
+					final LinkedHashSet<LexicalEntry<MR>> parseLexicalEntries = parse
 							.getMaxLexicalEntries();
-					for (final LexicalEntry<Y> entry : parseLexicalEntries) {
+					for (final LexicalEntry<MR> entry : parseLexicalEntries) {
 						// Only keep lexical entries that were used twice at
 						// least
 						if (!seenEntries.add(entry)) {
@@ -88,11 +89,11 @@ public class LexiconPruner<Y> implements IModelPostProcessor<Sentence, Y> {
 				}
 			}
 		}
-		final Set<LexicalEntry<Y>> originalLexicon = new HashSet<LexicalEntry<Y>>(
+		final Set<LexicalEntry<MR>> originalLexicon = new HashSet<LexicalEntry<MR>>(
 				model.getLexicon().toCollection());
 		model.getLexicon().retainAll(usedEntries);
 		originalLexicon.removeAll(usedEntries);
-		for (final LexicalEntry<Y> removedEntry : originalLexicon) {
+		for (final LexicalEntry<MR> removedEntry : originalLexicon) {
 			LOG.info("Removed: [%.2f] %s", model.score(removedEntry),
 					removedEntry);
 		}

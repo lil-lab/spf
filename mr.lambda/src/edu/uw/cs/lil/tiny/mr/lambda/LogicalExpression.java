@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,11 +36,12 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public abstract class LogicalExpression implements
-		IMeaningRepresentation<ILogicalExpressionVisitor> {
+		IMeaningRepresentation<ILogicalExpressionVisitor>, Serializable {
 	public static char				PARENTHESIS_CLOSE	= ')';
 	public static char				PARENTHESIS_OPEN	= '(';
 	private static final ILogger	LOG					= LoggerFactory
 																.create(LogicalExpression.class);
+	private static final long		serialVersionUID	= 751768060713295464L;
 	
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
@@ -54,6 +56,31 @@ public abstract class LogicalExpression implements
 	 */
 	private boolean					hashCodeCalculated	= false;
 	
+	public static LogicalExpression parse(String string) {
+		return parse(string, LogicLanguageServices.getTypeRepository(),
+				LogicLanguageServices.getTypeComparator());
+	}
+	
+	public static LogicalExpression parse(String string, boolean lockOntology) {
+		return parse(string, LogicLanguageServices.getTypeRepository(),
+				LogicLanguageServices.getTypeComparator(), lockOntology);
+	}
+	
+	protected static LogicalExpression doParse(String string,
+			Map<String, Variable> variables, TypeRepository typeRepository,
+			ITypeComparator typeComparator, boolean lockOntology) {
+		if (string.startsWith(Lambda.PREFIX)) {
+			return Lambda.doParse(string, variables, typeRepository,
+					typeComparator, lockOntology);
+		} else if (string.startsWith(Literal.PREFIX)) {
+			return Literal.doParse(string, variables, typeRepository,
+					typeComparator, lockOntology);
+		} else {
+			return Term.doParse(string, variables, typeRepository,
+					typeComparator, lockOntology);
+		}
+	}
+	
 	/**
 	 * Parse a logical expression from a string. Throw a
 	 * {@link RuntimeException} when trying to create a new logical constant.
@@ -62,7 +89,7 @@ public abstract class LogicalExpression implements
 	 * @param typeRepository
 	 * @return
 	 */
-	public static LogicalExpression parse(String string,
+	protected static LogicalExpression parse(String string,
 			TypeRepository typeRepository, ITypeComparator typeComparator) {
 		return parse(string, typeRepository, typeComparator, true);
 	}
@@ -80,30 +107,15 @@ public abstract class LogicalExpression implements
 	 *            encountered.
 	 * @return logical expression
 	 */
-	public static LogicalExpression parse(String string,
+	protected static LogicalExpression parse(String string,
 			TypeRepository typeRepository, ITypeComparator typeComparator,
 			boolean lockOntology) {
 		try {
-			return parse(string, new HashMap<String, Variable>(),
+			return doParse(string, new HashMap<String, Variable>(),
 					typeRepository, typeComparator, lockOntology);
 		} catch (final RuntimeException e) {
 			LOG.error("Logical expression syntax error: %s", string);
 			throw e;
-		}
-	}
-	
-	protected static LogicalExpression parse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator, boolean lockOntology) {
-		if (string.startsWith(Lambda.PREFIX)) {
-			return Lambda.parse(string, variables, typeRepository,
-					typeComparator, lockOntology);
-		} else if (string.startsWith(Literal.PREFIX)) {
-			return Literal.parse(string, variables, typeRepository,
-					typeComparator, lockOntology);
-		} else {
-			return Term.parse(string, variables, typeRepository,
-					typeComparator, lockOntology);
 		}
 	}
 	

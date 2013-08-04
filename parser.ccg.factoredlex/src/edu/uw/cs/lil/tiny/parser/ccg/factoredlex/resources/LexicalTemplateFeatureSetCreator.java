@@ -19,21 +19,22 @@
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexicalTemplateFeatureSet;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
-public class LexicalTemplateFeatureSetCreator<SENT> implements
-		IResourceObjectCreator<LexicalTemplateFeatureSet<SENT>> {
+public class LexicalTemplateFeatureSetCreator<DI extends IDataItem<?>>
+		implements IResourceObjectCreator<LexicalTemplateFeatureSet<DI>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexicalTemplateFeatureSet<SENT> create(Parameters parameters,
+	public LexicalTemplateFeatureSet<DI> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final LexicalTemplateFeatureSet.Builder<SENT> builder = new LexicalTemplateFeatureSet.Builder<SENT>();
+		final LexicalTemplateFeatureSet.Builder<DI> builder = new LexicalTemplateFeatureSet.Builder<DI>();
 		
 		if (parameters.contains("scale")) {
 			builder.setScale(Double.valueOf(parameters.get("scale")));
@@ -44,12 +45,12 @@ public class LexicalTemplateFeatureSetCreator<SENT> implements
 		}
 		
 		if (parameters.contains("initFixed")) {
-			builder.setInitialFixedScorer((IScorer<LexicalTemplate>) resourceRepo
+			builder.setInitialFixedScorer((ISerializableScorer<LexicalTemplate>) resourceRepo
 					.getResource(parameters.get("initFixed")));
 		}
 		
 		if (parameters.contains("init")) {
-			builder.setInitialScorer((IScorer<LexicalTemplate>) resourceRepo
+			builder.setInitialScorer((ISerializableScorer<LexicalTemplate>) resourceRepo
 					.getResource(parameters.get("init")));
 		}
 		

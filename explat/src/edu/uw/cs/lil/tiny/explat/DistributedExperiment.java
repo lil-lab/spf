@@ -19,15 +19,15 @@
 package edu.uw.cs.lil.tiny.explat;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -35,11 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
 import edu.uw.cs.lil.tiny.utils.concurrency.TinyExecutorService;
-import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
-import edu.uw.cs.utils.log.Log;
-import edu.uw.cs.utils.log.LogLevel;
-import edu.uw.cs.utils.log.Logger;
 import edu.uw.cs.utils.log.LoggerFactory;
 import edu.uw.cs.utils.log.thread.LoggingThreadFactory;
 
@@ -61,23 +57,17 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	
 	private final Set<String>			launchedIds				= new HashSet<String>();
 	
-	private final File					outputDir;
 	private boolean						running					= true;
+	
 	private final long					startingTime			= System.currentTimeMillis();
 	
 	public DistributedExperiment(File initFile) throws IOException {
-		super(initFile);
-		
-		// //////////////////////////////////////////
-		// Get parameters
-		// //////////////////////////////////////////
-		this.outputDir = globalParams.contains("outputDir") ? globalParams
-				.getAsFile("outputDir") : null;
-		// Create the directory, just to be on the safe side
-		outputDir.mkdir();
-		final File globalLogFile = globalParams.contains("globalLog")
-				&& outputDir != null ? globalParams.getAsFile("globalLog")
-				: null;
+		this(initFile, Collections.<String, String> emptyMap());
+	}
+	
+	public DistributedExperiment(File initFile, Map<String, String> envParams)
+			throws IOException {
+		super(initFile, envParams);
 		
 		// //////////////////////////////////////////
 		// Create the executor
@@ -89,22 +79,6 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 				globalParams.contains("threadMonitorPolling") ? Long
 						.valueOf(globalParams.get("threadMonitorPolling"))
 						: ITinyExecutor.DEFAULT_MONITOR_SLEEP);
-		
-		// //////////////////////////////////////////
-		// Init logging and output stream
-		// //////////////////////////////////////////
-		Logger.DEFAULT_LOG = new Log(globalLogFile == null ? System.err
-				: new PrintStream(globalLogFile));
-		Logger.setSkipPrefix(true);
-		LogLevel.setLogLevel(LogLevel.INFO);
-		
-		// //////////////////////////////////////////
-		// Log global parameters
-		// //////////////////////////////////////////
-		LOG.info("Parameters:");
-		for (final Pair<String, String> param : globalParams) {
-			LOG.info("%s=%s", param.first(), param.second());
-		}
 	}
 	
 	@Override
@@ -133,17 +107,18 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	}
 	
 	@Override
-	public void jobCompleted(String jobId) {
+	public void jobCompleted(Job job) {
 		boolean allCompleted = true;
 		synchronized (jobs) {
-			completedIds.add(jobId);
+			completedIds.add(job.getId());
 			if (running) {
-				for (final Job job : jobs) {
-					allCompleted &= job.isCompleted();
-					if (!launchedIds.contains(job.getId())
-							&& completedIds.containsAll(job.getDependencyIds())) {
-						executor.execute(job);
-						launchedIds.add(job.getId());
+				for (final Job queuedJob : jobs) {
+					allCompleted &= queuedJob.isCompleted();
+					if (!launchedIds.contains(queuedJob.getId())
+							&& completedIds.containsAll(queuedJob
+									.getDependencyIds())) {
+						executor.execute(queuedJob);
+						launchedIds.add(queuedJob.getId());
 					}
 				}
 			}
@@ -160,16 +135,16 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	}
 	
 	@Override
-	public void jobException(String jobId, Exception e) {
+	public void jobException(Job job, Exception e) {
 		synchronized (jobs) {
 			running = false;
 		}
-		LOG.error("Job %s threw an exception: %s", jobId, e.getMessage());
+		LOG.error("Job %s threw an exception: %s", job.getId(), e.getMessage());
 		final StringWriter sw = new StringWriter();
 		final PrintWriter pw = new PrintWriter(sw);
 		e.printStackTrace(pw);
 		LOG.error(sw.toString()); // stack trace as a string
-		jobCompleted(jobId);
+		jobCompleted(job);
 	}
 	
 	public void start() {
@@ -219,22 +194,11 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 		jobs.add(job);
 	}
 	
-	protected PrintStream createJobLogStream(String jobId)
-			throws FileNotFoundException {
-		if (outputDir == null) {
-			return System.err;
-		} else {
-			return new PrintStream(new File(outputDir, String.format("%s.log",
-					jobId)));
-		}
+	protected File createJobLogFile(String jobId) {
+		return new File(outputDir, String.format("%s.log", jobId));
 	}
 	
-	protected PrintStream createJobOutputStream(String jobId)
-			throws FileNotFoundException {
-		if (outputDir == null) {
-			return System.out;
-		}
-		return new PrintStream(new File(outputDir, String.format("%s.out",
-				jobId)));
+	protected File createJobOutputFile(String jobId) {
+		return new File(outputDir, String.format("%s.out", jobId));
 	}
 }

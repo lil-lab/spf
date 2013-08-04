@@ -24,7 +24,7 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
@@ -67,19 +67,22 @@ public class SingleSentencePartialCreditTestingStatistics extends
 	}
 	
 	@Override
-	public void recordNoParse(IDataItem<Sentence> dataItem,
+	public void recordNoParse(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold) {
 		recordParse(dataItem, gold, null);
 	}
 	
 	@Override
-	public void recordNoParseWithSkipping(IDataItem<Sentence> dataItem,
+	public void recordNoParseWithSkipping(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold) {
 		recordParseWithSkipping(dataItem, gold, null);
 	}
 	
 	@Override
-	public void recordParse(IDataItem<Sentence> dataItem,
+	public void recordParse(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold, LogicalExpression label) {
 		final PartialCreditTriplet partialCreditTriplet = partialCompare(gold,
 				label);
@@ -91,19 +94,22 @@ public class SingleSentencePartialCreditTestingStatistics extends
 	}
 	
 	@Override
-	public void recordParses(IDataItem<Sentence> dataItem,
+	public void recordParses(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold, List<LogicalExpression> labels) {
 		recordNoParse(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParsesWithSkipping(IDataItem<Sentence> dataItem,
+	public void recordParsesWithSkipping(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold, List<LogicalExpression> labels) {
 		recordNoParseWithSkipping(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParseWithSkipping(IDataItem<Sentence> dataItem,
+	public void recordParseWithSkipping(
+			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			LogicalExpression gold, LogicalExpression label) {
 		final PartialCreditTriplet partialCreditTriplet = partialCompare(gold,
 				label);

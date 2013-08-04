@@ -24,6 +24,7 @@ import edu.uw.cs.utils.assertion.Assert;
 
 public class SimpleCategory<Y> extends Category<Y> {
 	
+	private static final long	serialVersionUID	= -5684681598851371506L;
 	/** The name of this atomic category */
 	private final SimpleSyntax	syntax;
 	

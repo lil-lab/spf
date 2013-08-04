@@ -28,16 +28,16 @@ import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.utils.filter.IFilter;
 
-public class TesterCreator<X, Y> implements
-		IResourceObjectCreator<Tester<X, Y>> {
+public class TesterCreator<SAMPLE, MR> implements
+		IResourceObjectCreator<Tester<SAMPLE, MR>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public Tester<X, Y> create(Parameters parameters,
+	public Tester<SAMPLE, MR> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
 		
 		// Get the testing set
-		final IDataCollection<? extends ILabeledDataItem<X, Y>> testSet;
+		final IDataCollection<? extends ILabeledDataItem<SAMPLE, MR>> testSet;
 		{
 			// [yoav] [17/10/2011] Store in Object to javac known bug
 			final Object dataCollection = resourceRepo.getResource(parameters
@@ -47,7 +47,7 @@ public class TesterCreator<X, Y> implements
 				throw new RuntimeException("Unknown or non labeled dataset: "
 						+ parameters.get("data"));
 			} else {
-				testSet = (IDataCollection<? extends ILabeledDataItem<X, Y>>) dataCollection;
+				testSet = (IDataCollection<? extends ILabeledDataItem<SAMPLE, MR>>) dataCollection;
 			}
 		}
 		
@@ -56,12 +56,13 @@ public class TesterCreator<X, Y> implements
 					"tester now requires you to provide a parser");
 		}
 		
-		final Tester.Builder<X, Y> builder = new Tester.Builder<X, Y>(testSet,
-				(IParser<X, Y>) resourceRepo.getResource(parameters
+		final Tester.Builder<SAMPLE, MR> builder = new Tester.Builder<SAMPLE, MR>(
+				testSet,
+				(IParser<SAMPLE, MR>) resourceRepo.getResource(parameters
 						.get("parser")));
 		
 		if (parameters.get("skippingFilter") != null) {
-			builder.setSkipParsingFilter((IFilter<ILabeledDataItem<X, Y>>) resourceRepo
+			builder.setSkipParsingFilter((IFilter<SAMPLE>) resourceRepo
 					.getResource(parameters.get("skippingFilter")));
 		}
 		

@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.categories;
 
+import java.io.Serializable;
+
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.ComplexSyntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax.SimpleSyntax;
@@ -28,25 +30,27 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax.SimpleSyntax;
  * 
  * @author Yoav Artzi
  */
-public abstract class Category<Y> {
+public abstract class Category<Y> implements Serializable {
+	
+	private static final long	serialVersionUID	= 2261734167449321894L;
 	
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
 	 * It mustn't be used when copying/comparing/storing/etc. the object.
 	 */
-	private int		hashCodeCache;
+	private int					hashCodeCache;
 	
 	/**
 	 * Mutable flag to indicate if the hash code cache is populated. This field
 	 * is for internal use only! It mustn't be used when
 	 * copying/comparing/storing/etc. the object.
 	 */
-	private boolean	hashCodeCalculated	= false;
+	private boolean				hashCodeCalculated	= false;
 	
 	/**
 	 * Category semantics
 	 */
-	private final Y	semantics;
+	private final Y				semantics;
 	
 	public Category(Y semantics) {
 		this.semantics = semantics;

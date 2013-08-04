@@ -24,26 +24,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.utils.counter.Counter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
-public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
-		AbstractTestingStatistics<X, Y> {
-	private static final String		DEFAULT_METRIC_NAME		= "DUPLICATE_EXACT";
+public class ExactMatchTestingStatsWithDuplicates<SAMPLE, LABEL> extends
+		AbstractTestingStatistics<SAMPLE, LABEL> {
+	private static final String			DEFAULT_METRIC_NAME		= "DUPLICATE_EXACT";
 	
-	private static final ILogger	LOG						= LoggerFactory
-																	.create(ExactMatchTestingStatsWithDuplicates.class);
+	private static final ILogger		LOG						= LoggerFactory
+																		.create(ExactMatchTestingStatsWithDuplicates.class);
 	
-	private final Map<X, Counter>	correctParses			= new HashMap<X, Counter>();
-	private final Map<X, Counter>	noParses				= new HashMap<X, Counter>();
-	private final Map<X, Counter>	numParses				= new HashMap<X, Counter>();
-	private final Set<X>			sentences				= new HashSet<X>();
-	private final Map<X, Counter>	skippingCorrectParses	= new HashMap<X, Counter>();
-	private final Map<X, Counter>	skippingNoParses		= new HashMap<X, Counter>();
-	private final Map<X, Counter>	skippingWrongParses		= new HashMap<X, Counter>();
-	private final Map<X, Counter>	wrongParses				= new HashMap<X, Counter>();
+	private final Map<SAMPLE, Counter>	correctParses			= new HashMap<SAMPLE, Counter>();
+	private final Map<SAMPLE, Counter>	noParses				= new HashMap<SAMPLE, Counter>();
+	private final Map<SAMPLE, Counter>	numParses				= new HashMap<SAMPLE, Counter>();
+	private final Set<SAMPLE>			sentences				= new HashSet<SAMPLE>();
+	private final Map<SAMPLE, Counter>	skippingCorrectParses	= new HashMap<SAMPLE, Counter>();
+	private final Map<SAMPLE, Counter>	skippingNoParses		= new HashMap<SAMPLE, Counter>();
+	private final Map<SAMPLE, Counter>	skippingWrongParses		= new HashMap<SAMPLE, Counter>();
+	private final Map<SAMPLE, Counter>	wrongParses				= new HashMap<SAMPLE, Counter>();
 	
 	public ExactMatchTestingStatsWithDuplicates() {
 		super(DEFAULT_METRIC_NAME);
@@ -57,7 +57,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 		super(prefix, metricName);
 	}
 	
-	public int getCount(X sample, Map<X, Counter> map) {
+	public int getCount(SAMPLE sample, Map<SAMPLE, Counter> map) {
 		if (map.containsKey(sample)) {
 			return map.get(sample).value();
 		} else {
@@ -65,7 +65,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 		}
 	}
 	
-	public void inc(X sample, Map<X, Counter> map) {
+	public void inc(SAMPLE sample, Map<SAMPLE, Counter> map) {
 		if (map.containsKey(sample)) {
 			map.get(sample).inc();
 		} else {
@@ -74,30 +74,34 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	}
 	
 	@Override
-	public void recordNoParse(IDataItem<X> dataItem, Y gold) {
+	public void recordNoParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold) {
 		LOG.info("%s stats -- recording no parse", getMetricName());
-		final X sample = dataItem.getSample();
+		final SAMPLE sample = dataItem.getSample();
 		sentences.add(sample);
 		inc(sample, numParses);
 		inc(sample, noParses);
 	}
 	
 	@Override
-	public void recordNoParseWithSkipping(IDataItem<X> dataItem, Y gold) {
-		LOG.info("%s stats -- recording no parse with skipping", getMetricName());
-		final X sample = dataItem.getSample();
+	public void recordNoParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold) {
+		LOG.info("%s stats -- recording no parse with skipping",
+				getMetricName());
+		final SAMPLE sample = dataItem.getSample();
 		sentences.add(sample);
 		inc(sample, skippingNoParses);
 	}
 	
 	@Override
-	public void recordParse(IDataItem<X> dataItem, Y gold, Y label) {
-		final X sample = dataItem.getSample();
+	public void recordParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, LABEL label) {
+		final SAMPLE sample = dataItem.getSample();
 		sentences.add(sample);
 		inc(sample, numParses);
 		if (gold.equals(label)) {
-			LOG.info("%s stats -- recording correct parse: %s", getMetricName(),
-					label);
+			LOG.info("%s stats -- recording correct parse: %s",
+					getMetricName(), label);
 			inc(sample, correctParses);
 		} else {
 			LOG.info("%s stats -- recording wrong parse: %s", getMetricName(),
@@ -107,19 +111,22 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	}
 	
 	@Override
-	public void recordParses(IDataItem<X> dataItem, Y gold, List<Y> labels) {
+	public void recordParses(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, List<LABEL> labels) {
 		recordNoParse(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParsesWithSkipping(IDataItem<X> dataItem, Y gold,
-			List<Y> labels) {
+	public void recordParsesWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold,
+			List<LABEL> labels) {
 		recordNoParseWithSkipping(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParseWithSkipping(IDataItem<X> dataItem, Y gold, Y label) {
-		final X sample = dataItem.getSample();
+	public void recordParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold, LABEL label) {
+		final SAMPLE sample = dataItem.getSample();
 		sentences.add(sample);
 		if (gold.equals(label)) {
 			LOG.info("%s stats -- recording correct parse with skipping: %s",
@@ -171,7 +178,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	
 	private double correctParses() {
 		double ret = 0.0;
-		for (final Map.Entry<X, Counter> entry : numParses.entrySet()) {
+		for (final Map.Entry<SAMPLE, Counter> entry : numParses.entrySet()) {
 			ret += (double) getCount(entry.getKey(), correctParses)
 					/ (double) entry.getValue().value();
 		}
@@ -185,7 +192,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	
 	private double noParses() {
 		double ret = 0.0;
-		for (final Map.Entry<X, Counter> entry : numParses.entrySet()) {
+		for (final Map.Entry<SAMPLE, Counter> entry : numParses.entrySet()) {
 			ret += (double) getCount(entry.getKey(), noParses)
 					/ (double) entry.getValue().value();
 		}
@@ -207,7 +214,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	
 	private double skippingCorrectParses() {
 		double ret = 0.0;
-		for (final Map.Entry<X, Counter> entry : numParses.entrySet()) {
+		for (final Map.Entry<SAMPLE, Counter> entry : numParses.entrySet()) {
 			ret += (double) getCount(entry.getKey(), skippingCorrectParses)
 					/ (double) entry.getValue().value();
 		}
@@ -222,7 +229,7 @@ public class ExactMatchTestingStatsWithDuplicates<X, Y> extends
 	
 	private double skippingNoParses() {
 		double ret = 0.0;
-		for (final Map.Entry<X, Counter> entry : numParses.entrySet()) {
+		for (final Map.Entry<SAMPLE, Counter> entry : numParses.entrySet()) {
 			ret += (double) getCount(entry.getKey(), skippingNoParses)
 					/ (double) entry.getValue().value();
 		}

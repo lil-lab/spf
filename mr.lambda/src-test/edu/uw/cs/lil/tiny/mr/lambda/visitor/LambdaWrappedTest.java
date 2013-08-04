@@ -21,7 +21,6 @@ package edu.uw.cs.lil.tiny.mr.lambda.visitor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.TestServices;
 
@@ -34,62 +33,45 @@ public class LambdaWrappedTest {
 	@Test
 	public void test() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:<e,t>", LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false));
+				.parse("boo:<e,t>", false));
 		final LogicalExpression expected = LogicalExpression.parse(
-				"(lambda $0:e (boo:<e,t> $0))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (boo:<e,t> $0))", false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test2() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:<e,<e,t>>",
-						LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false));
+				.parse("boo:<e,<e,t>>", false));
 		final LogicalExpression expected = LogicalExpression.parse(
-				"(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1))", false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test3() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:e", LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false));
+				.parse("boo:e", false));
 		final LogicalExpression expected = LogicalExpression.parse("boo:e",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test4() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("(lambda $0:<e,t> $0)",
-						LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false));
+				.parse("(lambda $0:<e,t> $0)", false));
 		final LogicalExpression expected = LogicalExpression.parse(
-				"(lambda $0:<e,t> (lambda $1:e ($0 $1)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:<e,t> (lambda $1:e ($0 $1)))", false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test5() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("(lambda $0:e (boo:<e,<e,t>> $0))",
-						LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false));
+				.parse("(lambda $0:e (boo:<e,<e,t>> $0))", false));
 		final LogicalExpression expected = LogicalExpression.parse(
-				"(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))", false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	
@@ -98,13 +80,11 @@ public class LambdaWrappedTest {
 		final LogicalExpression wrapped = LambdaWrapped
 				.of(LogicalExpression
 						.parse("(lambda $0:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0)))",
-								LogicLanguageServices.getTypeRepository(),
-								LogicLanguageServices.getTypeComparator(),
-								false));
+						
+						false));
 		final LogicalExpression expected = LogicalExpression
 				.parse("(lambda $0:e (lambda $1:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0) $1)))",
-						LogicLanguageServices.getTypeRepository(),
-						LogicLanguageServices.getTypeComparator(), false);
+						false);
 		Assert.assertEquals(expected, wrapped);
 	}
 	

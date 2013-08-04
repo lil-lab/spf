@@ -20,33 +20,38 @@ package edu.uw.cs.lil.tiny.test.stats;
 
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 
 /**
  * Accumulates testing statistics.
  * 
  * @author Yoav Artzi
  */
-public interface ITestingStatistics<X, Y> {
+public interface ITestingStatistics<SAMPLE, LABEL> {
 	
-	void recordNoParse(IDataItem<X> dataItem, Y gold);
+	void recordNoParse(ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold);
 	
-	void recordNoParseWithSkipping(IDataItem<X> dataItem, Y gold);
+	void recordNoParseWithSkipping(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold);
 	
 	/**
 	 * Record a parse.
 	 */
-	void recordParse(IDataItem<X> dataItem, Y gold, Y label);
+	void recordParse(ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold,
+			LABEL label);
 	
-	void recordParses(IDataItem<X> dataItem, Y gold, List<Y> labels);
+	void recordParses(ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold,
+			List<LABEL> labels);
 	
-	void recordParsesWithSkipping(IDataItem<X> dataItem, Y gold, List<Y> labels);
+	void recordParsesWithSkipping(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, List<LABEL> labels);
 	
 	/**
 	 * Record a parse with word skipping enabled. Assumes a record parse for
 	 * this data item has been called earlier.
 	 */
-	void recordParseWithSkipping(IDataItem<X> dataItem, Y gold, Y label);
+	void recordParseWithSkipping(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, LABEL label);
 	
 	@Override
 	String toString();

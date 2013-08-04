@@ -22,21 +22,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.IParse;
-import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.ITester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
@@ -60,89 +61,95 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <MR>
  *            Meaning representation type.
  */
-public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
-		implements ILearner<Sentence, MR, Model<Sentence, MR>> {
-	private static final ILogger											LOG	= LoggerFactory
-																						.create(AbstractLearner.class);
+public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO extends IParserOutput<MR>, MR>
+		implements
+		ILearner<IDataItem<SAMPLE>, MR, Model<IDataItem<SAMPLE>, MR>> {
+	private static final ILogger													LOG	= LoggerFactory
+																								.create(AbstractLearner.class);
+	
+	private final ICategoryServices<MR>												categoryServices;
 	
 	/**
 	 * Recycle the lexical induction parser output as the pruned one for
 	 * parameter update.
 	 */
-	private final boolean													conflateGenlexAndPrunedParses;
+	private final boolean															conflateGenlexAndPrunedParses;
 	
 	/**
 	 * Number of training epochs.
 	 */
-	private final int														epochs;
+	private final int																epochs;
+	
+	/**
+	 * The learner is error driven, meaning: if it can parse a sentence, it will
+	 * skip lexical induction.
+	 */
+	private final boolean															errorDriven;
+	
+	/**
+	 * GENLEX procedure. If 'null', skip lexicon learning.
+	 */
+	private final ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex;
 	
 	/**
 	 * Parser beam size for lexical generation.
 	 */
-	private final int														lexiconGenerationBeamSize;
+	private final int																lexiconGenerationBeamSize;
 	
-	/**
-	 * Enable lexicon learning.
-	 */
-	private final boolean													lexiconLearning;
-	
-	/**
-	 * Max sentence length to process. If longer, skip.
-	 */
-	private final int														maxSentenceLength;
+	private final IFilter<DI>														processingFilter;
 	
 	/**
 	 * Tester to use after each epoch.
 	 */
-	private final ITester<Sentence, MR>										tester;
+	private final ITester<SAMPLE, MR>												tester;
 	
 	/**
 	 * Training data.
 	 */
-	private final IDataCollection<? extends ILexGenDataItem<Sentence, MR>>	trainingData;
+	private final IDataCollection<DI>												trainingData;
 	
 	/**
 	 * Mapping of training data samples to their gold labels.
 	 */
-	private final Map<IDataItem<Sentence>, MR>								trainingDataDebug;
-	
-	/**
-	 * Parser for inference.
-	 */
-	protected final IParser<Sentence, MR>									oldParser;
+	private final Map<DI, MR>														trainingDataDebug;
 	
 	/**
 	 * Parser output logger.
 	 */
-	protected final IOutputLogger<MR>										parserOutputLogger;
+	protected final IOutputLogger<MR>												parserOutputLogger;
 	
 	/**
 	 * Learning statistics.
 	 */
-	protected final OnlineLearningStats										stats;
+	protected final OnlineLearningStats												stats;
 	
 	protected AbstractLearner(
 			int numIterations,
-			IDataCollection<? extends ILexGenDataItem<Sentence, MR>> trainingData,
-			Map<IDataItem<Sentence>, MR> trainingDataDebug,
-			int maxSentenceLength, int lexiconGenerationBeamSize,
-			IParser<Sentence, MR> parser, boolean lexiconLearning,
-			IOutputLogger<MR> parserOutputLogger, ITester<Sentence, MR> tester,
-			boolean conflateGenlexAndPrunedParses) {
+			IDataCollection<DI> trainingData,
+			Map<DI, MR> trainingDataDebug,
+			int lexiconGenerationBeamSize,
+			IOutputLogger<MR> parserOutputLogger,
+			ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses,
+			boolean errorDriven,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			IFilter<DI> processingFilter) {
 		this.epochs = numIterations;
 		this.trainingData = trainingData;
 		this.trainingDataDebug = trainingDataDebug;
-		this.maxSentenceLength = maxSentenceLength;
 		this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
-		this.oldParser = parser;
-		this.lexiconLearning = lexiconLearning;
 		this.parserOutputLogger = parserOutputLogger;
 		this.tester = tester;
 		this.conflateGenlexAndPrunedParses = conflateGenlexAndPrunedParses;
+		this.errorDriven = errorDriven;
+		this.categoryServices = categoryServices;
+		this.genlex = genlex;
+		this.processingFilter = processingFilter;
 		this.stats = new OnlineLearningStats(numIterations, trainingData.size());
 	}
 	
-	public void train(Model<Sentence, MR> model) {
+	public void train(Model<IDataItem<SAMPLE>, MR> model) {
 		// Epochs
 		for (int epochNumber = 0; epochNumber < epochs; ++epochNumber) {
 			// Training epoch, iterate over all training samples
@@ -152,7 +159,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 			int itemCounter = -1;
 			
 			// Iterating over training data
-			for (final ILexGenDataItem<Sentence, MR> dataItem : trainingData) {
+			for (final DI dataItem : trainingData) {
 				// Process a single training sample
 				
 				// Record start time
@@ -165,8 +172,8 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 				LOG.info("%s", dataItem);
 				
 				// Skip sample, if over the length limit
-				if (dataItem.getSample().getTokens().size() > maxSentenceLength) {
-					LOG.warn("Training sample too long, skipping");
+				if (!processingFilter.isValid(dataItem)) {
+					LOG.info("Skipped training sample, due to processing filter");
 					continue;
 				}
 				
@@ -209,7 +216,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 					
 					// If has a valid parse, call parameter update procedure
 					// and continue
-					if (!validParses.isEmpty()) {
+					if (!validParses.isEmpty() && errorDriven) {
 						parameterUpdate(dataItem, parserOutput, parserOutput,
 								model, itemCounter, epochNumber);
 						continue;
@@ -220,7 +227,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 					// the model. Keep the parser output for Step III.
 					// ///////////////////////////
 					
-					if (!lexiconLearning) {
+					if (genlex == null) {
 						// Skip the example if not doing lexicon learning
 						continue;
 					}
@@ -233,7 +240,8 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 					// Step III: Update parameters
 					// ///////////////////////////
 					
-					if (conflateGenlexAndPrunedParses) {
+					if (conflateGenlexAndPrunedParses
+							&& generationParserOutput != null) {
 						parameterUpdate(dataItem, parserOutput,
 								generationParserOutput, model, itemCounter,
 								epochNumber);
@@ -261,7 +269,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 			// Intermediate testing with exact match statistics only
 			if (tester != null) {
 				LOG.info("Testing:");
-				final ExactMatchTestingStatistics<Sentence, MR> testingStats = new ExactMatchTestingStatistics<Sentence, MR>();
+				final ExactMatchTestingStatistics<SAMPLE, MR> testingStats = new ExactMatchTestingStatistics<SAMPLE, MR>();
 				tester.test(model, testingStats);
 				LOG.info("%s", testingStats);
 			}
@@ -275,7 +283,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param dataItem
 	 * @return
 	 */
-	private IFilter<MR> createPruningFilter(final IDataItem<Sentence> dataItem) {
+	private IFilter<MR> createPruningFilter(final DI dataItem) {
 		if (dataItem instanceof ILossDataItem) {
 			return new IFilter<MR>() {
 				
@@ -301,7 +309,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	}
 	
 	private List<? extends IParse<MR>> getValidParses(PO parserOutput,
-			final IDataItem<Sentence> dataItem) {
+			final DI dataItem) {
 		final List<? extends IParse<MR>> parses = new LinkedList<IParse<MR>>(
 				parserOutput.getAllParses());
 		
@@ -315,11 +323,13 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 		return parses;
 	}
 	
-	private PO lexicalInduction(final ILexGenDataItem<Sentence, MR> dataItem,
-			IDataItemModel<MR> dataItemModel, Model<Sentence, MR> model,
-			int dataItemNumber, int epochNumber) {
+	private PO lexicalInduction(final DI dataItem,
+			IDataItemModel<MR> dataItemModel,
+			Model<IDataItem<SAMPLE>, MR> model, int dataItemNumber,
+			int epochNumber) {
 		// Generate lexical entries
-		final ILexicon<MR> generatedLexicon = dataItem.generateLexicon();
+		final ILexicon<MR> generatedLexicon = genlex.generate(dataItem, model,
+				categoryServices);
 		LOG.info("Generated lexicon size = %d", generatedLexicon.size());
 		
 		if (generatedLexicon.size() > 0) {
@@ -420,7 +430,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 		}
 	}
 	
-	protected boolean isGoldDebugCorrect(IDataItem<Sentence> dataItem, MR label) {
+	protected boolean isGoldDebugCorrect(DI dataItem, MR label) {
 		if (trainingDataDebug.containsKey(dataItem)) {
 			return trainingDataDebug.get(dataItem).equals(label);
 		} else {
@@ -428,14 +438,13 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 		}
 	}
 	
-	protected void logParse(IDataItem<Sentence> dataItem, IParse<MR> parse,
-			Boolean valid, boolean verbose, IDataItemModel<MR> dataItemModel) {
+	protected void logParse(DI dataItem, IParse<MR> parse, Boolean valid,
+			boolean verbose, IDataItemModel<MR> dataItemModel) {
 		logParse(dataItem, parse, valid, verbose, null, dataItemModel);
 	}
 	
-	protected void logParse(IDataItem<Sentence> dataItem, IParse<MR> parse,
-			Boolean valid, boolean verbose, String tag,
-			IDataItemModel<MR> dataItemModel) {
+	protected void logParse(DI dataItem, IParse<MR> parse, Boolean valid,
+			boolean verbose, String tag, IDataItemModel<MR> dataItemModel) {
 		final boolean isGold;
 		if (isGoldDebugCorrect(dataItem, parse.getSemantics())) {
 			isGold = true;
@@ -469,9 +478,8 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param goodOutput
 	 * @param model
 	 */
-	protected abstract void parameterUpdate(
-			ILexGenDataItem<Sentence, MR> dataItem, PO realOutput,
-			PO goodOutput, Model<Sentence, MR> model, int itemCounter,
+	protected abstract void parameterUpdate(DI dataItem, PO realOutput,
+			PO goodOutput, Model<IDataItem<SAMPLE>, MR> model, int itemCounter,
 			int epochNumber);
 	
 	/**
@@ -481,8 +489,7 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param dataItemModel
 	 * @return
 	 */
-	protected abstract PO parse(ILexGenDataItem<Sentence, MR> dataItem,
-			IDataItemModel<MR> dataItemModel);
+	protected abstract PO parse(DI dataItem, IDataItemModel<MR> dataItemModel);
 	
 	/**
 	 * Constrained parsing method.
@@ -494,8 +501,8 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param beamSize
 	 * @return
 	 */
-	protected abstract PO parse(ILexGenDataItem<Sentence, MR> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel);
+	protected abstract PO parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> dataItemModel);
 	
 	/**
 	 * Constrained parsing method for lexical generation.
@@ -507,9 +514,9 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param beamSize
 	 * @return
 	 */
-	protected abstract PO parse(ILexGenDataItem<Sentence, MR> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel,
-			ILexicon<MR> generatedLexicon, int beamSize);
+	protected abstract PO parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> dataItemModel, ILexicon<MR> generatedLexicon,
+			int beamSize);
 	
 	/**
 	 * Validation method.
@@ -518,6 +525,5 @@ public abstract class AbstractLearner<PO extends IParserOutput<MR>, MR>
 	 * @param hypothesis
 	 * @return
 	 */
-	abstract protected boolean validate(IDataItem<Sentence> dataItem,
-			MR hypothesis);
+	abstract protected boolean validate(DI dataItem, MR hypothesis);
 }

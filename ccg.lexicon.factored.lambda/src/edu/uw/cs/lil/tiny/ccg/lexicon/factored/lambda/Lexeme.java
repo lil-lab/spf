@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -30,7 +31,8 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 
-public class Lexeme {
+public class Lexeme implements Serializable {
+	private static final long			serialVersionUID	= 669086599072880122L;
 	private final List<LogicalConstant>	constants;
 	private final String				origin;
 	private final List<String>			tokens;

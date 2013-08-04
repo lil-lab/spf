@@ -25,6 +25,7 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
@@ -32,77 +33,89 @@ import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 
-public class JointModel<LANG, STATE, LF, ESTEP> extends Model<LANG, LF>
-		implements IJointModelImmutable<LANG, STATE, LF, ESTEP> {
+public class JointModel<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
+		extends Model<DI, MR> implements
+		IJointModelImmutable<DI, STATE, MR, ESTEP> {
 	
-	private final List<IJointFeatureSet<LANG, STATE, LF, ESTEP>>	jointFeatures;
+	private static final long								serialVersionUID	= 4171988104744030985L;
+	private final List<IJointFeatureSet<DI, STATE, ESTEP>>	jointFeatures;
 	
 	protected JointModel(
-			List<IIndependentLexicalFeatureSet<LANG, LF>> lexicalFeatures,
-			List<IParseFeatureSet<LANG, LF>> parseFeatures,
-			List<IJointFeatureSet<LANG, STATE, LF, ESTEP>> jointFeatures,
-			ILexicon<LF> lexicon) {
-		super(lexicalFeatures, parseFeatures, lexicon);
+			List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures,
+			List<IParseFeatureSet<DI, MR>> parseFeatures,
+			List<IJointFeatureSet<DI, STATE, ESTEP>> jointFeatures,
+			ILexicon<MR> lexicon) {
+		this(lexicalFeatures, parseFeatures, jointFeatures, lexicon,
+				HashVectorFactory.create());
+	}
+	
+	protected JointModel(
+			List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures,
+			List<IParseFeatureSet<DI, MR>> parseFeatures,
+			List<IJointFeatureSet<DI, STATE, ESTEP>> jointFeatures,
+			ILexicon<MR> lexicon, IHashVector theta) {
+		super(lexicalFeatures, parseFeatures, lexicon, theta);
 		this.jointFeatures = Collections.unmodifiableList(jointFeatures);
 	}
 	
 	@Override
-	public IHashVector computeFeatures(ESTEP executionStep,
-			IDataItem<Pair<LANG, STATE>> dataItem) {
+	public IHashVector computeFeatures(ESTEP executionStep, DI dataItem) {
 		final IHashVector features = HashVectorFactory.create();
-		for (final IJointFeatureSet<LANG, STATE, LF, ESTEP> featureSet : jointFeatures) {
+		for (final IJointFeatureSet<DI, STATE, ESTEP> featureSet : jointFeatures) {
 			featureSet.setFeats(executionStep, features, dataItem);
 		}
 		return features;
 	}
 	
 	@Override
-	public IJointDataItemModel<LF, ESTEP> createJointDataItemModel(
-			IDataItem<Pair<LANG, STATE>> dataItem) {
-		return new JointDataItemModel<LANG, STATE, LF, ESTEP>(this, dataItem);
+	public IJointDataItemModel<MR, ESTEP> createJointDataItemModel(DI dataItem) {
+		return new JointDataItemModel<DI, STATE, MR, ESTEP>(this, dataItem);
+	}
+	
+	public List<IJointFeatureSet<DI, STATE, ESTEP>> getJointFeatures() {
+		return jointFeatures;
 	}
 	
 	@Override
-	public double score(ESTEP executionStep,
-			IDataItem<Pair<LANG, STATE>> dataItem) {
+	public double score(ESTEP executionStep, DI dataItem) {
 		double score = 0.0;
-		for (final IJointFeatureSet<LANG, STATE, LF, ESTEP> featureSet : jointFeatures) {
+		for (final IJointFeatureSet<DI, STATE, ESTEP> featureSet : jointFeatures) {
 			score += featureSet.score(executionStep, getTheta(), dataItem);
 		}
 		return score;
 	}
 	
-	public static class Builder<X, W, Y, Z> {
+	public static class Builder<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP> {
 		
-		private final List<IJointFeatureSet<X, W, Y, Z>>		jointFeatures	= new LinkedList<IJointFeatureSet<X, W, Y, Z>>();
-		private final List<IIndependentLexicalFeatureSet<X, Y>>	lexicalFeatures	= new LinkedList<IIndependentLexicalFeatureSet<X, Y>>();
-		private ILexicon<Y>										lexicon			= new Lexicon<Y>();
-		private final List<IParseFeatureSet<X, Y>>				parseFeatures	= new LinkedList<IParseFeatureSet<X, Y>>();
+		private final List<IJointFeatureSet<DI, STATE, ESTEP>>		jointFeatures	= new LinkedList<IJointFeatureSet<DI, STATE, ESTEP>>();
+		private final List<IIndependentLexicalFeatureSet<DI, MR>>	lexicalFeatures	= new LinkedList<IIndependentLexicalFeatureSet<DI, MR>>();
+		private ILexicon<MR>										lexicon			= new Lexicon<MR>();
+		private final List<IParseFeatureSet<DI, MR>>				parseFeatures	= new LinkedList<IParseFeatureSet<DI, MR>>();
 		
-		public Builder<X, W, Y, Z> addJointFeatureSet(
-				IJointFeatureSet<X, W, Y, Z> featureSet) {
+		public Builder<DI, STATE, MR, ESTEP> addJointFeatureSet(
+				IJointFeatureSet<DI, STATE, ESTEP> featureSet) {
 			jointFeatures.add(featureSet);
 			return this;
 		}
 		
-		public Builder<X, W, Y, Z> addLexicalFeatureSet(
-				IIndependentLexicalFeatureSet<X, Y> featureSet) {
+		public Builder<DI, STATE, MR, ESTEP> addLexicalFeatureSet(
+				IIndependentLexicalFeatureSet<DI, MR> featureSet) {
 			lexicalFeatures.add(featureSet);
 			return this;
 		}
 		
-		public Builder<X, W, Y, Z> addParseFeatureSet(
-				IParseFeatureSet<X, Y> featureSet) {
+		public Builder<DI, STATE, MR, ESTEP> addParseFeatureSet(
+				IParseFeatureSet<DI, MR> featureSet) {
 			parseFeatures.add(featureSet);
 			return this;
 		}
 		
-		public JointModel<X, W, Y, Z> build() {
-			return new JointModel<X, W, Y, Z>(lexicalFeatures, parseFeatures,
-					jointFeatures, lexicon);
+		public JointModel<DI, STATE, MR, ESTEP> build() {
+			return new JointModel<DI, STATE, MR, ESTEP>(lexicalFeatures,
+					parseFeatures, jointFeatures, lexicon);
 		}
 		
-		public Builder<X, W, Y, Z> setLexicon(ILexicon<Y> lexicon) {
+		public Builder<DI, STATE, MR, ESTEP> setLexicon(ILexicon<MR> lexicon) {
 			this.lexicon = lexicon;
 			return this;
 		}

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.lexicon;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,7 +36,9 @@ import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
  * A Lexical Entry associates a sequence of tokens with a category, and thereby
  * a semantics.
  **/
-public class LexicalEntry<Y> {
+public class LexicalEntry<Y> implements Serializable {
+	
+	private static final long			serialVersionUID	= 7338579915538130443L;
 	
 	private final Category<Y>			category;
 	
@@ -46,7 +49,7 @@ public class LexicalEntry<Y> {
 	 * it's not part of the essential meaning of the lexical entry, it's not
 	 * part of {@link #equals(Object)} and {@link #hashCode()}.
 	 */
-	private final Set<LexicalEntry<Y>>	linkedEntries	= new HashSet<LexicalEntry<Y>>();
+	private final Set<LexicalEntry<Y>>	linkedEntries		= new HashSet<LexicalEntry<Y>>();
 	
 	/**
 	 * Origin label -- indicates the origin of the lexical entry, often used for

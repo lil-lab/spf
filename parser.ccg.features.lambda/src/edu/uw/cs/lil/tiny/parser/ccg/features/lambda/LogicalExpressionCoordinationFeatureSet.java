@@ -54,12 +54,14 @@ import edu.uw.cs.utils.counter.Counter;
  * 
  * @author Yoav Artzi
  */
-public class LogicalExpressionCoordinationFeatureSet<X> implements
-		IParseFeatureSet<X, LogicalExpression> {
+public class LogicalExpressionCoordinationFeatureSet<DI extends IDataItem<?>>
+		implements IParseFeatureSet<DI, LogicalExpression> {
 	
-	private static final String	FEATURE_TAG	= "LOGEXP";
+	private static final String	FEATURE_TAG			= "LOGEXP";
 	
-	private static final double	SCALE		= 1.0;
+	private static final double	SCALE				= 1.0;
+	
+	private static final long	serialVersionUID	= -7190994850951239893L;
 	
 	private final boolean		cpapFeatures;
 	private final boolean		cpp1Features;
@@ -72,8 +74,8 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 		this.cpapFeatures = cpapFeatures;
 	}
 	
-	public static <X> IDecoder<LogicalExpressionCoordinationFeatureSet<X>> getDecoder() {
-		return new Decoder<X>();
+	public static <DI extends IDataItem<?>> IDecoder<LogicalExpressionCoordinationFeatureSet<DI>> getDecoder() {
+		return new Decoder<DI>();
 	}
 	
 	@Override
@@ -95,7 +97,7 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 	
 	@Override
 	public double score(IParseStep<LogicalExpression> parseStep,
-			IHashVector theta, IDataItem<X> dataItem) {
+			IHashVector theta, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only score logical expression features of the final logical
 			// form
@@ -108,7 +110,7 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 	
 	@Override
 	public void setFeats(IParseStep<LogicalExpression> parseStep,
-			IHashVector feats, IDataItem<X> dataItem) {
+			IHashVector feats, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only generate logical expression features of the final logical
 			// form
@@ -127,8 +129,9 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 		return feats;
 	}
 	
-	private static class Decoder<X> extends
-			AbstractDecoderIntoFile<LogicalExpressionCoordinationFeatureSet<X>> {
+	private static class Decoder<DI extends IDataItem<?>>
+			extends
+			AbstractDecoderIntoFile<LogicalExpressionCoordinationFeatureSet<DI>> {
 		private static final int	VERSION	= 1;
 		
 		public Decoder() {
@@ -142,7 +145,7 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				LogicalExpressionCoordinationFeatureSet<X> object) {
+				LogicalExpressionCoordinationFeatureSet<DI> object) {
 			final HashMap<String, String> attributes = new HashMap<String, String>();
 			attributes.put("cpp1Features", object.cpp1Features ? "true"
 					: "false");
@@ -154,11 +157,11 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 		}
 		
 		@Override
-		protected LogicalExpressionCoordinationFeatureSet<X> doDecode(
+		protected LogicalExpressionCoordinationFeatureSet<DI> doDecode(
 				Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
-			return new LogicalExpressionCoordinationFeatureSet<X>(
+			return new LogicalExpressionCoordinationFeatureSet<DI>(
 					"true".equals(attributes.get("cpp1Features")),
 					"true".equals(attributes.get("reptFeatures")),
 					"true".equals(attributes.get("cpapFeatures")));
@@ -166,14 +169,14 @@ public class LogicalExpressionCoordinationFeatureSet<X> implements
 		
 		@Override
 		protected void doEncode(
-				LogicalExpressionCoordinationFeatureSet<X> object,
+				LogicalExpressionCoordinationFeatureSet<DI> object,
 				BufferedWriter writer) throws IOException {
 			// Nothing to do here
 		}
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				LogicalExpressionCoordinationFeatureSet<X> object,
+				LogicalExpressionCoordinationFeatureSet<DI> object,
 				File directory, File parentFile) throws IOException {
 			// No dependent files
 			return new HashMap<String, File>();

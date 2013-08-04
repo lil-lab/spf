@@ -19,12 +19,13 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointModelImmutable<LANG, STATE, LF, ESTEP> extends
-		IModelImmutable<LANG, LF> {
+public interface IJointModelImmutable<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
+		extends IModelImmutable<DI, MR> {
 	
 	/**
 	 * Compute feature over execution and logical form.
@@ -33,11 +34,9 @@ public interface IJointModelImmutable<LANG, STATE, LF, ESTEP> extends
 	 * @param dataItem
 	 * @return
 	 */
-	IHashVector computeFeatures(ESTEP executionStep,
-			IDataItem<Pair<LANG, STATE>> dataItem);
+	IHashVector computeFeatures(ESTEP executionStep, DI dataItem);
 	
-	IJointDataItemModel<LF, ESTEP> createJointDataItemModel(
-			IDataItem<Pair<LANG, STATE>> dataItem);
+	IJointDataItemModel<MR, ESTEP> createJointDataItemModel(DI dataItem);
 	
 	/**
 	 * Score execution and logical form pair.
@@ -46,5 +45,5 @@ public interface IJointModelImmutable<LANG, STATE, LF, ESTEP> extends
 	 * @param dataItem
 	 * @return
 	 */
-	double score(ESTEP executionStep, IDataItem<Pair<LANG, STATE>> dataItem);
+	double score(ESTEP executionStep, DI dataItem);
 }

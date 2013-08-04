@@ -400,6 +400,7 @@ public class Cell<MR> {
 	 * @return
 	 * @see Cell#getAllLexicalEntriesRecursively()
 	 */
+	@SuppressWarnings("unchecked")
 	private void recursiveGetAllLexicalEntries(
 			LinkedHashSet<LexicalEntry<MR>> result, Set<Cell<MR>> visited) {
 		if (visited.contains(this)) {
@@ -408,12 +409,12 @@ public class Cell<MR> {
 			return;
 		} else {
 			for (final AbstractCKYParseStep<MR> derivationStep : steps) {
-				if (derivationStep instanceof CKYLexicalStep) {
-					result.add(((CKYLexicalStep<MR>) derivationStep)
+				if (derivationStep instanceof ILexicalParseStep) {
+					result.add(((ILexicalParseStep<MR>) derivationStep)
 							.getLexicalEntry());
 				}
 				for (final Cell<MR> child : derivationStep) {
-					child.recursiveGetMaxLexicalEntries(result, visited);
+					child.recursiveGetAllLexicalEntries(result, visited);
 				}
 			}
 			visited.add(this);
@@ -516,17 +517,19 @@ public class Cell<MR> {
 	void collectExpectedFeatures(IHashVector expectedFeatures) {
 		// Iterate over all derivations steps (incl. both lexical and
 		// non-lexical steps)
-		for (final AbstractCKYParseStep<MR> step : steps) {
-			// Accumulate the weight for using this parse step: the outside of
-			// the root, the inside of each child and the local score associated
-			// with the current step.
-			double weight = outsideScore * Math.exp(step.getLocalScore());
-			for (final Cell<MR> child : step) {
-				weight *= child.insideScore;
+		if (outsideScore != 0.0) {
+			for (final AbstractCKYParseStep<MR> step : steps) {
+				// Accumulate the weight for using this parse step: the outside
+				// of the root, the inside of each child and the local score
+				// associated with the current step.
+				double weight = outsideScore * Math.exp(step.getLocalScore());
+				for (final Cell<MR> child : step) {
+					weight *= child.insideScore;
+				}
+				// Update the weighted values of the local features into the
+				// result vector
+				step.getLocalFeatures().addTimesInto(weight, expectedFeatures);
 			}
-			// Update the weighted values of the local features into the result
-			// vector
-			step.getLocalFeatures().addTimesInto(weight, expectedFeatures);
 		}
 	}
 	

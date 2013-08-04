@@ -22,11 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.lexicalgen.ILexGenDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.situated.AbstractSituatedLearner;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
@@ -34,6 +35,7 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParser;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
+import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -51,8 +53,8 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <ESTEP>
  * @param <ERESULT>
  */
-public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT> extends
-		AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT> {
+public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
+		extends AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI> {
 	private static final ILogger											LOG						= LoggerFactory
 																											.create(SituatedValidationStocGrad.class);
 	
@@ -64,38 +66,47 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT> extends
 	
 	private int																stocGradientNumUpdates	= 0;
 	
-	private final IValidator<IDataItem<Pair<Sentence, STATE>>, ERESULT>		validator;
+	private final IValidator<DI, ERESULT>									validator;
 	
 	private SituatedValidationStocGrad(
 			int numIterations,
-			IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>> trainingData,
-			Map<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>> trainingDataDebug,
-			int maxSentenceLength, int lexiconGenerationBeamSize,
+			IDataCollection<DI> trainingData,
+			Map<DI, Pair<MR, ERESULT>> trainingDataDebug,
+			int maxSentenceLength,
+			int lexiconGenerationBeamSize,
 			IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT> parser,
-			boolean lexiconLearning,
 			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger,
-			double alpha0, double c,
-			IValidator<IDataItem<Pair<Sentence, STATE>>, ERESULT> validator) {
+			double alpha0,
+			double c,
+			IValidator<DI, ERESULT> validator,
+			ICategoryServices<MR> categoryServices,
+			ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>> genlex) {
 		super(numIterations, trainingData, trainingDataDebug,
 				maxSentenceLength, lexiconGenerationBeamSize, parser,
-				lexiconLearning, parserOutputLogger);
+				parserOutputLogger, categoryServices, genlex);
 		this.graphParser = parser;
 		this.alpha0 = alpha0;
 		this.c = c;
 		this.validator = validator;
+		LOG.info(
+				"Init SituatedValidationSensitiveStocGrad: numIterations=%d,trainingData.size()=%d, trainingDataDebug.size()=%d, maxSentenceLength=%d ...",
+				numIterations, trainingData.size(), trainingDataDebug.size(),
+				maxSentenceLength);
+		LOG.info(
+				"Init SituatedValidationSensitiveStocGrad: ... lexiconGenerationBeamSize=%d, alpah0=%f, c=%f",
+				lexiconGenerationBeamSize, alpha0, c);
 	}
 	
 	@Override
-	public void train(JointModel<Sentence, STATE, MR, ESTEP> model) {
+	public void train(JointModel<DI, STATE, MR, ESTEP> model) {
 		stocGradientNumUpdates = 0;
 		super.train(model);
 	}
 	
 	@Override
-	protected void parameterUpdate(
-			final ILexGenDataItem<Pair<Sentence, STATE>, MR> dataItem,
+	protected void parameterUpdate(final DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<Sentence, STATE, MR, ESTEP> model, int itemCounter,
+			JointModel<DI, STATE, MR, ESTEP> model, int itemCounter,
 			int epochNumber) {
 		
 		// Parse with current model
@@ -128,11 +139,6 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT> extends
 						.getResult())) {
 			stats.goldIsOptimal(itemCounter, epochNumber);
 		}
-		
-		// TODO Solve the case of some lexical entries (in the factored case)
-		// not in the model, so they don't have features. However, just adding
-		// them is not enough, because the chart caches the previous features.
-		// Thsi is true for other learners as well.
 		
 		// Create the update
 		final IHashVector update = HashVectorFactory.create();
@@ -210,124 +216,131 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT> extends
 	}
 	
 	@Override
-	protected boolean validate(IDataItem<Pair<Sentence, STATE>> dataItem,
-			Pair<MR, ERESULT> hypothesis) {
+	protected boolean validate(DI dataItem, Pair<MR, ERESULT> hypothesis) {
 		return validator.isValid(dataItem, hypothesis.second());
 	}
 	
-	public static class Builder<STATE, MR, ESTEP, ERESULT> {
+	public static class Builder<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>> {
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																		alpha0						= 0.1;
+		private double																	alpha0						= 0.1;
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																		c							= 0.0001;
+		private double																	c							= 0.0001;
+		
+		/**
+		 * Required for lexical induction.
+		 */
+		private ICategoryServices<MR>													categoryServices			= null;
+		
+		/**
+		 * GENLEX procedure. If 'null' skip lexical induction.
+		 */
+		private ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>>	genlex						= null;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																			lexiconGenerationBeamSize	= 20;
+		private int																		lexiconGenerationBeamSize	= 20;
 		
-		/**
-		 * Learn a lexicon.
-		 */
-		private boolean																		lexiconLearning				= true;
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private int																			maxSentenceLength			= Integer.MAX_VALUE;
+		private int																		maxSentenceLength			= Integer.MAX_VALUE;
 		
 		/** Number of training iterations */
-		private int																			numIterations				= 4;
+		private int																		numIterations				= 4;
 		
-		private final IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT>				parser;
+		private final IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT>			parser;
 		
-		private IJointOutputLogger<MR, ESTEP, ERESULT>										parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
+		private IJointOutputLogger<MR, ESTEP, ERESULT>									parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
+																														
+																														public void log(
+																																IJointOutput<MR, ERESULT> output,
+																																IJointDataItemModel<MR, ESTEP> dataItemModel) {
+																															// Stub
 																															
-																															public void log(
-																																	IJointOutput<MR, ERESULT> output,
-																																	IJointDataItemModel<MR, ESTEP> dataItemModel) {
-																																// Stub
-																																
-																															}
-																														};
+																														}
+																													};
 		
 		/** Training data */
-		private final IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>>	trainingData;
+		private final IDataCollection<DI>												trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>>					trainingDataDebug			= new HashMap<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>>();
+		private Map<DI, Pair<MR, ERESULT>>												trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
 		
-		private final IValidator<IDataItem<Pair<Sentence, STATE>>, ERESULT>					validator;
+		private final IValidator<DI, ERESULT>											validator;
 		
-		public Builder(
-				IDataCollection<? extends ILexGenDataItem<Pair<Sentence, STATE>, MR>> trainingData,
+		public Builder(IDataCollection<DI> trainingData,
 				IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT> parser,
-				IValidator<IDataItem<Pair<Sentence, STATE>>, ERESULT> validator) {
+				IValidator<DI, ERESULT> validator) {
 			this.trainingData = trainingData;
 			this.parser = parser;
 			this.validator = validator;
 		}
 		
-		public SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT> build() {
-			return new SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT>(
+		public SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI> build() {
+			return new SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI>(
 					numIterations, trainingData, trainingDataDebug,
 					maxSentenceLength, lexiconGenerationBeamSize, parser,
-					lexiconLearning, parserOutputLogger, alpha0, c, validator);
+					parserOutputLogger, alpha0, c, validator, categoryServices,
+					genlex);
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setAlpha0(double alpha0) {
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setAlpha0(double alpha0) {
 			this.alpha0 = alpha0;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setC(double c) {
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setC(double c) {
 			this.c = c;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setLexiconGenerationBeamSize(
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setGenlex(
+				ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>> genlex,
+				ICategoryServices<MR> categoryServices) {
+			this.genlex = genlex;
+			this.categoryServices = categoryServices;
+			return this;
+		}
+		
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setLexiconGenerationBeamSize(
 				int lexiconGenerationBeamSize) {
 			this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setLexiconLearning(
-				boolean lexiconLearning) {
-			this.lexiconLearning = lexiconLearning;
-			return this;
-		}
-		
-		public Builder<STATE, MR, ESTEP, ERESULT> setMaxSentenceLength(
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setMaxSentenceLength(
 				int maxSentenceLength) {
 			this.maxSentenceLength = maxSentenceLength;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setNumIterations(
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setNumIterations(
 				int numIterations) {
 			this.numIterations = numIterations;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setParserOutputLogger(
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setParserOutputLogger(
 				IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger) {
 			this.parserOutputLogger = parserOutputLogger;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT> setTrainingDataDebug(
-				Map<IDataItem<Pair<Sentence, STATE>>, Pair<MR, ERESULT>> trainingDataDebug) {
+		public Builder<STATE, MR, ESTEP, ERESULT, DI> setTrainingDataDebug(
+				Map<DI, Pair<MR, ERESULT>> trainingDataDebug) {
 			this.trainingDataDebug = trainingDataDebug;
 			return this;
 		}

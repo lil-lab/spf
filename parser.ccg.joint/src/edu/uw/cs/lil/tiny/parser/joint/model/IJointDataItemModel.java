@@ -21,7 +21,7 @@ package edu.uw.cs.lil.tiny.parser.joint.model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
-public interface IJointDataItemModel<LF, ESTEP> extends IDataItemModel<LF> {
+public interface IJointDataItemModel<MR, ESTEP> extends IDataItemModel<MR> {
 	
 	IHashVector computeFeatures(ESTEP result);
 	

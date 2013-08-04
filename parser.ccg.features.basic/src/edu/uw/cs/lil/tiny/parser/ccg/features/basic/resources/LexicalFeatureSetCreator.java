@@ -19,38 +19,39 @@
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.LexicalFeatureSet;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Creator for {@link LexicalFeatureSet}.
  * 
  * @author Yoav Artzi
  */
-public class LexicalFeatureSetCreator<X, Y> implements
-		IResourceObjectCreator<LexicalFeatureSet<X, Y>> {
+public class LexicalFeatureSetCreator<DI extends IDataItem<?>, MR> implements
+		IResourceObjectCreator<LexicalFeatureSet<DI, MR>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexicalFeatureSet<X, Y> create(Parameters parameters,
+	public LexicalFeatureSet<DI, MR> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final LexicalFeatureSet.Builder<X, Y> builder = new LexicalFeatureSet.Builder<X, Y>();
+		final LexicalFeatureSet.Builder<DI, MR> builder = new LexicalFeatureSet.Builder<DI, MR>();
 		
 		if (parameters.contains("tag")) {
 			builder.setFeatureTag(parameters.get("tag"));
 		}
 		
 		if (parameters.contains("initFixed")) {
-			builder.setInitialFixedScorer((IScorer<LexicalEntry<Y>>) resourceRepo
+			builder.setInitialFixedScorer((ISerializableScorer<LexicalEntry<MR>>) resourceRepo
 					.getResource(parameters.get("initFixed")));
 		}
 		
 		if (parameters.contains("init")) {
-			builder.setInitialScorer((IScorer<LexicalEntry<Y>>) resourceRepo
+			builder.setInitialScorer((ISerializableScorer<LexicalEntry<MR>>) resourceRepo
 					.getResource(parameters.get("init")));
 		}
 		

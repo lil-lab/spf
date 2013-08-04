@@ -42,7 +42,7 @@ import edu.uw.cs.utils.counter.Counter;
  */
 public class SingleSentence implements
 		ILabeledDataItem<Sentence, LogicalExpression> {
-	
+	private static final long					serialVersionUID	= 5434665811874050978L;
 	private final Map<String, Counter>			predArgCounts;
 	private final Map<LogicalConstant, Counter>	predCounts;
 	

@@ -18,7 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
-public interface IJointFeatureSet<X, W, Y, Z> extends
-		IJointFeatureSetImmutable<X, W, Y, Z> {
+import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.utils.composites.Pair;
+
+public interface IJointFeatureSet<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, ESTEP>
+		extends IJointFeatureSetImmutable<DI, STATE, ESTEP> {
 	
 }

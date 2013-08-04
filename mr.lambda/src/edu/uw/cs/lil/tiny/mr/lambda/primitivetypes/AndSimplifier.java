@@ -97,9 +97,7 @@ public class AndSimplifier implements IPredicateSimplifier {
 			}
 			
 			if (expChanged) {
-				return new Literal(literal.getPredicate(), consolidatedArgs,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				return new Literal(literal.getPredicate(), consolidatedArgs);
 			} else {
 				return exp;
 			}

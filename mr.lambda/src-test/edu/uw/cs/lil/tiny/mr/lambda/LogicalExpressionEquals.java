@@ -31,37 +31,27 @@ public class LogicalExpressionEquals {
 	@Test
 	public void test() {
 		final LogicalExpression e1 = LogicalExpression.parse(
-				"(lambda $0:e (boo:<e,t> $0))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (boo:<e,t> $0))", false);
 		final LogicalExpression e2 = LogicalExpression.parse(
-				"(lambda $0:e (boo:<e,t> $0))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (boo:<e,t> $0))", false);
 		Assert.assertTrue(e1.equals(e2));
 	}
 	
 	@Test
 	public void test2() {
 		final LogicalExpression e1 = LogicalExpression.parse(
-				"(boo:<e,t> $0:e)", LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(boo:<e,t> $0:e)", false);
 		final LogicalExpression e2 = LogicalExpression.parse(
-				"(boo:<e,t> $0:e)", LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(boo:<e,t> $0:e)", false);
 		Assert.assertTrue(e1.equals(e2));
 	}
 	
 	@Test
 	public void test3() {
 		final LogicalExpression e1 = LogicalExpression.parse(
-				"(lambda $0:e (boo:<e,t> $0))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $0:e (boo:<e,t> $0))", false);
 		final LogicalExpression e2 = LogicalExpression.parse(
-				"(lambda $1:e (boo:<e,t> $0:e))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				"(lambda $1:e (boo:<e,t> $0:e))", false);
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
@@ -69,12 +59,10 @@ public class LogicalExpressionEquals {
 	public void test4() {
 		final LogicalExpression e1 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		final LogicalExpression e2 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
@@ -82,12 +70,10 @@ public class LogicalExpressionEquals {
 	public void test5() {
 		final LogicalExpression e1 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		final LogicalExpression e2 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
@@ -95,12 +81,10 @@ public class LogicalExpressionEquals {
 	public void test6() {
 		final LogicalExpression e1 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $1)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		final LogicalExpression e2 = LogicalExpression.parse(
 				"(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $0)))",
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), false);
+				false);
 		Assert.assertFalse(e1.equals(e2));
 	}
 	

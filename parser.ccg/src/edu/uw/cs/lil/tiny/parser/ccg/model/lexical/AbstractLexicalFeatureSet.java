@@ -23,24 +23,25 @@ import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
-public abstract class AbstractLexicalFeatureSet<X, Y> implements
-		IIndependentLexicalFeatureSet<X, Y> {
+public abstract class AbstractLexicalFeatureSet<DI extends IDataItem<?>, MR>
+		implements IIndependentLexicalFeatureSet<DI, MR> {
+	
+	private static final long	serialVersionUID	= 8723491320895862185L;
 	
 	@Override
-	public final double score(IParseStep<Y> obj, IHashVector theta,
-			IDataItem<X> dataItem) {
+	public final double score(IParseStep<MR> obj, IHashVector theta, DI dataItem) {
 		if (obj instanceof ILexicalParseStep) {
-			return score(((ILexicalParseStep<Y>) obj).getLexicalEntry(), theta);
+			return score(((ILexicalParseStep<MR>) obj).getLexicalEntry(), theta);
 		} else {
 			return 0;
 		}
 	}
 	
 	@Override
-	public final void setFeats(IParseStep<Y> obj, IHashVector features,
-			IDataItem<X> dataItem) {
+	public final void setFeats(IParseStep<MR> obj, IHashVector features,
+			DI dataItem) {
 		if (obj instanceof ILexicalParseStep) {
-			setFeats(((ILexicalParseStep<Y>) obj).getLexicalEntry(), features);
+			setFeats(((ILexicalParseStep<MR>) obj).getLexicalEntry(), features);
 		}
 	}
 }

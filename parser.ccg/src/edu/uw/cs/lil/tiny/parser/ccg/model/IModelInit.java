@@ -18,13 +18,15 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
+
 /**
  * Takes a model and initializes its weights.
  * 
  * @author Yoav Artzi
  */
-public interface IModelInit<X, Y> {
+public interface IModelInit<DI extends IDataItem<?>, MR> {
 	
-	void init(Model<X, Y> model);
+	void init(Model<DI, MR> model);
 	
 }

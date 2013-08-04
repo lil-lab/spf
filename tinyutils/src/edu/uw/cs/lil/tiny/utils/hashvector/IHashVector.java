@@ -18,12 +18,14 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.utils.hashvector;
 
+import java.io.Serializable;
+
 /**
  * Hash vector to store sparse vectors.
  * 
  * @author Yoav Artzi
  */
-public interface IHashVector extends IHashVectorImmutable {
+public interface IHashVector extends IHashVectorImmutable, Serializable {
 	
 	/**
 	 * Threshold value to drop values.

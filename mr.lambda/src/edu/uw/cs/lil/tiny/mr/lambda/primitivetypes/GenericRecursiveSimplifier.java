@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 
 /**
@@ -60,9 +59,7 @@ public class GenericRecursiveSimplifier implements IPredicateSimplifier {
 			}
 			
 			if (expChanged) {
-				return new Literal(literal.getPredicate(), consolidatedArgs,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				return new Literal(literal.getPredicate(), consolidatedArgs);
 			} else {
 				return exp;
 			}

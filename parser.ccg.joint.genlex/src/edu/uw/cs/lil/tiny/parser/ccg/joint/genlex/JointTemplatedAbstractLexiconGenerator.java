@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
@@ -76,9 +77,9 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
+public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
 		implements
-		ILexiconGenerator<IDataItem<Pair<Sentence, STATE>>, LogicalExpression> {
+		ILexiconGenerator<DI, LogicalExpression, IJointModelImmutable<DI, STATE, LogicalExpression, ESTEP>> {
 	private static final ILogger																	LOG	= LoggerFactory
 																												.create(JointTemplatedAbstractLexiconGenerator.class);
 	
@@ -88,8 +89,6 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>					jointParser;
 	private final double																			margin;
 	private final int																				maxTokens;
-	
-	private final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>					model;
 	
 	private final Set<Pair<List<Type>, List<LogicalConstant>>>										potentialConstantSeqs;
 	private final Set<LexicalTemplate>																templates;
@@ -101,7 +100,6 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			Set<Pair<List<Type>, List<LogicalConstant>>> pontetialConstantSeqs,
 			Set<List<LogicalConstant>> abstractConstantSeqs,
 			int maxTokens,
-			IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP> model,
 			IParser<Sentence, LogicalExpression> baseParser,
 			int generationParsingBeam,
 			IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
@@ -109,7 +107,6 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
 		this.abstractConstantSeqs = abstractConstantSeqs;
-		this.model = model;
 		this.baseParser = baseParser;
 		this.generationParsingBeam = generationParsingBeam;
 		this.jointParser = jointParser;
@@ -125,8 +122,9 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(
-			IDataItem<Pair<Sentence, STATE>> dataItem) {
+	public ILexicon<LogicalExpression> generate(DI dataItem,
+			IJointModelImmutable<DI, STATE, LogicalExpression, ESTEP> model,
+			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getSample().first().getTokens();
 		final int numTokens = tokens.size();
 		
@@ -154,10 +152,9 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		for (int i = 0; i < numTokens; ++i) {
 			for (int j = i; j < numTokens && j - i + 1 < maxTokens; ++j) {
 				for (final List<LogicalConstant> constants : abstractConstantSeqs) {
-					abstractLexemes
-							.add(new Lexeme(tokens.subList(i, j + 1),
-									constants,
-									ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
+					abstractLexemes.add(new Lexeme(CollectionUtils.subList(
+							tokens, i, j + 1), constants,
+							ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
 				}
 			}
 		}
@@ -171,8 +168,8 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		// parsing)
 		final IParserOutput<LogicalExpression> parserOutput = baseParser.parse(
 				dataItem.getSample().first(),
-				model.createDataItemModel(dataItem.getSample().first()), false,
-				abstractLexicon, generationParsingBeam);
+				model.createDataItemModel(dataItem), false, abstractLexicon,
+				generationParsingBeam);
 		
 		LOG.debug("Abstract parsing for lexicon generation completed, %.4fsec",
 				parserOutput.getParsingTime() / 1000.0);
@@ -275,7 +272,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		return lexicon;
 	}
 	
-	public static class Builder<STATE, ESTEP, ERESULT> {
+	public static class Builder<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>> {
 		private static final String																		CONST_SEED_NAME	= "absconst";
 		
 		protected final IParser<Sentence, LogicalExpression>											baseParser;
@@ -287,21 +284,17 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 		
 		protected final int																				maxTokens;
 		
-		protected final IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP>					model;
-		
 		protected final Set<LexicalTemplate>															templates		= new HashSet<LexicalTemplate>();
 		
 		protected final IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>>	validator;
 		
 		public Builder(
 				int maxTokens,
-				IJointModelImmutable<Sentence, STATE, LogicalExpression, ESTEP> model,
 				IParser<Sentence, LogicalExpression> parser,
 				int generationParsingBeam,
 				IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
 				IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
 			this.maxTokens = maxTokens;
-			this.model = model;
 			this.baseParser = parser;
 			this.generationParsingBeam = generationParsingBeam;
 			this.jointParser = jointParser;
@@ -314,7 +307,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 							String.format("%s", CONST_SEED_NAME), type), type);
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> addConstants(
+		public Builder<STATE, ESTEP, ERESULT, DI> addConstants(
 				Iterable<LogicalConstant> constantCollection) {
 			for (final LogicalConstant constant : constantCollection) {
 				constants.add(constant);
@@ -322,13 +315,13 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> addTemplate(
+		public Builder<STATE, ESTEP, ERESULT, DI> addTemplate(
 				LexicalTemplate template) {
 			templates.add(template);
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> addTemplates(
+		public Builder<STATE, ESTEP, ERESULT, DI> addTemplates(
 				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
@@ -336,7 +329,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> addTemplatesFromLexicon(
+		public Builder<STATE, ESTEP, ERESULT, DI> addTemplatesFromLexicon(
 				ILexicon<LogicalExpression> lexicon) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
 					.toCollection();
@@ -348,7 +341,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> addTemplatesFromModel(
+		public Builder<STATE, ESTEP, ERESULT, DI> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
 					.getLexicon().toCollection();
@@ -360,14 +353,14 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>
 			return this;
 		}
 		
-		public JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT> build() {
-			return new JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT>(
+		public JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI> build() {
+			return new JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI>(
 					templates, createPotentialLists(), createAbstractLists(),
-					maxTokens, model, baseParser, generationParsingBeam,
-					jointParser, margin, validator);
+					maxTokens, baseParser, generationParsingBeam, jointParser,
+					margin, validator);
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT> setMargin(double margin) {
+		public Builder<STATE, ESTEP, ERESULT, DI> setMargin(double margin) {
 			this.margin = margin;
 			return this;
 		}

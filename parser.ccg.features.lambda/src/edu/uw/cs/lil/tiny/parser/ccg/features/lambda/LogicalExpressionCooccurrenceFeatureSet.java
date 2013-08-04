@@ -48,15 +48,16 @@ import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 
-public class LogicalExpressionCooccurrenceFeatureSet<X> implements
-		IParseFeatureSet<X, LogicalExpression> {
+public class LogicalExpressionCooccurrenceFeatureSet<DI extends IDataItem<?>>
+		implements IParseFeatureSet<DI, LogicalExpression> {
+	private static final String	FEATURE_TAG			= "LOGCOOC";
 	
-	private static final String	FEATURE_TAG	= "LOGCOOC";
+	private static final double	SCALE				= 1.0;
 	
-	private static final double	SCALE		= 1.0;
+	private static final long	serialVersionUID	= 7387260474009084901L;
 	
-	public static <X> IDecoder<LogicalExpressionCooccurrenceFeatureSet<X>> getDecoder() {
-		return new Decoder<X>();
+	public static <DI extends IDataItem<?>> IDecoder<LogicalExpressionCooccurrenceFeatureSet<DI>> getDecoder() {
+		return new Decoder<DI>();
 	}
 	
 	@Override
@@ -78,7 +79,7 @@ public class LogicalExpressionCooccurrenceFeatureSet<X> implements
 	
 	@Override
 	public double score(IParseStep<LogicalExpression> parseStep,
-			IHashVector theta, IDataItem<X> dataItem) {
+			IHashVector theta, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only score logical expression features of the final logical
 			// form
@@ -91,7 +92,7 @@ public class LogicalExpressionCooccurrenceFeatureSet<X> implements
 	
 	@Override
 	public void setFeats(IParseStep<LogicalExpression> parseStep,
-			IHashVector feats, IDataItem<X> dataItem) {
+			IHashVector feats, DI dataItem) {
 		if (!parseStep.isFullParse()) {
 			// Only generate logical expression features of the final logical
 			// form
@@ -108,8 +109,9 @@ public class LogicalExpressionCooccurrenceFeatureSet<X> implements
 		return feats;
 	}
 	
-	private static class Decoder<X> extends
-			AbstractDecoderIntoFile<LogicalExpressionCooccurrenceFeatureSet<X>> {
+	private static class Decoder<DI extends IDataItem<?>>
+			extends
+			AbstractDecoderIntoFile<LogicalExpressionCooccurrenceFeatureSet<DI>> {
 		private static final int	VERSION	= 1;
 		
 		public Decoder() {
@@ -123,28 +125,28 @@ public class LogicalExpressionCooccurrenceFeatureSet<X> implements
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				LogicalExpressionCooccurrenceFeatureSet<X> object) {
+				LogicalExpressionCooccurrenceFeatureSet<DI> object) {
 			return new HashMap<String, String>();
 		}
 		
 		@Override
-		protected LogicalExpressionCooccurrenceFeatureSet<X> doDecode(
+		protected LogicalExpressionCooccurrenceFeatureSet<DI> doDecode(
 				Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
-			return new LogicalExpressionCooccurrenceFeatureSet<X>();
+			return new LogicalExpressionCooccurrenceFeatureSet<DI>();
 		}
 		
 		@Override
 		protected void doEncode(
-				LogicalExpressionCooccurrenceFeatureSet<X> object,
+				LogicalExpressionCooccurrenceFeatureSet<DI> object,
 				BufferedWriter writer) throws IOException {
 			// Nothing to do here
 		}
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				LogicalExpressionCooccurrenceFeatureSet<X> object,
+				LogicalExpressionCooccurrenceFeatureSet<DI> object,
 				File directory, File parentFile) throws IOException {
 			// No dependent files
 			return new HashMap<String, File>();

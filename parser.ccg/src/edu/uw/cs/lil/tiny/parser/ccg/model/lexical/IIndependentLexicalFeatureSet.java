@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser.ccg.model.lexical;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 /**
@@ -26,10 +27,10 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
  * 
  * @author Yoav Artzi
  */
-public interface IIndependentLexicalFeatureSet<X, Y> extends
-		ILexicalFeatureSet<X, Y> {
-	double score(LexicalEntry<Y> lexicalEntry, IHashVector theta);
+public interface IIndependentLexicalFeatureSet<DI extends IDataItem<?>, MR>
+		extends ILexicalFeatureSet<DI, MR> {
+	double score(LexicalEntry<MR> lexicalEntry, IHashVector theta);
 	
-	void setFeats(LexicalEntry<Y> lexicalEntry, IHashVector features);
+	void setFeats(LexicalEntry<MR> lexicalEntry, IHashVector features);
 	
 }

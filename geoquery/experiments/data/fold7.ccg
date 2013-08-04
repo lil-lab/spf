@@ -1,0 +1,180 @@
+how many people live in new mexico
+(population:<lo,i> new_mexico:s)
+
+what is the highest point in the state with capital des moines
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (loc:<lo,<lo,t>> $0 (the:<<e,t>,e> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (capital2:<s,<c,t>> $1 des_moines_ia:c))))))) (lambda $0:e (elevation:<lo,i> $0)))
+
+what are the major cities in oklahoma
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 oklahoma:s)))
+
+how many states does the colorado river flow through
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> colorado_river:r $0))))
+
+what state has the largest population
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $0:e (population:<lo,i> $0)))
+
+show major cities in colorado
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 colorado:s)))
+
+could you tell me what is the highest point in the state of oregon
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (loc:<lo,<lo,t>> $0 oregon:s))) (lambda $0:e (elevation:<lo,i> $0)))
+
+how many people live in chicago
+(population:<lo,i> chicago_il:c)
+
+what are the major rivers in the us
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (river:<r,t> $0) (loc:<lo,<lo,t>> $0 usa:co)))
+
+where is indianapolis
+(lambda $0:e (loc:<lo,<lo,t>> indianapolis_in:c $0))
+
+how many rivers are in the state with the highest point
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 (the:<<e,t>,e> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (loc:<lo,<lo,t>> (argmax:<<e,t>,<<e,i>,e>> (lambda $2:e (place:<p,t> $2)) (lambda $2:e (elevation:<lo,i> $2))) $1))))))))
+
+what is the highest point in the united states
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (elevation:<lo,i> $0)))
+
+list the states
+(lambda $0:e (state:<s,t> $0))
+
+which rivers run through the state with the largest city in the us
+(lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 (the:<<e,t>,e> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (loc:<lo,<lo,t>> (argmax:<<e,t>,<<e,i>,e>> (lambda $2:e (and:<t*,t> (city:<c,t> $2) (loc:<lo,<lo,t>> $2 usa:co))) (lambda $2:e (size:<lo,i> $2))) $1)))))))
+
+which states have points higher than the highest point in colorado
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (place:<p,t> $1) (>:<i,<i,t>> (elevation:<lo,i> $1) (elevation:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $2:e (and:<t*,t> (place:<p,t> $2) (loc:<lo,<lo,t>> $2 colorado:s))) (lambda $2:e (elevation:<lo,i> $2))))))))))
+
+what state is the state with the most rivers
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (equals:<e,<e,t>> $0 (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (state:<s,t> $1)) (lambda $1:e (count:<<e,t>,i> (lambda $2:e (and:<t*,t> (river:<r,t> $2) (loc:<lo,<lo,t>> $2 $1)))))))))
+
+how many people live in kalamazoo
+(population:<lo,i> kalamazoo_mi:c)
+
+how long is the rio grande river
+(len:<r,i> rio_grande_river:r)
+
+what is the state with the highest elevation in the united states
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (and:<t*,t> (place:<p,t> $1) (loc:<lo,<lo,t>> $1 usa:co))) (lambda $1:e (elevation:<lo,i> $1))) $0)))
+
+how many states border at least one other state
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (>:<i,<i,t>> (count:<<e,t>,i> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (next_to:<lo,<lo,t>> $0 $1)))) 0:i))))
+
+what are the major cities in wyoming
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 wyoming:s)))
+
+what is the highest point in texas
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (loc:<lo,<lo,t>> $0 texas:s))) (lambda $0:e (elevation:<lo,i> $0)))
+
+how many states border the state that borders the most states
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (state:<s,t> $1)) (lambda $1:e (count:<<e,t>,i> (lambda $2:e (and:<t*,t> (state:<s,t> $2) (next_to:<lo,<lo,t>> $1 $2))))))))))
+
+what are the cities in california
+(lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 california:s)))
+
+what are the populations of states through which the mississippi river run
+(lambda $0:i (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (loc:<lo,<lo,t>> mississippi_river:r $1) (population:<lo,<i,t>> $1 $0)))))
+
+what is the highest point of the state with the largest area
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (loc:<lo,<lo,t>> $0 (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (state:<s,t> $1)) (lambda $1:e (area:<lo,i> $1)))))) (lambda $0:e (elevation:<lo,i> $0)))
+
+where is fort wayne
+(lambda $0:e (loc:<lo,<lo,t>> fort_wayne_in:c $0))
+
+what is the length of the river that runs through the most number of states
+(len:<r,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (river:<r,t> $0)) (lambda $0:e (count:<<e,t>,i> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (loc:<lo,<lo,t>> $0 $1)))))))
+
+which states border michigan
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 michigan:s)))
+
+what is the biggest city in the usa
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (size:<lo,i> $0)))
+
+what are the major cities of the us
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 usa:co)))
+
+what are the names of the major cities in illinois
+(lambda $0:e (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (major:<lo,t> $1) (city:<c,t> $1) (loc:<lo,<lo,t>> $1 illinois:s) (named:<e,<n,t>> $1 $0)))))
+
+where is houston
+(lambda $0:e (loc:<lo,<lo,t>> houston_tx:c $0))
+
+which states does the missouri river pass through
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> missouri_river:r $0)))
+
+where is new hampshire
+(lambda $0:e (loc:<lo,<lo,t>> new_hampshire:s $0))
+
+what is the largest city of kansas
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 kansas:s))) (lambda $0:e (size:<lo,i> $0)))
+
+what is the population density of wyoming
+(density:<lo,i> wyoming:s)
+
+what are the major cities of texas
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 texas:s)))
+
+what are the lakes in states bordering texas
+(lambda $0:e (and:<t*,t> (lake:<l,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (next_to:<lo,<lo,t>> $1 texas:s) (loc:<lo,<lo,t>> $0 $1))))))
+
+what major rivers run through illinois
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (river:<r,t> $0) (loc:<lo,<lo,t>> $0 illinois:s)))
+
+what is the largest state in usa
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (size:<lo,i> $0)))
+
+what are the major cities in missouri
+(lambda $0:e (and:<t*,t> (major:<lo,t> $0) (city:<c,t> $0) (loc:<lo,<lo,t>> $0 missouri:s)))
+
+what state that borders texas has the highest population
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 texas:s))) (lambda $0:e (population:<lo,i> $0)))
+
+what is the height of the highest mountain in texas
+(elevation:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (mountain:<m,t> $0) (loc:<lo,<lo,t>> $0 texas:s))) (lambda $0:e (elevation:<lo,i> $0))))
+
+what is the size of texas
+(size:<lo,i> texas:s)
+
+what is the capital of the state that borders the most states
+(capital:<s,c> (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $0:e (count:<<e,t>,i> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (next_to:<lo,<lo,t>> $0 $1)))))))
+
+how many states have cities or towns named springfield
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (or:<t*,t> (town:<lo,t> $1) (city:<c,t> $1)) (named:<e,<n,t>> $1 springfield:n) (loc:<lo,<lo,t>> $1 $0)))))))
+
+how many people are there in new york
+(population:<lo,i> new_york:s)
+
+what is the state with the lowest population
+(argmin:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $0:e (population:<lo,i> $0)))
+
+how many rivers run through texas
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 texas:s))))
+
+what is the population of the state with the largest area
+(population:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $0:e (area:<lo,i> $0))))
+
+how many major rivers cross ohio
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (major:<lo,t> $0) (river:<r,t> $0) (loc:<lo,<lo,t>> $0 ohio:s))))
+
+what state has the largest urban population
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $0:e (population:<lo,i> $0)))
+
+what are the biggest rivers in texas
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 texas:s))) (lambda $0:e (size:<lo,i> $0)))
+
+how long is the shortest river in the usa
+(len:<r,i> (argmin:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (len:<r,i> $0))))
+
+how many rivers in texas are longer than the red
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 texas:s) (>:<i,<i,t>> (len:<r,i> $0) (len:<r,i> red_river:r)))))
+
+what is the longest river in the us
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (len:<r,i> $0)))
+
+what is the biggest state in the usa
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> $0 usa:co))) (lambda $0:e (size:<lo,i> $0)))
+
+how many states border colorado and border new mexico
+(count:<<e,t>,i> (lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 colorado:s) (next_to:<lo,<lo,t>> $0 new_mexico:s))))
+
+what are the neighboring states for michigan
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 michigan:s)))
+

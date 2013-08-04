@@ -28,11 +28,13 @@ import java.util.Map;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
-public class LexicalSyntaxPenaltyScorer implements IScorer<LexicalTemplate> {
+public class LexicalSyntaxPenaltyScorer implements
+		ISerializableScorer<LexicalTemplate> {
 	
-	final double	scale;
+	private static final long	serialVersionUID	= 7816026951225878763L;
+	final double				scale;
 	
 	public LexicalSyntaxPenaltyScorer(double scale) {
 		this.scale = scale;

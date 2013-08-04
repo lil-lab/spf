@@ -1,10 +1,10 @@
 <project name="spf" default="dist" basedir=".">
 	<description>
-        UW SPF build file
+        tiny framework build file
     </description>
 	<!-- set global properties for this build -->
 	<property file="build.properties" />
-	<property name="version" value="1.2" />
+	<property name="version" value="1.3" />
 	<property name="build" location="build" />
 	<property name="build.src" location="build.src" />
 	<property name="dist" location="dist" />
@@ -25,23 +25,21 @@
 		<copy todir="${build.src}" >
 			<fileset dir="${src.tinyutils}" includes="**/*.java" />
 			<fileset dir="${src.storage}" includes="**/*.java" />
+			<fileset dir="${src.geoquery}" includes="**/*.java" />
 			<fileset dir="${src.ccg}" includes="**/*.java" />
 			<fileset dir="${src.ccg.lexicon}" includes="**/*.java" />
 			<fileset dir="${src.ccg.lexicon.factored.lambda}" includes="**/*.java" />
 			<fileset dir="${src.data}" includes="**/*.java" />
 			<fileset dir="${src.genlex.ccg}" includes="**/*.java" />
 			<fileset dir="${src.genlex.ccg.template}" includes="**/*.java" />
+			<fileset dir="${src.genlex.ccg.unification}" includes="**/*.java" />
 			<fileset dir="${src.exec}" includes="**/*.java" />
-			<fileset dir="${src.data.lexicalgen}" includes="**/*.java" />
-			<fileset dir="${src.data.lexicalgen.singlesentence}" includes="**/*.java" />
 			<fileset dir="${src.datasinglesentence}" includes="**/*.java" />
 			<fileset dir="${src.explat}" includes="**/*.java" />
 			<fileset dir="${src.learn}" includes="**/*.java" />
 			<fileset dir="${src.learn.validation}" includes="**/*.java" />
 			<fileset dir="${src.learn.weakp}" includes="**/*.java" />
-			<fileset dir="${src.learn.ubl}" includes="**/*.java" />
 			<fileset dir="${src.learn.simple}" includes="**/*.java" />
-			<fileset dir="${src.learn.simple.genlex}" includes="**/*.java" />
 			<fileset dir="${src.learn.situated}" includes="**/*.java" />
 			<fileset dir="${src.mr.lambda}" includes="**/*.java" />
 			<fileset dir="${src.mr.lambda.ccg}" includes="**/*.java" />

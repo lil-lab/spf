@@ -24,7 +24,8 @@ package edu.uw.cs.lil.tiny.mr.language.type;
  * @author Yoav Artzi
  */
 public class TermType extends Type {
-	private final TermType	parent;
+	private static final long	serialVersionUID	= -1885822138975802084L;
+	private final TermType		parent;
 	
 	TermType(String label) {
 		super(label);

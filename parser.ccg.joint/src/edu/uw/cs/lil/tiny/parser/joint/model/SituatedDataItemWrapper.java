@@ -19,25 +19,35 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.utils.composites.Pair;
 
-public class SituatedDataItemWrapper<SAMPLE, STATE> implements IDataItem<SAMPLE> {
+/**
+ * Wraps a situated data item to only expose the language component.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ * @param <STATE>
+ */
+public class SituatedDataItemWrapper<DI extends IDataItem<Pair<IDataItem<Sentence>, STATE>>, STATE>
+		implements IDataItem<Sentence> {
 	
-	private final IDataItem<Pair<SAMPLE, STATE>>	baseDataItem;
-	private final SAMPLE						sample;
+	private static final long			serialVersionUID	= 9125402561551010485L;
+	private final IDataItem<Sentence>	sample;
+	private final DI					situatedDataItem;
 	
-	public SituatedDataItemWrapper(SAMPLE sample, IDataItem<Pair<SAMPLE, STATE>> baseDataItem) {
-		this.sample = sample;
-		this.baseDataItem = baseDataItem;
-	}
-	
-	public IDataItem<Pair<SAMPLE, STATE>> getBaseDataItem() {
-		return baseDataItem;
+	public SituatedDataItemWrapper(DI situatedDataItem) {
+		this.sample = situatedDataItem.getSample().first();
+		this.situatedDataItem = situatedDataItem;
 	}
 	
 	@Override
-	public SAMPLE getSample() {
-		return sample;
+	public Sentence getSample() {
+		return sample.getSample();
+	}
+	
+	public DI getSituatedDataItem() {
+		return situatedDataItem;
 	}
 	
 }

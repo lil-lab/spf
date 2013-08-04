@@ -20,7 +20,7 @@ package edu.uw.cs.lil.tiny.test.stats;
 
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -28,11 +28,11 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * Testing statistics for the exact match metric.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Y>
+ * @param <SAMPLE>
+ * @param <MR>
  */
-public class ExactMatchTestingStatistics<X, Y> extends
-		AbstractTestingStatistics<X, Y> {
+public class ExactMatchTestingStatistics<SAMPLE, LABEL> extends
+		AbstractTestingStatistics<SAMPLE, LABEL> {
 	private static final String		DEFAULT_METRIC_NAME		= "EXACT";
 	
 	private static final ILogger	LOG						= LoggerFactory
@@ -87,24 +87,28 @@ public class ExactMatchTestingStatistics<X, Y> extends
 	}
 	
 	@Override
-	public void recordNoParse(IDataItem<X> dataItem, Y gold) {
+	public void recordNoParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold) {
 		LOG.info("%s stats -- recording no parse", getMetricName());
 		numParses++;
 		noParses++;
 	}
 	
 	@Override
-	public void recordNoParseWithSkipping(IDataItem<X> dataItem, Y gold) {
-		LOG.info("%s stats -- recording no parse with skipping", getMetricName());
+	public void recordNoParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold) {
+		LOG.info("%s stats -- recording no parse with skipping",
+				getMetricName());
 		skippingNoParses++;
 	}
 	
 	@Override
-	public void recordParse(IDataItem<X> dataItem, Y gold, Y label) {
+	public void recordParse(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, LABEL label) {
 		numParses++;
 		if (gold.equals(label)) {
-			LOG.info("%s stats -- recording correct parse: %s", getMetricName(),
-					label);
+			LOG.info("%s stats -- recording correct parse: %s",
+					getMetricName(), label);
 			correctParses++;
 		} else {
 			LOG.info("%s stats -- recording wrong parse: %s", getMetricName(),
@@ -114,18 +118,21 @@ public class ExactMatchTestingStatistics<X, Y> extends
 	}
 	
 	@Override
-	public void recordParses(IDataItem<X> dataItem, Y gold, List<Y> labels) {
+	public void recordParses(ILabeledDataItem<SAMPLE, LABEL> dataItem,
+			LABEL gold, List<LABEL> labels) {
 		recordNoParse(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParsesWithSkipping(IDataItem<X> dataItem, Y gold,
-			List<Y> labels) {
+	public void recordParsesWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold,
+			List<LABEL> labels) {
 		recordNoParseWithSkipping(dataItem, gold);
 	}
 	
 	@Override
-	public void recordParseWithSkipping(IDataItem<X> dataItem, Y gold, Y label) {
+	public void recordParseWithSkipping(
+			ILabeledDataItem<SAMPLE, LABEL> dataItem, LABEL gold, LABEL label) {
 		if (gold.equals(label)) {
 			LOG.info("%s stats -- recording correct parse with skipping: %s",
 					getMetricName(), label);

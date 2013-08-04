@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 
@@ -38,45 +39,46 @@ public class ModelLogger {
 		this.sortLexicalEntries = sortLexicalEntries;
 	}
 	
-	private static <X, Y> String lexicalEntryToString(LexicalEntry<Y> entry,
-			IModelImmutable<X, Y> model) {
+	private static <DI extends IDataItem<?>, MR> String lexicalEntryToString(
+			LexicalEntry<MR> entry, IModelImmutable<DI, MR> model) {
 		return String.format("[%.4f] %s %s (%s)", model.score(entry), entry,
 				model.getTheta().printValues(model.computeFeatures(entry)),
 				entry.getOrigin());
 	}
 	
-	public <X, Y> void log(final IModelImmutable<X, Y> model, PrintStream out) {
+	public <DI extends IDataItem<?>, MR> void log(
+			final IModelImmutable<DI, MR> model, PrintStream out) {
 		// Lexicon
 		if (sortLexicalEntries) {
-			final Map<List<String>, List<LexicalEntry<Y>>> tokensToLexicalEntries = new HashMap<List<String>, List<LexicalEntry<Y>>>();
-			for (final LexicalEntry<Y> entry : model.getLexicon()
+			final Map<List<String>, List<LexicalEntry<MR>>> tokensToLexicalEntries = new HashMap<List<String>, List<LexicalEntry<MR>>>();
+			for (final LexicalEntry<MR> entry : model.getLexicon()
 					.toCollection()) {
 				if (!tokensToLexicalEntries.containsKey(entry.getTokens())) {
 					tokensToLexicalEntries.put(entry.getTokens(),
-							new LinkedList<LexicalEntry<Y>>());
+							new LinkedList<LexicalEntry<MR>>());
 				}
 				tokensToLexicalEntries.get(entry.getTokens()).add(entry);
 			}
 			
-			for (final Entry<List<String>, List<LexicalEntry<Y>>> mapEntry : tokensToLexicalEntries
+			for (final Entry<List<String>, List<LexicalEntry<MR>>> mapEntry : tokensToLexicalEntries
 					.entrySet()) {
 				Collections.sort(mapEntry.getValue(),
-						new Comparator<LexicalEntry<Y>>() {
+						new Comparator<LexicalEntry<MR>>() {
 							
 							@Override
-							public int compare(LexicalEntry<Y> o1,
-									LexicalEntry<Y> o2) {
+							public int compare(LexicalEntry<MR> o1,
+									LexicalEntry<MR> o2) {
 								return -Double.compare(model.score(o1),
 										model.score(o2));
 							}
 						});
-				for (final LexicalEntry<Y> entry : mapEntry.getValue()) {
+				for (final LexicalEntry<MR> entry : mapEntry.getValue()) {
 					out.println(lexicalEntryToString(entry, model));
 				}
 			}
 			
 		} else {
-			for (final LexicalEntry<Y> entry : model.getLexicon()
+			for (final LexicalEntry<MR> entry : model.getLexicon()
 					.toCollection()) {
 				out.println(lexicalEntryToString(entry, model));
 			}

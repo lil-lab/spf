@@ -18,11 +18,14 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.categories.syntax;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 
-public class Slash {
-	public static final Slash	BACKWARD	= new Slash('\\');
-	public static final Slash	FORWARD		= new Slash('/');
-	public static final Slash	VERTICAL	= new Slash('|');
+public class Slash implements Serializable {
+	public static final Slash	BACKWARD			= new Slash('\\');
+	public static final Slash	FORWARD				= new Slash('/');
+	public static final Slash	VERTICAL			= new Slash('|');
+	private static final long	serialVersionUID	= -3344487277034825666L;
 	
 	private final char			c;
 	
@@ -62,5 +65,9 @@ public class Slash {
 	@Override
 	public String toString() {
 		return String.valueOf(c);
+	}
+	
+	protected Object readResolve() throws ObjectStreamException {
+		return getSlash(c);
 	}
 }

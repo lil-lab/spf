@@ -38,27 +38,27 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * Perceptron learner for parameter update only.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Z>
+ * @param <DI>
+ * @param <MR>
  */
-public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
-	private static final ILogger									LOG	= LoggerFactory
-																				.create(SimplePerceptron.class);
+public class SimplePerceptron<DI extends ILabeledDataItem<LANG, MR>, LANG, MR>
+		implements ILearner<DI, MR, Model<DI, MR>> {
+	private static final ILogger		LOG	= LoggerFactory
+													.create(SimplePerceptron.class);
 	
-	private final int												numIterations;
-	private final IParser<X, Z>										parser;
-	private final IDataCollection<? extends ILabeledDataItem<X, Z>>	trainingData;
+	private final int					numIterations;
+	private final IParser<LANG, MR>		parser;
+	private final IDataCollection<DI>	trainingData;
 	
 	public SimplePerceptron(int numIterations,
-			IDataCollection<? extends ILabeledDataItem<X, Z>> trainingData,
-			IParser<X, Z> parser) {
+			IDataCollection<DI> trainingData, IParser<LANG, MR> parser) {
 		this.numIterations = numIterations;
 		this.trainingData = trainingData;
 		this.parser = parser;
 	}
 	
 	@Override
-	public void train(Model<X, Z> model) {
+	public void train(Model<DI, MR> model) {
 		for (int iterationNumber = 0; iterationNumber < numIterations; ++iterationNumber) {
 			// Training iteration, go over all training samples
 			LOG.info("=========================");
@@ -66,7 +66,7 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 			LOG.info("=========================");
 			int itemCounter = -1;
 			
-			for (final ILabeledDataItem<X, Z> dataItem : trainingData) {
+			for (final DI dataItem : trainingData) {
 				final long startTime = System.currentTimeMillis();
 				
 				LOG.info("%d : ================== [%d]", ++itemCounter,
@@ -74,20 +74,20 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 				LOG.info("Sample type: %s", dataItem.getClass().getSimpleName());
 				LOG.info("%s", dataItem);
 				
-				final IDataItemModel<Z> dataItemModel = model
+				final IDataItemModel<MR> dataItemModel = model
 						.createDataItemModel(dataItem);
-				final IParserOutput<Z> parserOutput = parser.parse(dataItem,
+				final IParserOutput<MR> parserOutput = parser.parse(dataItem,
 						dataItemModel);
-				final List<? extends IParse<Z>> bestParses = parserOutput
+				final List<? extends IParse<MR>> bestParses = parserOutput
 						.getBestParses();
 				
 				// Correct parse
-				final List<? extends IParse<Z>> correctParses = parserOutput
+				final List<? extends IParse<MR>> correctParses = parserOutput
 						.getMaxParses(dataItem.getLabel());
 				
 				// Violating parses
-				final List<IParse<Z>> violatingBadParses = new LinkedList<IParse<Z>>();
-				for (final IParse<Z> parse : bestParses) {
+				final List<IParse<MR>> violatingBadParses = new LinkedList<IParse<MR>>();
+				for (final IParse<MR> parse : bestParses) {
 					if (!dataItem.isCorrect(parse.getSemantics())) {
 						violatingBadParses.add(parse);
 						LOG.info("Bad parse: %s", parse.getSemantics());
@@ -102,13 +102,13 @@ public class SimplePerceptron<X, Z> implements ILearner<X, Z, Model<X, Z>> {
 					final IHashVector update = HashVectorFactory.create();
 					
 					// Positive update
-					for (final IParse<Z> parse : correctParses) {
+					for (final IParse<MR> parse : correctParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								(1.0 / correctParses.size()), update);
 					}
 					
 					// Negative update
-					for (final IParse<Z> parse : violatingBadParses) {
+					for (final IParse<MR> parse : violatingBadParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								-1.0 * (1.0 / violatingBadParses.size()),
 								update);

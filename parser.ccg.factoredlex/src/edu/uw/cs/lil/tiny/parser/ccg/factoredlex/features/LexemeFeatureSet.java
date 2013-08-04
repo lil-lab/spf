@@ -31,6 +31,7 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.AbstractLexicalFeatureSet;
@@ -41,33 +42,36 @@ import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
-public class LexemeFeatureSet<SENT> extends
-		AbstractLexicalFeatureSet<SENT, LogicalExpression> {
+public class LexemeFeatureSet<DI extends IDataItem<?>> extends
+		AbstractLexicalFeatureSet<DI, LogicalExpression> {
 	
 	/**
 	 * The name of the default (protected) feature.
 	 */
-	private static final String			DEFAULT_FEAT	= "DEFAULT";
+	private static final String					DEFAULT_FEAT		= "DEFAULT";
 	
-	private static ILogger				LOG				= LoggerFactory
-																.create(LexemeFeatureSet.class);
+	private static ILogger						LOG					= LoggerFactory
+																			.create(LexemeFeatureSet.class);
 	
-	private final String				featureTag;
-	private final IScorer<Lexeme>		initialFixedScorer;
-	private final IScorer<Lexeme>		initialScorer;
-	private final Map<Lexeme, Integer>	lexemeIds;
-	private int							nextId			= 0;
+	private static final long					serialVersionUID	= 1207002303754559846L;
 	
-	private final double				scale;
+	private final String						featureTag;
+	private final ISerializableScorer<Lexeme>	initialFixedScorer;
+	private final ISerializableScorer<Lexeme>	initialScorer;
+	private final Map<Lexeme, Integer>			lexemeIds;
+	private int									nextId				= 0;
+	
+	private final double						scale;
 	
 	private LexemeFeatureSet(String featureTag,
-			IScorer<Lexeme> initialFixedScorer, IScorer<Lexeme> initialScorer,
+			ISerializableScorer<Lexeme> initialFixedScorer,
+			ISerializableScorer<Lexeme> initialScorer,
 			Map<Lexeme, Integer> lexemeIds, double scale) {
 		this.featureTag = featureTag;
 		this.initialFixedScorer = initialFixedScorer;
@@ -81,9 +85,9 @@ public class LexemeFeatureSet<SENT> extends
 		}
 	}
 	
-	public static <X> IDecoder<LexemeFeatureSet<X>> getDecoder(
+	public static <DI extends IDataItem<?>> IDecoder<LexemeFeatureSet<DI>> getDecoder(
 			DecoderHelper<LogicalExpression> decoderHelper) {
-		return new Decoder<X>(decoderHelper);
+		return new Decoder<DI>(decoderHelper);
 	}
 	
 	@Override
@@ -225,49 +229,50 @@ public class LexemeFeatureSet<SENT> extends
 		}
 	}
 	
-	public static class Builder<X> {
+	public static class Builder<DI extends IDataItem<?>> {
 		
 		private String						featureTag			= "XEME";
 		
-		private IScorer<Lexeme>				initialFixedScorer	= new UniformScorer<Lexeme>(
+		private ISerializableScorer<Lexeme>	initialFixedScorer	= new UniformScorer<Lexeme>(
 																		0.0);
 		
-		private IScorer<Lexeme>				initialScorer		= new UniformScorer<Lexeme>(
+		private ISerializableScorer<Lexeme>	initialScorer		= new UniformScorer<Lexeme>(
 																		0.0);
 		
 		private final Map<Lexeme, Integer>	lexemeIds			= new HashMap<Lexeme, Integer>();
 		
 		private double						scale				= 1.0;
 		
-		public LexemeFeatureSet<X> build() {
-			return new LexemeFeatureSet<X>(featureTag, initialFixedScorer,
+		public LexemeFeatureSet<DI> build() {
+			return new LexemeFeatureSet<DI>(featureTag, initialFixedScorer,
 					initialScorer, lexemeIds, scale);
 		}
 		
-		public Builder<X> setFeatureTag(String featureTag) {
+		public Builder<DI> setFeatureTag(String featureTag) {
 			this.featureTag = featureTag;
 			return this;
 		}
 		
-		public Builder<X> setInitialFixedScorer(
-				IScorer<Lexeme> initialFixedScorer) {
+		public Builder<DI> setInitialFixedScorer(
+				ISerializableScorer<Lexeme> initialFixedScorer) {
 			this.initialFixedScorer = initialFixedScorer;
 			return this;
 		}
 		
-		public Builder<X> setInitialScorer(IScorer<Lexeme> initialScorer) {
+		public Builder<DI> setInitialScorer(
+				ISerializableScorer<Lexeme> initialScorer) {
 			this.initialScorer = initialScorer;
 			return this;
 		}
 		
-		public Builder<X> setScale(double scale) {
+		public Builder<DI> setScale(double scale) {
 			this.scale = scale;
 			return this;
 		}
 	}
 	
-	private static class Decoder<X> extends
-			AbstractDecoderIntoFile<LexemeFeatureSet<X>> {
+	private static class Decoder<DI extends IDataItem<?>> extends
+			AbstractDecoderIntoFile<LexemeFeatureSet<DI>> {
 		private static final int						VERSION	= 1;
 		private final DecoderHelper<LogicalExpression>	decoderHelper;
 		
@@ -283,7 +288,7 @@ public class LexemeFeatureSet<SENT> extends
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				LexemeFeatureSet<X> object) {
+				LexemeFeatureSet<DI> object) {
 			final HashMap<String, String> attributes = new HashMap<String, String>();
 			
 			attributes.put("featureTag", object.featureTag);
@@ -293,17 +298,18 @@ public class LexemeFeatureSet<SENT> extends
 		}
 		
 		@Override
-		protected LexemeFeatureSet<X> doDecode(Map<String, String> attributes,
+		protected LexemeFeatureSet<DI> doDecode(Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
 			final String featureTag = attributes.get("featureTag");
 			final double scale = Double.parseDouble(attributes.get("scale"));
 			
 			// Read scorers from external files
-			final IScorer<Lexeme> initialScorer = DecoderServices.decode(
-					dependentFiles.get("initialScorer"), decoderHelper);
-			final IScorer<Lexeme> initialFixedScorer = DecoderServices.decode(
-					dependentFiles.get("initialFixedScorer"), decoderHelper);
+			final ISerializableScorer<Lexeme> initialScorer = DecoderServices
+					.decode(dependentFiles.get("initialScorer"), decoderHelper);
+			final ISerializableScorer<Lexeme> initialFixedScorer = DecoderServices
+					.decode(dependentFiles.get("initialFixedScorer"),
+							decoderHelper);
 			
 			// Read lexItems mapping
 			final Map<Lexeme, Integer> lexemeIds = new HashMap<Lexeme, Integer>();
@@ -319,13 +325,13 @@ public class LexemeFeatureSet<SENT> extends
 				lexemeIds.put(lexeme, id);
 			}
 			
-			return new LexemeFeatureSet<X>(featureTag, initialFixedScorer,
+			return new LexemeFeatureSet<DI>(featureTag, initialFixedScorer,
 					initialScorer, lexemeIds, scale);
 			
 		}
 		
 		@Override
-		protected void doEncode(LexemeFeatureSet<X> object,
+		protected void doEncode(LexemeFeatureSet<DI> object,
 				BufferedWriter writer) throws IOException {
 			// Store mapping of lexemes to feature IDs
 			writer.write("LEXEME_MAP_START\n");
@@ -339,7 +345,7 @@ public class LexemeFeatureSet<SENT> extends
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				LexemeFeatureSet<X> object, File directory, File parentFile)
+				LexemeFeatureSet<DI> object, File directory, File parentFile)
 				throws IOException {
 			final Map<String, File> dependentFiles = new HashMap<String, File>();
 			

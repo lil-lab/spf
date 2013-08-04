@@ -25,25 +25,26 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.DecoderServices;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 public class SkippingSensitiveLexicalEntryScorer<Y> implements
-		IScorer<LexicalEntry<Y>> {
+		ISerializableScorer<LexicalEntry<Y>> {
 	
-	private final ICategoryServices<Y>		categoryServices;
+	private static final long				serialVersionUID	= 1517659515042456049L;
 	private final IScorer<LexicalEntry<Y>>	defaultScorer;
+	private final Category<Y>				emptyCategory;
 	private final double					skippingCost;
 	
-	public SkippingSensitiveLexicalEntryScorer(
-			ICategoryServices<Y> categoryServices, double skippingCost,
-			IScorer<LexicalEntry<Y>> defaultScorer) {
-		this.categoryServices = categoryServices;
+	public SkippingSensitiveLexicalEntryScorer(Category<Y> emptyCategory,
+			double skippingCost, IScorer<LexicalEntry<Y>> defaultScorer) {
+		this.emptyCategory = emptyCategory;
 		this.skippingCost = skippingCost;
 		this.defaultScorer = defaultScorer;
 	}
@@ -55,7 +56,7 @@ public class SkippingSensitiveLexicalEntryScorer<Y> implements
 	
 	@Override
 	public double score(LexicalEntry<Y> lex) {
-		if (categoryServices.getEmptyCategory().equals(lex.getCategory())) {
+		if (emptyCategory.equals(lex.getCategory())) {
 			return skippingCost;
 		} else {
 			return defaultScorer.score(lex);
@@ -104,8 +105,8 @@ public class SkippingSensitiveLexicalEntryScorer<Y> implements
 			final double skippingCost = Double.valueOf(attributes
 					.get("skippingCost"));
 			
-			return new SkippingSensitiveLexicalEntryScorer<Y>(
-					decoderHelper.getCategoryServices(), skippingCost,
+			return new SkippingSensitiveLexicalEntryScorer<Y>(decoderHelper
+					.getCategoryServices().getEmptyCategory(), skippingCost,
 					defaultScorer);
 		}
 		

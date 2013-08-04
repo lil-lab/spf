@@ -30,6 +30,7 @@ import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.DecoderServices;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Scorer to scale an existing base scorer.
@@ -37,8 +38,9 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Yoav Artzi
  * @param <Y>
  */
-public class ScalingScorer<Y> implements IScorer<Y> {
+public class ScalingScorer<Y> implements ISerializableScorer<Y> {
 	
+	private static final long	serialVersionUID	= 4118718964164528806L;
 	private final IScorer<Y>	baseScorer;
 	private final double		scale;
 	

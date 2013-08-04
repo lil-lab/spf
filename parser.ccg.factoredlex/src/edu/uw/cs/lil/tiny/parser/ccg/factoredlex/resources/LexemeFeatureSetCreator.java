@@ -19,26 +19,27 @@
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexemeFeatureSet;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Creator for {@link LexemeFeatureSet}.
  * 
  * @author Yoav Artzi
  */
-public class LexemeFeatureSetCreator<SENT> implements
-		IResourceObjectCreator<LexemeFeatureSet<SENT>> {
+public class LexemeFeatureSetCreator<DI extends IDataItem<?>> implements
+		IResourceObjectCreator<LexemeFeatureSet<DI>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LexemeFeatureSet<SENT> create(Parameters parameters,
+	public LexemeFeatureSet<DI> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final LexemeFeatureSet.Builder<SENT> builder = new LexemeFeatureSet.Builder<SENT>();
+		final LexemeFeatureSet.Builder<DI> builder = new LexemeFeatureSet.Builder<DI>();
 		
 		if (parameters.contains("scale")) {
 			builder.setScale(Double.valueOf(parameters.get("scale")));
@@ -49,12 +50,12 @@ public class LexemeFeatureSetCreator<SENT> implements
 		}
 		
 		if (parameters.contains("initFixed")) {
-			builder.setInitialFixedScorer((IScorer<Lexeme>) resourceRepo
+			builder.setInitialFixedScorer((ISerializableScorer<Lexeme>) resourceRepo
 					.getResource(parameters.get("initFixed")));
 		}
 		
 		if (parameters.contains("init")) {
-			builder.setInitialScorer((IScorer<Lexeme>) resourceRepo
+			builder.setInitialScorer((ISerializableScorer<Lexeme>) resourceRepo
 					.getResource(parameters.get("init")));
 		}
 		

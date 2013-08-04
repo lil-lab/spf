@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.lambda.resources;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
@@ -29,13 +30,13 @@ import edu.uw.cs.lil.tiny.parser.ccg.features.lambda.LogicalExpressionTypeFeatur
  * 
  * @author Yoav Artzi
  */
-public class LogicalExpressionTypeFeatureSetCreator<X> implements
-		IResourceObjectCreator<LogicalExpressionTypeFeatureSet<X>> {
+public class LogicalExpressionTypeFeatureSetCreator<DI extends IDataItem<?>>
+		implements IResourceObjectCreator<LogicalExpressionTypeFeatureSet<DI>> {
 	
 	@Override
-	public LogicalExpressionTypeFeatureSet<X> create(Parameters parameters,
+	public LogicalExpressionTypeFeatureSet<DI> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		return new LogicalExpressionTypeFeatureSet<X>();
+		return new LogicalExpressionTypeFeatureSet<DI>();
 	}
 	
 	@Override

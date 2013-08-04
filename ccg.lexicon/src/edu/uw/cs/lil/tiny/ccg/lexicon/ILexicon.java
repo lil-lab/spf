@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.ccg.lexicon;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
@@ -29,19 +30,23 @@ import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
  * 
  * @author Luke Zettlemoyer
  */
-public interface ILexicon<Y> extends ILexiconImmutable<Y> {
+public interface ILexicon<MR> extends ILexiconImmutable<MR> {
 	
-	boolean add(LexicalEntry<Y> lex);
+	Set<LexicalEntry<MR>> add(LexicalEntry<MR> lex);
 	
-	boolean addAll(Collection<LexicalEntry<Y>> entries);
+	Set<LexicalEntry<MR>> addAll(Collection<LexicalEntry<MR>> entries);
 	
-	boolean addAll(ILexicon<Y> lexicon);
+	Set<LexicalEntry<MR>> addAll(ILexicon<MR> lexicon);
 	
-	void addEntriesFromFile(File file, IStringFilter textFilter,
-			ICategoryServices<Y> categoryServices, String origin);
+	Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			ICategoryServices<MR> categoryServices, String origin);
 	
-	boolean retainAll(Collection<LexicalEntry<Y>> entries);
+	Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			IStringFilter textFilter, ICategoryServices<MR> categoryServices,
+			String origin);
 	
-	boolean retainAll(ILexicon<Y> entries);
+	boolean retainAll(Collection<LexicalEntry<MR>> entries);
+	
+	boolean retainAll(ILexicon<MR> entries);
 	
 }

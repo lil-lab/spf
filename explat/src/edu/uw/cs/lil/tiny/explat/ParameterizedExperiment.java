@@ -31,10 +31,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import jregex.MatchResult;
 import jregex.Matcher;
 import jregex.Pattern;
+import jregex.Replacer;
+import jregex.Substitution;
+import jregex.TextBuffer;
+import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.Log;
+import edu.uw.cs.utils.log.LogLevel;
+import edu.uw.cs.utils.log.Logger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 public abstract class ParameterizedExperiment implements IResourceRepository {
 	
@@ -47,55 +57,107 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 	private static final String			INCLUDE_DIRECTIVE			= "include";
 	private static final Pattern		LINE_REPEAT_PATTERN			= new Pattern(
 																			"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
+	private static final ILogger		LOG							= LoggerFactory
+																			.create(ParameterizedExperiment.class);
+	private static final Pattern		VAR_REF						= new Pattern(
+																			"%\\{({var}[\\w@]+)\\}");
 	private final Map<String, Object>	resources					= new HashMap<String, Object>();
-	
 	private final File					rootDir;
 	protected final Parameters			globalParams;
 	protected final List<Parameters>	jobParams;
+	
+	protected final File				outputDir;
+	
 	protected final List<Parameters>	resourceParams;
 	
 	public ParameterizedExperiment(File file) throws IOException {
+		this(file, Collections.<String, String> emptyMap());
+	}
+	
+	public ParameterizedExperiment(File file, Map<String, String> envParams)
+			throws IOException {
 		this.rootDir = file.getParentFile() == null ? new File(".") : file
 				.getParentFile();
 		
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
 		
-		String line;
-		
-		// Read parameters
-		final Map<String, String> mutableParameters = new HashMap<String, String>();
-		while ((line = readLineSkipComments(reader)) != null
-				&& !line.trim().equals("")) {
-			final String[] split = line.trim().split("=", 2);
-			if (split[0].equals(INCLUDE_DIRECTIVE)) {
-				mutableParameters
-						.putAll(readIncludedParamsFile(makeAbsolute(new File(
-								split[1]))));
-			} else {
-				mutableParameters.put(split[0], split[1]);
+		try {
+			String line;
+			
+			// Read parameters
+			final Map<String, String> mutableParameters = new HashMap<String, String>();
+			while ((line = readLineSkipComments(reader)) != null
+					&& !line.trim().equals("")) {
+				final String[] split = line.trim().split("=", 2);
+				if (split[0].equals(INCLUDE_DIRECTIVE)) {
+					mutableParameters
+							.putAll(readIncludedParamsFile(makeAbsolute(new File(
+									split[1]))));
+				} else {
+					mutableParameters.put(split[0], split[1]);
+				}
 			}
+			this.globalParams = new Parameters(mutableParameters, true);
+			
+			// Overwrite global params with provided environment params
+			for (final Map.Entry<String, String> entry : envParams.entrySet()) {
+				globalParams.parametersMap
+						.put(entry.getKey(), entry.getValue());
+			}
+			
+			// TODO [yoav] Find a place to close the default log, if opened a
+			// stream for it
+			
+			// Output directory
+			this.outputDir = globalParams.contains("outputDir") ? globalParams
+					.getAsFile("outputDir") : null;
+			Assert.ifNull(outputDir);
+			// Create the directory, just to be on the safe side
+			outputDir.mkdir();
+			
+			// Init logging and output stream
+			final File globalLogFile = globalParams.contains("globalLog") ? globalParams
+					.getAsFile("globalLog") : null;
+			if (globalLogFile == null) {
+				Logger.DEFAULT_LOG = new Log(System.err);
+			} else {
+				Logger.DEFAULT_LOG = new Log(globalLogFile);
+			}
+			Logger.setSkipPrefix(true);
+			LogLevel.setLogLevel(LogLevel.INFO);
+			
+			// Log global parameters
+			LOG.info("Parameters:");
+			for (final Pair<String, String> param : globalParams) {
+				LOG.info("%s=%s", param.first(), param.second());
+			}
+			
+			// Read resources
+			this.resourceParams = readSectionLines(reader);
+			
+			// Read jobs
+			this.jobParams = readSectionLines(reader);
+		} finally {
+			reader.close();
 		}
-		this.globalParams = new Parameters(mutableParameters, true);
-		
-		// Read resources
-		this.resourceParams = readSectionLines(reader);
-		
-		// Read jobs
-		this.jobParams = readSectionLines(reader);
 		
 	}
 	
 	private static Map<String, String> readIncludedParamsFile(File file)
 			throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
-		final Map<String, String> parameters = new HashMap<String, String>();
-		String line;
-		while ((line = readLineSkipComments(reader)) != null
-				&& !line.trim().equals("")) {
-			final String[] split = line.trim().split("=", 2);
-			parameters.put(split[0], split[1]);
+		try {
+			final Map<String, String> parameters = new HashMap<String, String>();
+			String line;
+			while ((line = readLineSkipComments(reader)) != null
+					&& !line.trim().equals("")) {
+				final String[] split = line.trim().split("=", 2);
+				parameters.put(split[0], split[1]);
+			}
+			return Collections.unmodifiableMap(parameters);
+		} finally {
+			reader.close();
 		}
-		return Collections.unmodifiableMap(parameters);
 	}
 	
 	private static String readLineSkipComments(BufferedReader reader)
@@ -159,13 +221,17 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 	
 	private List<String> readIncludedLines(File file) throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
-		String line;
-		final List<String> lines = new LinkedList<String>();
-		while ((line = readLineSkipComments(reader)) != null
-				&& !line.trim().equals("")) {
-			lines.add(line);
+		try {
+			String line;
+			final List<String> lines = new LinkedList<String>();
+			while ((line = readLineSkipComments(reader)) != null
+					&& !line.trim().equals("")) {
+				lines.add(line);
+			}
+			return lines;
+		} finally {
+			reader.close();
 		}
-		return lines;
 	}
 	
 	private List<Parameters> readLine(String line) throws IOException {
@@ -204,6 +270,19 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		private final boolean				global;
 		private final Map<String, String>	parametersMap;
 		
+		final private Replacer				substitutionReplacer	= new Replacer(
+																			VAR_REF,
+																			new Substitution() {
+																				
+																				@Override
+																				public void appendSubstitution(
+																						MatchResult match,
+																						TextBuffer dest) {
+																					dest.append(get(match
+																							.group("var")));
+																				}
+																			});
+		
 		public Parameters(Map<String, String> parametersMap) {
 			this(parametersMap, false);
 		}
@@ -230,12 +309,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 				if (global) {
 					return null;
 				} else {
-					return globalParams.get(name);
+					return substituteVars(globalParams.get(name));
 				}
-			} else if (parametersMap.get(name).startsWith("@")) {
-				return globalParams.get(parametersMap.get(name).substring(1));
 			} else {
-				return parametersMap.get(name);
+				return substituteVars(parametersMap.get(name));
 			}
 		}
 		
@@ -286,5 +363,12 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 					+ parametersMap + "]";
 		}
 		
+		private String substituteVars(String string) {
+			if (string == null) {
+				return string;
+			} else {
+				return substitutionReplacer.replace(string);
+			}
+		}
 	}
 }

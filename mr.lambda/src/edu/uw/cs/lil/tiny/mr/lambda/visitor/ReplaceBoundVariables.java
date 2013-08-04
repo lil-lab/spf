@@ -25,7 +25,6 @@ import java.util.Map;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
@@ -54,8 +53,7 @@ public class ReplaceBoundVariables implements ILogicalExpressionVisitor {
 		variableMapping.put(lambda.getArgument(), newVar);
 		lambda.getBody().accept(this);
 		variableMapping.remove(lambda.getArgument());
-		result = new Lambda(newVar, result,
-				LogicLanguageServices.getTypeRepository());
+		result = new Lambda(newVar, result);
 	}
 	
 	@Override
@@ -74,16 +72,12 @@ public class ReplaceBoundVariables implements ILogicalExpressionVisitor {
 		}
 		
 		if (argChanged) {
-			result = new Literal(newPred, newArgs,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository());
+			result = new Literal(newPred, newArgs);
 		} else {
 			if (newPred == literal.getPredicate()) {
 				result = literal;
 			} else {
-				result = new Literal(newPred, literal.getArguments(),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				result = new Literal(newPred, literal.getArguments());
 			}
 		}
 	}

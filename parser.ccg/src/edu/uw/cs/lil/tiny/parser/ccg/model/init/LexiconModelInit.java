@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser.ccg.model.init;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 
@@ -26,21 +27,22 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
  * Init a lexicon with a set lexical entries.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Y>
+ * @param <DI>
+ * @param <MR>
  */
-public class LexiconModelInit<X, Y> implements IModelInit<X, Y> {
+public class LexiconModelInit<DI extends IDataItem<?>, MR> implements
+		IModelInit<DI, MR> {
 	
 	private final boolean		fixed;
-	private final ILexicon<Y>	lexicon;
+	private final ILexicon<MR>	lexicon;
 	
-	public LexiconModelInit(ILexicon<Y> lexicon, boolean fixed) {
+	public LexiconModelInit(ILexicon<MR> lexicon, boolean fixed) {
 		this.lexicon = lexicon;
 		this.fixed = fixed;
 	}
 	
 	@Override
-	public void init(Model<X, Y> model) {
+	public void init(Model<DI, MR> model) {
 		if (fixed) {
 			model.addFixedLexicalEntries(lexicon.toCollection());
 		} else {

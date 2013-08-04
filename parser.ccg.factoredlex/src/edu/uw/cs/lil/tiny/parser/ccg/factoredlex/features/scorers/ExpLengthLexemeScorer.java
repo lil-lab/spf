@@ -28,7 +28,7 @@ import java.util.Map;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Lexeme scorer that takes the number of tokens into account.
@@ -36,10 +36,11 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Luke Zettlemoyer
  * @param <Y>
  */
-public class ExpLengthLexemeScorer implements IScorer<Lexeme> {
+public class ExpLengthLexemeScorer implements ISerializableScorer<Lexeme> {
 	
-	private final double	coef;
-	private final double	exponent;
+	private static final long	serialVersionUID	= -5560915581878575813L;
+	private final double		coef;
+	private final double		exponent;
 	
 	public ExpLengthLexemeScorer(double baseScore, double exponent) {
 		this.coef = baseScore;

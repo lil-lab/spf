@@ -36,11 +36,10 @@ public class SkippingSensitiveLexicalEntryScorerCreator<Y>
 	public SkippingSensitiveLexicalEntryScorer<Y> createScorer(
 			Parameters parameters, IResourceRepository resourceRepo) {
 		return new SkippingSensitiveLexicalEntryScorer<Y>(
-				(ICategoryServices<Y>) resourceRepo
-						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE),
-				Double.valueOf(parameters.get("cost")),
-				(IScorer<LexicalEntry<Y>>) resourceRepo.getResource(parameters
-						.get("baseScorer")));
+				((ICategoryServices<Y>) resourceRepo.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE))
+						.getEmptyCategory(), Double.valueOf(parameters
+						.get("cost")), (IScorer<LexicalEntry<Y>>) resourceRepo
+						.getResource(parameters.get("baseScorer")));
 	}
 	
 	@Override

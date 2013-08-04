@@ -42,10 +42,12 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class Literal extends LogicalExpression {
-	public static final String				PREFIX	= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
+	public static final String				PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
 	
-	private static final ILogger			LOG		= LoggerFactory
-															.create(Literal.class);
+	private static final ILogger			LOG					= LoggerFactory
+																		.create(Literal.class);
+	
+	private static final long				serialVersionUID	= -4209330309716600396L;
 	
 	private final List<LogicalExpression>	arguments;
 	
@@ -53,15 +55,21 @@ public class Literal extends LogicalExpression {
 	
 	private final Type						type;
 	
+	public Literal(LogicalExpression predicate,
+			List<LogicalExpression> arguments) {
+		this(predicate, arguments, LogicLanguageServices.getTypeComparator(),
+				LogicLanguageServices.getTypeRepository());
+	}
+	
 	/**
-	 * The given arguments list will be cast into an unmodifiable list.
+	 * The given arguments list will be wrapped as an unmodifiable list.
 	 * 
 	 * @param predicate
 	 * @param arguments
 	 * @param typeComparator
 	 * @param typeRepository
 	 */
-	public Literal(LogicalExpression predicate,
+	private Literal(LogicalExpression predicate,
 			List<LogicalExpression> arguments, ITypeComparator typeComparator,
 			TypeRepository typeRepository) {
 		// Verify predicate and all arguments are not null -- safety measure
@@ -129,7 +137,7 @@ public class Literal extends LogicalExpression {
 		this.arguments = Collections.unmodifiableList(arguments);
 	}
 	
-	protected static Literal parse(String string,
+	protected static Literal doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
 			ITypeComparator typeComparator, boolean lockOntology) {
 		try {
@@ -139,7 +147,7 @@ public class Literal extends LogicalExpression {
 			// First is the literal predicate. Get its signature and verify it
 			// exists
 			final String predicateString = lispReader.next();
-			final LogicalExpression predicate = LogicalExpression.parse(
+			final LogicalExpression predicate = LogicalExpression.doParse(
 					predicateString, variables, typeRepository, typeComparator,
 					lockOntology);
 			
@@ -147,7 +155,7 @@ public class Literal extends LogicalExpression {
 			final List<LogicalExpression> arguments = new ArrayList<LogicalExpression>();
 			while (lispReader.hasNext()) {
 				final String stringElement = lispReader.next();
-				final LogicalExpression argument = LogicalExpression.parse(
+				final LogicalExpression argument = LogicalExpression.doParse(
 						stringElement, variables, typeRepository,
 						typeComparator, lockOntology);
 				arguments.add(argument);

@@ -39,21 +39,27 @@ import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
+import edu.uw.cs.utils.collections.SetUtils;
 
 /**
  * Lexicon containing a collection of lexical entries that match textual tokens.
  * 
  * @author Yoav Artzi
  */
-public class Lexicon<Y> implements ILexicon<Y> {
+public class Lexicon<MR> implements ILexicon<MR> {
 	public static final String			SAVED_LEXICON_ORIGIN	= "saved";
 	
-	private final Set<LexicalEntry<Y>>	entries					= new HashSet<LexicalEntry<Y>>();
+	private static final long			serialVersionUID		= -6246827857469875399L;
+	
+	private final Set<LexicalEntry<MR>>	emptySet				= Collections
+																		.emptySet();
+	
+	private final Set<LexicalEntry<MR>>	entries					= new HashSet<LexicalEntry<MR>>();
 	
 	public Lexicon() {
 	}
 	
-	public Lexicon(ILexicon<Y> lexicon) {
+	public Lexicon(ILexicon<MR> lexicon) {
 		this.entries.addAll(lexicon.toCollection());
 	}
 	
@@ -62,7 +68,7 @@ public class Lexicon<Y> implements ILexicon<Y> {
 	 * 
 	 * @param entries
 	 */
-	public Lexicon(Set<LexicalEntry<Y>> entries) {
+	public Lexicon(Set<LexicalEntry<MR>> entries) {
 		this.entries.addAll(entries);
 	}
 	
@@ -72,23 +78,28 @@ public class Lexicon<Y> implements ILexicon<Y> {
 	}
 	
 	@Override
-	public boolean add(LexicalEntry<Y> lex) {
-		return entries.add(lex);
+	public Set<LexicalEntry<MR>> add(LexicalEntry<MR> lex) {
+		return entries.add(lex) ? SetUtils.createSingleton(lex) : emptySet;
 	}
 	
 	@Override
-	public boolean addAll(Collection<LexicalEntry<Y>> newEntries) {
-		return entries.addAll(newEntries);
+	public Set<LexicalEntry<MR>> addAll(Collection<LexicalEntry<MR>> newEntries) {
+		final Set<LexicalEntry<MR>> added = new HashSet<LexicalEntry<MR>>();
+		for (final LexicalEntry<MR> entry : newEntries) {
+			added.addAll(add(entry));
+		}
+		return added;
 	}
 	
-	public boolean addAll(ILexicon<Y> lexicon) {
-		return entries.addAll(lexicon.toCollection());
+	public Set<LexicalEntry<MR>> addAll(ILexicon<MR> lexicon) {
+		return addAll(lexicon.toCollection());
 	}
 	
-	public void addEntriesFromFile(File file,
-			ICategoryServices<Y> categoryServices, String origin) {
-		addEntriesFromFile(file, new StubStringFilter(), categoryServices,
-				origin);
+	@Override
+	public Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			ICategoryServices<MR> categoryServices, String origin) {
+		return addEntriesFromFile(file, new StubStringFilter(),
+				categoryServices, origin);
 	}
 	
 	/**
@@ -99,9 +110,11 @@ public class Lexicon<Y> implements ILexicon<Y> {
 	 * </pre>
 	 */
 	@Override
-	public void addEntriesFromFile(File file, IStringFilter textFilter,
-			ICategoryServices<Y> categoryServices, String origin) {
+	public Set<LexicalEntry<MR>> addEntriesFromFile(File file,
+			IStringFilter textFilter, ICategoryServices<MR> categoryServices,
+			String origin) {
 		try {
+			final Set<LexicalEntry<MR>> added = new HashSet<LexicalEntry<MR>>();
 			final BufferedReader in = new BufferedReader(new FileReader(file));
 			int lineCounter = 0;
 			try {
@@ -112,8 +125,8 @@ public class Lexicon<Y> implements ILexicon<Y> {
 					line = line.trim();
 					// Ignore blank lines and comments
 					if (!line.equals("") && !line.startsWith("//")) {
-						entries.add(LexicalEntry.parse(line, textFilter,
-								categoryServices, origin));
+						added.addAll(add(LexicalEntry.parse(line, textFilter,
+								categoryServices, origin)));
 					}
 				}
 			} catch (final RuntimeException e) {
@@ -123,18 +136,19 @@ public class Lexicon<Y> implements ILexicon<Y> {
 			} finally {
 				in.close();
 			}
+			return added;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	@Override
-	public boolean contains(LexicalEntry<Y> lex) {
+	public boolean contains(LexicalEntry<MR> lex) {
 		return entries.contains(lex);
 	}
 	
-	public Lexicon<Y> copy() {
-		return new Lexicon<Y>(this);
+	public Lexicon<MR> copy() {
+		return new Lexicon<MR>(this);
 	}
 	
 	/**
@@ -143,9 +157,9 @@ public class Lexicon<Y> implements ILexicon<Y> {
 	 * @param words
 	 * @return
 	 */
-	public List<LexicalEntry<Y>> getLexEntries(List<String> words) {
-		final List<LexicalEntry<Y>> matchingEntries = new LinkedList<LexicalEntry<Y>>();
-		for (final LexicalEntry<Y> entry : entries) {
+	public List<LexicalEntry<MR>> getLexEntries(List<String> words) {
+		final List<LexicalEntry<MR>> matchingEntries = new LinkedList<LexicalEntry<MR>>();
+		for (final LexicalEntry<MR> entry : entries) {
 			if (entry.hasWords(words)) {
 				matchingEntries.add(entry);
 			}
@@ -154,11 +168,11 @@ public class Lexicon<Y> implements ILexicon<Y> {
 	}
 	
 	@Override
-	public boolean retainAll(Collection<LexicalEntry<Y>> toKeepEntries) {
+	public boolean retainAll(Collection<LexicalEntry<MR>> toKeepEntries) {
 		return entries.retainAll(toKeepEntries);
 	}
 	
-	public boolean retainAll(ILexicon<Y> lexicon) {
+	public boolean retainAll(ILexicon<MR> lexicon) {
 		return retainAll(lexicon.toCollection());
 	}
 	
@@ -166,16 +180,16 @@ public class Lexicon<Y> implements ILexicon<Y> {
 		return entries.size();
 	}
 	
-	public Collection<LexicalEntry<Y>> toCollection() {
+	public Collection<LexicalEntry<MR>> toCollection() {
 		return Collections.unmodifiableCollection(entries);
 	}
 	
 	@Override
 	public String toString() {
 		final StringBuffer result = new StringBuffer();
-		final Iterator<LexicalEntry<Y>> i = entries.iterator();
+		final Iterator<LexicalEntry<MR>> i = entries.iterator();
 		while (i.hasNext()) {
-			final LexicalEntry<Y> entry = i.next();
+			final LexicalEntry<MR> entry = i.next();
 			result.append(entry).append("\n");
 		}
 		return result.toString();

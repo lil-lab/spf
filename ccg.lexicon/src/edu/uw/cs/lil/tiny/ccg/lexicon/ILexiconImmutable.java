@@ -18,10 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.lexicon;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-public interface ILexiconImmutable<Y> {
+public interface ILexiconImmutable<Y> extends Serializable {
 	
 	public List<? extends LexicalEntry<Y>> getLexEntries(List<String> words);
 	

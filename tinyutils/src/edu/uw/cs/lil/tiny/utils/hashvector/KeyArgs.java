@@ -18,14 +18,17 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.utils.hashvector;
 
-public final class KeyArgs implements Comparable<KeyArgs> {
-	private final String	cachedString;
-	final String			arg1;
-	final String			arg2;
-	final String			arg3;
-	final String			arg4;
-	final String			arg5;
-	final int				hashCode;
+import java.io.Serializable;
+
+public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
+	private static final long	serialVersionUID	= -4637982636899382888L;
+	private final String		cachedString;
+	final String				arg1;
+	final String				arg2;
+	final String				arg3;
+	final String				arg4;
+	final String				arg5;
+	final int					hashCode;
 	
 	public KeyArgs(String arg1) {
 		this.arg1 = arg1;

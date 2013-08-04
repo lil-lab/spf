@@ -18,6 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.parse;
 
-public interface IParseFeatureSet<X, Y> extends IParseFeatureSetImmutable<X, Y> {
+import edu.uw.cs.lil.tiny.data.IDataItem;
+
+public interface IParseFeatureSet<DI extends IDataItem<?>, Y> extends
+		IParseFeatureSetImmutable<DI, Y> {
 	
 }

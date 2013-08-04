@@ -26,6 +26,7 @@ import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
+import edu.uw.cs.utils.collections.CollectionUtils;
 
 /**
  * Generate an EMPTY lexical entry for each token.
@@ -50,8 +51,8 @@ public class SimpleWordSkippingLexicalGenerator<Y> implements
 		final List<String> tokens = evidence.getTokens();
 		for (int j = 0; j < tokens.size(); j++) {
 			// Single token empty lexical entry
-			lexicalEntries.add(new LexicalEntry<Y>(tokens.subList(j, j + 1),
-					categoryServices.getEmptyCategory(),
+			lexicalEntries.add(new LexicalEntry<Y>(CollectionUtils.subList(
+					tokens, j, j + 1), categoryServices.getEmptyCategory(),
 					SKIPPING_LEXICAL_ORIGIN));
 		}
 		return lexicalEntries;

@@ -1,0 +1,15 @@
+(
+
+(i e)	// integer / number...
+(n e)		//name
+(lo e)		// location
+(s lo) 		// state
+(c lo)		// city
+(r lo)		// river
+(l lo)		// lake
+(m lo)		// mountain
+(co lo)		// country 
+(p lo)		// place
+(to lo)		// town
+
+)

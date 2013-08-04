@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -25,7 +26,7 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Triplet;
 
-public interface IFeatureSet {
+public interface IFeatureSet extends Serializable {
 	/**
 	 * Returns all the weights of the features represented by this feature set.
 	 * 

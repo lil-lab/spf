@@ -69,14 +69,11 @@ public class ArrayIndexAccessSimplifier implements IPredicateSimplifier {
 						newArg2 = new Literal(
 								LogicLanguageServices
 										.getIndexIncreasePredicate(),
-								incArgument, LogicLanguageServices
-										.getTypeComparator(),
-								LogicLanguageServices.getTypeRepository());
+								incArgument);
 					}
 					newArgs.add(newArg2);
 					return Simplify.of(new Literal(literal.getPredicate(),
-							newArgs, LogicLanguageServices.getTypeComparator(),
-							LogicLanguageServices.getTypeRepository()));
+							newArgs));
 				}
 			}
 		}

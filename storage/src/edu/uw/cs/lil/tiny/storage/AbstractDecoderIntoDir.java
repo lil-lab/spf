@@ -71,11 +71,14 @@ public abstract class AbstractDecoderIntoDir<C> extends AbstractDecoder<C> {
 		final File dir = file;
 		
 		// Read the attributes file into a map
-		final Map<String, String> attributes = readValueAttributeHeader(new BufferedReader(
-				new FileReader(new File(dir, ATTRIBUTE_FILE_NAME))));
-		
-		// Decode the actual data and create the object
-		return decodeFromDir(attributes, dir);
+		final BufferedReader reader = new BufferedReader(new FileReader(
+				new File(dir, ATTRIBUTE_FILE_NAME)));
+		try {
+			// Decode the actual data and create the object
+			return decodeFromDir(readValueAttributeHeader(reader), dir);
+		} finally {
+			reader.close();
+		}
 	}
 	
 	@Override

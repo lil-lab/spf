@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data;
 
+import java.io.Serializable;
+
 /**
  * A data item.
  * 
@@ -25,7 +27,7 @@ package edu.uw.cs.lil.tiny.data;
  * @param <SAMPLE>
  *            Type of the sample.
  */
-public interface IDataItem<SAMPLE> {
+public interface IDataItem<SAMPLE> extends Serializable {
 	@Override
 	public String toString();
 	

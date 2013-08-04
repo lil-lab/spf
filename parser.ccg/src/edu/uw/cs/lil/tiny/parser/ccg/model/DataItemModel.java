@@ -25,40 +25,41 @@ import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
-public class DataItemModel<X, Y> implements IDataItemModel<Y> {
+public class DataItemModel<DI extends IDataItem<?>, MR> implements
+		IDataItemModel<MR> {
 	
-	private final IDataItem<X>			dataItem;
-	private final IModelImmutable<X, Y>	model;
+	private final DI						dataItem;
+	private final IModelImmutable<DI, MR>	model;
 	
-	public DataItemModel(IModelImmutable<X, Y> model, IDataItem<X> dataItem) {
+	public DataItemModel(IModelImmutable<DI, MR> model, DI dataItem) {
 		this.model = model;
 		this.dataItem = dataItem;
 	}
 	
 	@Override
-	public IHashVector computeFeatures(IParseStep<Y> parseStep) {
+	public IHashVector computeFeatures(IParseStep<MR> parseStep) {
 		return model.computeFeatures(parseStep, dataItem);
 	}
 	
 	@Override
-	public IHashVector computeFeatures(IParseStep<Y> parseStep,
+	public IHashVector computeFeatures(IParseStep<MR> parseStep,
 			IHashVector features) {
 		return model.computeFeatures(parseStep, features, dataItem);
 	}
 	
 	@Override
-	public IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry) {
+	public IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry) {
 		return model.computeFeatures(lexicalEntry);
 	}
 	
 	@Override
-	public IHashVector computeFeatures(LexicalEntry<Y> lexicalEntry,
+	public IHashVector computeFeatures(LexicalEntry<MR> lexicalEntry,
 			IHashVector features) {
 		return model.computeFeatures(lexicalEntry, features);
 	}
 	
 	@Override
-	public ILexiconImmutable<Y> getLexicon() {
+	public ILexiconImmutable<MR> getLexicon() {
 		return model.getLexicon();
 	}
 	
@@ -68,12 +69,12 @@ public class DataItemModel<X, Y> implements IDataItemModel<Y> {
 	}
 	
 	@Override
-	public double score(IParseStep<Y> parseStep) {
+	public double score(IParseStep<MR> parseStep) {
 		return model.score(parseStep, dataItem);
 	}
 	
 	@Override
-	public double score(LexicalEntry<Y> entry) {
+	public double score(LexicalEntry<MR> entry) {
 		return model.score(entry);
 	}
 	

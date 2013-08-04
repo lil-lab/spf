@@ -88,17 +88,13 @@ public class AToExists implements ILogicalExpressionVisitor {
 				
 				// Create the equals literal
 				final LogicalExpression equalsLiteral = new Literal(equals,
-						ListUtils.createList(variable, visitor.result.first()),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+						ListUtils.createList(variable, visitor.result.first()));
 				
 				// Conjunction of the equals literal and the rest
 				final Literal conjLiteral = new Literal(
 						LogicLanguageServices.getConjunctionPredicate(),
 						ListUtils.createList(visitor.result.second().peek()
-								.second(), equalsLiteral),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+								.second(), equalsLiteral));
 				
 				// Create the exists literal for the variable of the indefinite
 				// quatifier
@@ -107,14 +103,10 @@ public class AToExists implements ILogicalExpressionVisitor {
 						ListUtils
 								.createSingletonList((LogicalExpression) new Lambda(
 										visitor.result.second().peek().first(),
-										conjLiteral, LogicLanguageServices
-												.getTypeRepository())),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+										conjLiteral)));
 				
 				// Create the final lambda operator, simplify and return
-				return Simplify.of(new Lambda(variable, existsLiteral,
-						LogicLanguageServices.getTypeRepository()));
+				return Simplify.of(new Lambda(variable, existsLiteral));
 			} else if (isVacuousLambda(output)) {
 				final Lambda lambda = (Lambda) output;
 				
@@ -124,15 +116,10 @@ public class AToExists implements ILogicalExpressionVisitor {
 						ListUtils
 								.createSingletonList((LogicalExpression) new Lambda(
 										visitor.result.second().peek().first(),
-										visitor.result.second().peek().second(),
-										LogicLanguageServices
-												.getTypeRepository())),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+										visitor.result.second().peek().second())));
 				
 				return Simplify
-						.of(new Lambda(lambda.getArgument(), existential,
-								LogicLanguageServices.getTypeRepository()));
+						.of(new Lambda(lambda.getArgument(), existential));
 			} else {
 				LOG.error(
 						"ERROR: No 'equals' for %s and not a vacuous lambda, failed to process: %s",
@@ -171,10 +158,8 @@ public class AToExists implements ILogicalExpressionVisitor {
 		lambda.getBody().accept(this);
 		if (result.first() != lambda.getBody()) {
 			// Case body changed
-			result = Pair
-					.of(new Lambda(lambda.getArgument(), result.first(),
-							LogicLanguageServices.getTypeRepository()), result
-							.second());
+			result = Pair.of(new Lambda(lambda.getArgument(), result.first()),
+					result.second());
 		} else {
 			result = Pair.of(lambda, result.second());
 		}
@@ -233,11 +218,8 @@ public class AToExists implements ILogicalExpressionVisitor {
 			}
 			
 			if (argsChanged || newPredPair.first() != literal.getPredicate()) {
-				result = Pair
-						.of(new Literal(newPredPair.first(), newArgs,
-								LogicLanguageServices.getTypeComparator(),
-								LogicLanguageServices.getTypeRepository()),
-								mergedStack);
+				result = Pair.of(new Literal(newPredPair.first(), newArgs),
+						mergedStack);
 			} else {
 				result = Pair.of(literal, mergedStack);
 			}
@@ -305,11 +287,8 @@ public class AToExists implements ILogicalExpressionVisitor {
 			final Pair<Variable, ? extends LogicalExpression> pop = stack.pop();
 			final List<LogicalExpression> args = new ArrayList<LogicalExpression>(
 					1);
-			args.add(new Lambda(pop.first(), pop.second(),
-					LogicLanguageServices.getTypeRepository()));
-			return new Literal(existsPredicate, args,
-					LogicLanguageServices.getTypeComparator(),
-					LogicLanguageServices.getTypeRepository());
+			args.add(new Lambda(pop.first(), pop.second()));
+			return new Literal(existsPredicate, args);
 		} else {
 			return exp;
 		}
@@ -327,13 +306,8 @@ public class AToExists implements ILogicalExpressionVisitor {
 						1);
 				args.add(new Lambda(pop.first(), new Literal(
 						LogicLanguageServices.getConjunctionPredicate(),
-						ListUtils.createList(pop.second(), ret),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository()),
-						LogicLanguageServices.getTypeRepository()));
-				ret = new Literal(existsPredicate, args,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+						ListUtils.createList(pop.second(), ret))));
+				ret = new Literal(existsPredicate, args);
 			}
 			return ret;
 		} else {

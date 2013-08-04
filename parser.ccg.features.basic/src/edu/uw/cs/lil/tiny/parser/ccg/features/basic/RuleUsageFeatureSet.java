@@ -39,17 +39,19 @@ import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 
-public class RuleUsageFeatureSet<X, Y> implements IParseFeatureSet<X, Y> {
+public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
+		IParseFeatureSet<DI, MR> {
 	
-	private static final String	FEATURE_TAG	= "RULE";
+	private static final String	FEATURE_TAG			= "RULE";
+	private static final long	serialVersionUID	= -2924052883973590335L;
 	private final double		scale;
 	
 	public RuleUsageFeatureSet(double scale) {
 		this.scale = scale;
 	}
 	
-	public static <X, Y> IDecoder<RuleUsageFeatureSet<X, Y>> getDecoder() {
-		return new Decoder<X, Y>();
+	public static <DI extends IDataItem<?>, MR> IDecoder<RuleUsageFeatureSet<DI, MR>> getDecoder() {
+		return new Decoder<DI, MR>();
 	}
 	
 	@Override
@@ -70,16 +72,14 @@ public class RuleUsageFeatureSet<X, Y> implements IParseFeatureSet<X, Y> {
 	}
 	
 	@Override
-	public double score(IParseStep<Y> obj, IHashVector theta,
-			IDataItem<X> dataItem) {
+	public double score(IParseStep<MR> obj, IHashVector theta, DI dataItem) {
 		return setFeats(obj.getRuleName(), HashVectorFactory.create())
 				.vectorMultiply(theta);
 		
 	}
 	
 	@Override
-	public void setFeats(IParseStep<Y> obj, IHashVector feats,
-			IDataItem<X> dataItem) {
+	public void setFeats(IParseStep<MR> obj, IHashVector feats, DI dataItem) {
 		setFeats(obj.getRuleName(), feats);
 		
 	}
@@ -92,8 +92,8 @@ public class RuleUsageFeatureSet<X, Y> implements IParseFeatureSet<X, Y> {
 		return features;
 	}
 	
-	private static class Decoder<X, Y> extends
-			AbstractDecoderIntoFile<RuleUsageFeatureSet<X, Y>> {
+	private static class Decoder<DI extends IDataItem<?>, MR> extends
+			AbstractDecoderIntoFile<RuleUsageFeatureSet<DI, MR>> {
 		private static final int	VERSION	= 1;
 		
 		public Decoder() {
@@ -107,30 +107,30 @@ public class RuleUsageFeatureSet<X, Y> implements IParseFeatureSet<X, Y> {
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				RuleUsageFeatureSet<X, Y> object) {
+				RuleUsageFeatureSet<DI, MR> object) {
 			final HashMap<String, String> attributes = new HashMap<String, String>();
 			attributes.put("scale", Double.toString(object.scale));
 			return attributes;
 		}
 		
 		@Override
-		protected RuleUsageFeatureSet<X, Y> doDecode(
+		protected RuleUsageFeatureSet<DI, MR> doDecode(
 				Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
-			return new RuleUsageFeatureSet<X, Y>(Double.valueOf(attributes
+			return new RuleUsageFeatureSet<DI, MR>(Double.valueOf(attributes
 					.get("scale")));
 		}
 		
 		@Override
-		protected void doEncode(RuleUsageFeatureSet<X, Y> object,
+		protected void doEncode(RuleUsageFeatureSet<DI, MR> object,
 				BufferedWriter writer) throws IOException {
 			// Nothing to do here
 		}
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				RuleUsageFeatureSet<X, Y> object, File directory,
+				RuleUsageFeatureSet<DI, MR> object, File directory,
 				File parentFile) throws IOException {
 			// No dependent files
 			return new HashMap<String, File>();

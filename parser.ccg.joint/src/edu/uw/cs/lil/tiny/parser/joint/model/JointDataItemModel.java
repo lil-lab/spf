@@ -19,21 +19,20 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ccg.model.DataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 
-public class JointDataItemModel<LANG, STATE, LF, ESTEP> extends
-		DataItemModel<LANG, LF> implements IJointDataItemModel<LF, ESTEP> {
+public class JointDataItemModel<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
+		extends DataItemModel<DI, MR> implements IJointDataItemModel<MR, ESTEP> {
 	
-	private final IDataItem<Pair<LANG, STATE>>					dataItem;
-	private final IJointModelImmutable<LANG, STATE, LF, ESTEP>	model;
+	private final DI											dataItem;
+	private final IJointModelImmutable<DI, STATE, MR, ESTEP>	model;
 	
-	public JointDataItemModel(
-			IJointModelImmutable<LANG, STATE, LF, ESTEP> model,
-			final IDataItem<Pair<LANG, STATE>> dataItem) {
-		super(model, new SituatedDataItemWrapper<LANG, STATE>(dataItem.getSample()
-				.first(), dataItem));
+	public JointDataItemModel(IJointModelImmutable<DI, STATE, MR, ESTEP> model,
+			final DI dataItem) {
+		super(model, dataItem);
 		this.model = model;
 		this.dataItem = dataItem;
 	}

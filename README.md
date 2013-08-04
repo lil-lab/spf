@@ -1,4 +1,4 @@
-# [_**UW SPF v1.2**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.2
+# [_**UW SPF v1.3**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.2
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)
 
@@ -7,6 +7,8 @@
 ## Documentations
 
 More coming soon … 
+
+In the meantime, see the ACL 2013 tutorial for general information about semantic parsing with CCGs. The slides are available [here](http://yoavartzi.com).
 
 # Building
 
@@ -29,27 +31,22 @@ Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semanti
 When using specific algorithms please cite the appropriate work:
 
 ### Validation based learning, joint inference and coarse-to-fine lexical generation
-(Classes: JointValidationSensitivePerceptron, JointModel, IJointFeatureSet, JointTemplatedAbstractLexiconGenerator, TemplatedAbstractLexiconGenerator)
 
 Yoav Artzi and Luke Zettlemoyer. [Weakly Supervised Learning of Semantic Parsers for Mapping Instructions to Actions](http://yoavartzi.com/pub/az-tacl.2013.pdf). In Transactions of the Association for Computational Linguistics (TACL), 2013.
 
 ### Loss sensitive learning
-(Classes: LossSensitivePerceptronCKY)
 
 Yoav Artzi and Luke Zettlemoyer. [Bootstrapping Semantic Parsers from Conversations](http://yoavartzi.com/pub/2011.emnlp.az.pdf). In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2011.
 
-### Unification-based learning
-(Classes: UBLStocGradient, UBLPerceptron)
+### Unification-based GENLEX
 
 Tom Kwiatkowski, Luke Zettlemoyer, Sharon Goldwater, and Mark Steedman. [Inducing Probabilistic CCG Grammars from Logical Form with Higher-order Unification](http://homes.cs.washington.edu/~lsz/papers/kzgs-emnlp2010.pdf). In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2010.
 
 ### Factored lexicons
-(Classes: FactoredLexicon, Lexeme, LexicalTemplate)
 
 Tom Kwiatkowski, Luke Zettlemoyer, Sharon Goldwater, and Mark Steedman. [Lexical Generalization in CCG Grammar Induction for Semantic Parsing](http://homes.cs.washington.edu/~lsz/papers/kzgs-emnlp2011.pdf). In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2011.
 
-### Template-driven lexical induction
-(Classes: FactoredGENLEXPerceptron)
+### Template-based GENLEX
 
 Luke Zettlemoyer and Michael Collins. [Online Learning of Relaxed CCG Grammars for Parsing to Logical Form](http://homes.cs.washington.edu/~lsz/papers/zc-emnlp07.pdf). In Proceedings of the Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning (EMNLP-CoNLL), 2007.
 

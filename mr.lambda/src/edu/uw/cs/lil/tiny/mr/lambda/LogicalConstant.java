@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda;
 
+import java.io.ObjectStreamException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,6 +42,8 @@ public class LogicalConstant extends Term {
 	
 	private static final ILogger						LOG					= LoggerFactory
 																					.create(LogicalConstant.class);
+	
+	private static final long							serialVersionUID	= 4418490882304760062L;
 	
 	private final String								name;
 	
@@ -108,7 +111,7 @@ public class LogicalConstant extends Term {
 		}
 	}
 	
-	protected static LogicalConstant parse(String string,
+	protected static LogicalConstant doParse(String string,
 			TypeRepository typeRepository, boolean lockOntology) {
 		try {
 			final String[] split = string.split(Term.TYPE_SEPARATOR);
@@ -167,6 +170,21 @@ public class LogicalConstant extends Term {
 			Map<Variable, Variable> variablesMapping) {
 		// Constants are singletons and re-used
 		return this == obj;
+	}
+	
+	/**
+	 * Resolves read serialized objects to constants from the repository.
+	 * 
+	 * @return
+	 * @throws ObjectStreamException
+	 */
+	protected Object readResolve() throws ObjectStreamException {
+		final LogicalConstant existing = INSTANCE_REPOSITORY.get(name);
+		if (existing == null) {
+			return addToRepository(name, this);
+		} else {
+			return existing;
+		}
 	}
 	
 }

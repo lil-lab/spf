@@ -23,10 +23,10 @@ import java.util.List;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
+import edu.uw.cs.utils.compare.IBooleanComparator;
 
 /**
  * Replaces all the N-th occurrence of the given sub-expression with the
@@ -38,11 +38,12 @@ import edu.uw.cs.lil.tiny.mr.lambda.Variable;
  */
 public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
-	private final int				N;
-	private int						numTimesSeen	= 0;
-	private final LogicalExpression	replacement;
-	private final LogicalExpression	subExp;
-	private LogicalExpression		tempReturn		= null;
+	private final IBooleanComparator<LogicalExpression>	comparator;
+	private final int									N;
+	private int											numTimesSeen	= 0;
+	private final LogicalExpression						replacement;
+	private final LogicalExpression						subExp;
+	private LogicalExpression							tempReturn		= null;
 	
 	/**
 	 * Usage only through 'of' static method.
@@ -50,9 +51,12 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	 * @param subExp
 	 * @param relacement
 	 * @param N
+	 * @param comparator2
 	 */
 	private ReplaceNthExpression(LogicalExpression subExp,
-			LogicalExpression relacement, int N) {
+			LogicalExpression relacement, int N,
+			IBooleanComparator<LogicalExpression> comparator) {
+		this.comparator = comparator;
 		this.numTimesSeen = 0;
 		this.subExp = subExp;
 		this.N = N + 1; // switch from 0 first index to 1 first index
@@ -61,8 +65,15 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
 	public static LogicalExpression of(LogicalExpression exp,
 			LogicalExpression subExp, LogicalExpression replacement, int N) {
+		return of(exp, subExp, replacement, N,
+				ReplaceExpression.EQUALS_COMPARATOR);
+	}
+	
+	public static LogicalExpression of(LogicalExpression exp,
+			LogicalExpression subExp, LogicalExpression replacement, int N,
+			IBooleanComparator<LogicalExpression> comparator) {
 		final ReplaceNthExpression visitor = new ReplaceNthExpression(subExp,
-				replacement, N);
+				replacement, N, comparator);
 		visitor.visit(exp);
 		return visitor.getResult();
 	}
@@ -73,7 +84,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Lambda lambda) {
-		if (lambda.equals(subExp)) {
+		if (comparator.compare(lambda, subExp)) {
 			numTimesSeen++;
 			if (numTimesSeen == N) {
 				tempReturn = replacement;
@@ -97,8 +108,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 				// Need to check that the new argument is actually a variable,
 				// to avoid a runtime exception
 				if (newArg instanceof Variable) {
-					tempReturn = new Lambda((Variable) newArg, newBody,
-							LogicLanguageServices.getTypeRepository());
+					tempReturn = new Lambda((Variable) newArg, newBody);
 				} else {
 					// Case we don't have a legal expression, just return null
 					tempReturn = null;
@@ -110,7 +120,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Literal literal) {
-		if (literal.equals(subExp)) {
+		if (comparator.compare(literal, subExp)) {
 			numTimesSeen++;
 			if (numTimesSeen == N) {
 				tempReturn = replacement;
@@ -148,9 +158,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 				}
 			}
 			if (literalChanged) {
-				tempReturn = new Literal(newPredicate, args,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				tempReturn = new Literal(newPredicate, args);
 			} else {
 				tempReturn = literal;
 			}
@@ -159,7 +167,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(LogicalConstant logicalConstant) {
-		if (logicalConstant.equals(subExp)) {
+		if (comparator.compare(logicalConstant, subExp)) {
 			numTimesSeen++;
 			if (numTimesSeen == N) {
 				tempReturn = replacement;
@@ -176,7 +184,7 @@ public class ReplaceNthExpression implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Variable variable) {
-		if (variable.equals(subExp)) {
+		if (comparator.compare(variable, subExp)) {
 			numTimesSeen++;
 			if (numTimesSeen == N) {
 				tempReturn = replacement;

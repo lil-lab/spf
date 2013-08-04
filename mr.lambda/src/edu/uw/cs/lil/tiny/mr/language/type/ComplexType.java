@@ -26,6 +26,7 @@ public class ComplexType extends Type {
 	public static final char	COMPLEX_TYPE_OPEN_PAREN			= '<';
 	public static final String	COMPLEX_TYPE_OPEN_PAREN_STR		= String.valueOf(COMPLEX_TYPE_OPEN_PAREN);
 	public static final char	COMPLEX_TYPE_SEP				= ',';
+	private static final long	serialVersionUID				= -4179088110249120938L;
 	
 	private final Type			domain;
 	

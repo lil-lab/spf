@@ -18,19 +18,21 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.lambda.resources;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.features.lambda.LogicalExpressionCooccurrenceFeatureSet;
 
-public class LogicalExpressionCooccurrenceFeatureSetCreator<X> implements
-		IResourceObjectCreator<LogicalExpressionCooccurrenceFeatureSet<X>> {
+public class LogicalExpressionCooccurrenceFeatureSetCreator<DI extends IDataItem<?>>
+		implements
+		IResourceObjectCreator<LogicalExpressionCooccurrenceFeatureSet<DI>> {
 	
 	@Override
-	public LogicalExpressionCooccurrenceFeatureSet<X> create(
+	public LogicalExpressionCooccurrenceFeatureSet<DI> create(
 			Parameters parameters, IResourceRepository resourceRepo) {
-		return new LogicalExpressionCooccurrenceFeatureSet<X>();
+		return new LogicalExpressionCooccurrenceFeatureSet<DI>();
 	}
 	
 	@Override

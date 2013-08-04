@@ -28,7 +28,7 @@ import java.util.Map;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Lexical entry scorer that takes the number of tokens into account. coef *
@@ -37,10 +37,12 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Yoav Artzi
  * @param <Y>
  */
-public class ExpLengthLexicalEntryScorer<Y> implements IScorer<LexicalEntry<Y>> {
+public class ExpLengthLexicalEntryScorer<Y> implements
+		ISerializableScorer<LexicalEntry<Y>> {
 	
-	private final double	coef;
-	private final double	exponent;
+	private static final long	serialVersionUID	= 3086307252253251483L;
+	private final double		coef;
+	private final double		exponent;
 	
 	public ExpLengthLexicalEntryScorer(double coef, double exponent) {
 		this.coef = coef;

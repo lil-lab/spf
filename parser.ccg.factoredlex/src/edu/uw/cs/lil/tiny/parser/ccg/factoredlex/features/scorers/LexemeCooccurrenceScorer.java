@@ -36,7 +36,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Returns a score for a Lexeme<Y> that is an average over the pairwise scores
@@ -47,8 +47,9 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Luke Zettlemoyer
  * @author Yoav Artzi
  */
-public class LexemeCooccurrenceScorer implements IScorer<Lexeme> {
+public class LexemeCooccurrenceScorer implements ISerializableScorer<Lexeme> {
 	
+	private static final long			serialVersionUID	= 3293458533645197970L;
 	protected final Map<String, Double>	pMIS;
 	
 	public LexemeCooccurrenceScorer(File f) throws IOException {
@@ -69,7 +70,7 @@ public class LexemeCooccurrenceScorer implements IScorer<Lexeme> {
 		
 		String line = reader.readLine();
 		while (line != null) { // for each line in the file
-			line.trim();
+			line = line.trim();
 			line = line.split("\\s*//")[0];
 			if (!line.equals("")) {
 				final String[] tokens = line.split("..\\:\\:..");
@@ -89,7 +90,11 @@ public class LexemeCooccurrenceScorer implements IScorer<Lexeme> {
 		// storage system to load from a file? It's more consistent. Now we have
 		// two formats that basically store the same structure.
 		final BufferedReader reader = new BufferedReader(new FileReader(f));
-		return readStats(reader);
+		try {
+			return readStats(reader);
+		} finally {
+			reader.close();
+		}
 	}
 	
 	public double getScore(String token, LogicalConstant exp) {

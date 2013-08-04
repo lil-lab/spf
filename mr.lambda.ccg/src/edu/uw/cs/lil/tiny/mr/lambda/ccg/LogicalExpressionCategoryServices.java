@@ -133,8 +133,7 @@ public class LogicalExpressionCategoryServices extends
 			final LogicalExpression newbody = ApplyAndSimplify.of(f,
 					gBodyWithNewVar);
 			if (newbody != null) {
-				final LogicalExpression newComposedExp = new Lambda(x, newbody,
-						LogicLanguageServices.getTypeRepository());
+				final LogicalExpression newComposedExp = new Lambda(x, newbody);
 				// Do type checking, if verification is turned on
 				if (doTypeChecking && !IsWellTyped.of(newComposedExp)) {
 					return null;
@@ -215,8 +214,7 @@ public class LogicalExpressionCategoryServices extends
 	@Override
 	public LogicalExpression parseSemantics(String string, boolean checkType) {
 		final LogicalExpression exp = LogicalExpression.parse(string,
-				LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), lockOntology);
+				lockOntology);
 		if (checkType && !IsWellTyped.of(exp)) {
 			throw new IllegalStateException("Semantics not well typed: "
 					+ string);

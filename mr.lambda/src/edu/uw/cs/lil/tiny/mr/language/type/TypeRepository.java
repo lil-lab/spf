@@ -92,15 +92,18 @@ public class TypeRepository {
 				final BufferedReader reader = new BufferedReader(
 						new FileReader(typesFile));
 				final StringBuilder strippedFile = new StringBuilder();
-				String line = null;
-				while ((line = reader.readLine()) != null) {
-					line.trim();
-					line = line.split("\\s*//")[0];
-					if (!line.equals("")) {
-						strippedFile.append(line).append(" ");
+				try {
+					String line = null;
+					while ((line = reader.readLine()) != null) {
+						line = line.trim();
+						line = line.split("\\s*//")[0];
+						if (!line.equals("")) {
+							strippedFile.append(line).append(" ");
+						}
 					}
+				} finally {
+					reader.close();
 				}
-				reader.close();
 				
 				// Get all the types and parse them
 				final LispReader lispReader = new LispReader(new StringReader(
@@ -179,8 +182,8 @@ public class TypeRepository {
 		return truthValueType;
 	}
 	
-	public Type getType(String label) {
-		return types.get(label);
+	public Type getType(String name) {
+		return types.get(name);
 	}
 	
 	/**

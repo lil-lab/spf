@@ -27,7 +27,7 @@ import java.util.Map;
 
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
 import edu.uw.cs.lil.tiny.storage.IDecoder;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Returns a constant value for every lexical item.
@@ -35,9 +35,10 @@ import edu.uw.cs.utils.collections.IScorer;
  * @author Luke Zettlemoyer
  * @param <E>
  */
-public class UniformScorer<Y> implements IScorer<Y> {
+public class UniformScorer<Y> implements ISerializableScorer<Y> {
 	
-	private final double	score;
+	private static final long	serialVersionUID	= 5896129775849488211L;
+	private final double		score;
 	
 	public UniformScorer(double value) {
 		score = value;

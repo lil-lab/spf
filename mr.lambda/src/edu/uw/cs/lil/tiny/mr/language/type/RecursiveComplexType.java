@@ -30,9 +30,10 @@ import edu.uw.cs.utils.composites.Pair;
  */
 public class RecursiveComplexType extends ComplexType {
 	
-	public static final int	MIN_NUM_ARGUMENT	= 2;
-	private final int		minArgs;
-	private final boolean	orderSensitive;
+	public static final int		MIN_NUM_ARGUMENT	= 2;
+	private static final long	serialVersionUID	= -9084392421171457642L;
+	private final int			minArgs;
+	private final boolean		orderSensitive;
 	
 	RecursiveComplexType(String label, Type domain, Type range,
 			boolean orderSensitive, int minArgs) {

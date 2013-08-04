@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.AbstractLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
@@ -41,7 +42,7 @@ import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
-import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ISerializableScorer;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
@@ -49,44 +50,52 @@ import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
- * The lexical features, also deals with the co-occurence statistics used for
- * Initialization.
+ * Lexical feature sets. Creates a feature for every lexical entry.
  **/
-public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
+public class LexicalFeatureSet<DI extends IDataItem<?>, MR> extends
+		AbstractLexicalFeatureSet<DI, MR> {
 	
 	/**
 	 * The name of the default (protected) feature.
 	 */
-	private static final String									DEFAULT_FEAT	= "DEFAULT";
+	private static final String										DEFAULT_FEAT		= "DEFAULT";
 	
-	private static ILogger										LOG				= LoggerFactory
-																						.create(LexicalFeatureSet.class
-																								.getName());
+	private static ILogger											LOG					= LoggerFactory
+																								.create(LexicalFeatureSet.class
+																										.getName());
 	
-	private final String										featureTag;
+	private static final long										serialVersionUID	= -6342057762767968195L;
 	
-	private final Map<Pair<List<String>, Category<Y>>, Integer>	idMapping;
+	private final String											featureTag;
 	
-	private final IScorer<LexicalEntry<Y>>						initialFixedScorer;
-	private final IScorer<LexicalEntry<Y>>						initialScorer;
+	/**
+	 * Mapping is decomposed to a pair to treat lexical entries that are
+	 * identical, but factored differently, the same way.
+	 */
+	private final Map<Pair<List<String>, Category<MR>>, Integer>	idMapping;
 	
-	private int													nextId			= 0;
+	private final ISerializableScorer<LexicalEntry<MR>>				initialFixedScorer;
+	private final ISerializableScorer<LexicalEntry<MR>>				initialScorer;
+	
+	private int														nextId				= 0;
 	
 	public LexicalFeatureSet(String featureTag,
-			IScorer<LexicalEntry<Y>> initialLexicalScorer,
-			IScorer<LexicalEntry<Y>> initialScorer) {
+			ISerializableScorer<LexicalEntry<MR>> initialLexicalScorer,
+			ISerializableScorer<LexicalEntry<MR>> initialScorer) {
 		this(initialLexicalScorer, featureTag, initialScorer,
-				new HashMap<Pair<List<String>, Category<Y>>, Integer>());
+				new HashMap<Pair<List<String>, Category<MR>>, Integer>());
 	}
 	
-	private LexicalFeatureSet(IScorer<LexicalEntry<Y>> initialLexicalScorer,
-			String featureTag, IScorer<LexicalEntry<Y>> initialScorer,
-			Map<Pair<List<String>, Category<Y>>, Integer> idMapping) {
+	private LexicalFeatureSet(
+			ISerializableScorer<LexicalEntry<MR>> initialLexicalScorer,
+			String featureTag,
+			ISerializableScorer<LexicalEntry<MR>> initialScorer,
+			Map<Pair<List<String>, Category<MR>>, Integer> idMapping) {
 		this.initialScorer = initialScorer;
 		this.initialFixedScorer = initialLexicalScorer;
 		this.featureTag = featureTag;
 		this.idMapping = idMapping;
-		for (final Entry<Pair<List<String>, Category<Y>>, Integer> entry : this.idMapping
+		for (final Entry<Pair<List<String>, Category<MR>>, Integer> entry : this.idMapping
 				.entrySet()) {
 			if (entry.getValue() >= nextId) {
 				nextId = entry.getValue() + 1;
@@ -94,13 +103,13 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		}
 	}
 	
-	public static <X, Y> IDecoder<LexicalFeatureSet<X, Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<X, Y>(decoderHelper);
+	public static <DI extends IDataItem<?>, MR> IDecoder<LexicalFeatureSet<DI, MR>> getDecoder(
+			DecoderHelper<MR> decoderHelper) {
+		return new Decoder<DI, MR>(decoderHelper);
 	}
 	
 	@Override
-	public boolean addEntry(LexicalEntry<Y> entry, IHashVector theta) {
+	public boolean addEntry(LexicalEntry<MR> entry, IHashVector theta) {
 		if (indexOf(entry) < 0) {
 			final int index = createIndex(entry);
 			
@@ -117,7 +126,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 	}
 	
 	@Override
-	public boolean addFixedEntry(LexicalEntry<Y> entry,
+	public boolean addFixedEntry(LexicalEntry<MR> entry,
 			IHashVector prametersVector) {
 		if (indexOf(entry) < 0) {
 			final int index = createIndex(entry);
@@ -137,7 +146,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		// lexical entry as comment
 		final List<Triplet<KeyArgs, Double, String>> weights = new LinkedList<Triplet<KeyArgs, Double, String>>();
 		
-		for (final Entry<Pair<List<String>, Category<Y>>, Integer> entry : idMapping
+		for (final Entry<Pair<List<String>, Category<MR>>, Integer> entry : idMapping
 				.entrySet()) {
 			final int index = entry.getValue();
 			final double weight = theta.get(featureTag, String.valueOf(index));
@@ -149,7 +158,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		return weights;
 	}
 	
-	public int indexOf(LexicalEntry<Y> entry) {
+	public int indexOf(LexicalEntry<MR> entry) {
 		final Integer i = idMapping.get(Pair.of(entry.getTokens(),
 				entry.getCategory()));
 		if (i == null) {
@@ -171,7 +180,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 	}
 	
 	@Override
-	public double score(LexicalEntry<Y> entry, IHashVector theta) {
+	public double score(LexicalEntry<MR> entry, IHashVector theta) {
 		if (entry == null) {
 			return 0.0;
 		} else {
@@ -187,7 +196,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 	}
 	
 	@Override
-	public void setFeats(LexicalEntry<Y> entry, IHashVector feats) {
+	public void setFeats(LexicalEntry<MR> entry, IHashVector feats) {
 		final int i = indexOf(entry);
 		if (i >= 0) {
 			if (feats.get(featureTag, String.valueOf(i)) > 100) {
@@ -212,7 +221,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		return this.getClass().getSimpleName() + ":\n\t" + idMapping.toString();
 	}
 	
-	private int createIndex(LexicalEntry<Y> entry) {
+	private int createIndex(LexicalEntry<MR> entry) {
 		final int index = getNextId();
 		idMapping.put(Pair.of(entry.getTokens(), entry.getCategory()), index);
 		return index;
@@ -227,55 +236,55 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		return nextId++;
 	}
 	
-	public static class Builder<X, Y> {
+	public static class Builder<DI extends IDataItem<?>, MR> {
 		
 		/**
 		 * The name tag for the features.
 		 */
-		private String						featureTag			= "LEX";
+		private String									featureTag			= "LEX";
 		
 		/**
 		 * Scorer for fixed lexical entries.
 		 */
-		private IScorer<LexicalEntry<Y>>	initialFixedScorer	= new UniformScorer<LexicalEntry<Y>>(
-																		0.0);
+		private ISerializableScorer<LexicalEntry<MR>>	initialFixedScorer	= new UniformScorer<LexicalEntry<MR>>(
+																					0.0);
 		/**
 		 * Scorer for new lexical entries.
 		 */
-		private IScorer<LexicalEntry<Y>>	initialScorer		= new UniformScorer<LexicalEntry<Y>>(
-																		0.0);
+		private ISerializableScorer<LexicalEntry<MR>>	initialScorer		= new UniformScorer<LexicalEntry<MR>>(
+																					0.0);
 		
-		public LexicalFeatureSet<X, Y> build() {
-			return new LexicalFeatureSet<X, Y>(featureTag, initialFixedScorer,
-					initialScorer);
+		public LexicalFeatureSet<DI, MR> build() {
+			return new LexicalFeatureSet<DI, MR>(featureTag,
+					initialFixedScorer, initialScorer);
 		}
 		
-		public Builder<X, Y> setFeatureTag(String featureTag) {
+		public Builder<DI, MR> setFeatureTag(String featureTag) {
 			this.featureTag = featureTag;
 			return this;
 		}
 		
-		public Builder<X, Y> setInitialFixedScorer(
-				IScorer<LexicalEntry<Y>> initialFixedScorer) {
+		public Builder<DI, MR> setInitialFixedScorer(
+				ISerializableScorer<LexicalEntry<MR>> initialFixedScorer) {
 			this.initialFixedScorer = initialFixedScorer;
 			return this;
 		}
 		
-		public Builder<X, Y> setInitialScorer(
-				IScorer<LexicalEntry<Y>> initialScorer) {
+		public Builder<DI, MR> setInitialScorer(
+				ISerializableScorer<LexicalEntry<MR>> initialScorer) {
 			this.initialScorer = initialScorer;
 			return this;
 		}
 	}
 	
-	private static class Decoder<X, Y> extends
-			AbstractDecoderIntoFile<LexicalFeatureSet<X, Y>> {
+	private static class Decoder<DI extends IDataItem<?>, MR> extends
+			AbstractDecoderIntoFile<LexicalFeatureSet<DI, MR>> {
 		
 		private static final int		VERSION	= 2;
 		
-		private final DecoderHelper<Y>	decoderHelper;
+		private final DecoderHelper<MR>	decoderHelper;
 		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
+		public Decoder(DecoderHelper<MR> decoderHelper) {
 			super(LexicalFeatureSet.class);
 			this.decoderHelper = decoderHelper;
 		}
@@ -287,7 +296,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		
 		@Override
 		protected Map<String, String> createAttributesMap(
-				LexicalFeatureSet<X, Y> object) {
+				LexicalFeatureSet<DI, MR> object) {
 			final HashMap<String, String> attributes = new HashMap<String, String>();
 			
 			attributes.put("featureTag", object.featureTag);
@@ -296,21 +305,21 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		}
 		
 		@Override
-		protected LexicalFeatureSet<X, Y> doDecode(
+		protected LexicalFeatureSet<DI, MR> doDecode(
 				Map<String, String> attributes,
 				Map<String, File> dependentFiles, BufferedReader reader)
 				throws IOException {
 			final String featureTag = attributes.get("featureTag");
 			
 			// Read scorers from external files
-			final IScorer<LexicalEntry<Y>> initialScorer = DecoderServices
+			final ISerializableScorer<LexicalEntry<MR>> initialScorer = DecoderServices
 					.decode(dependentFiles.get("initialScorer"), decoderHelper);
-			final IScorer<LexicalEntry<Y>> initialFixedScorer = DecoderServices
+			final ISerializableScorer<LexicalEntry<MR>> initialFixedScorer = DecoderServices
 					.decode(dependentFiles.get("initialFixedScorer"),
 							decoderHelper);
 			
 			// Read IDs mapping
-			final Map<Pair<List<String>, Category<Y>>, Integer> idMapping = new HashMap<Pair<List<String>, Category<Y>>, Integer>();
+			final Map<Pair<List<String>, Category<MR>>, Integer> idMapping = new HashMap<Pair<List<String>, Category<MR>>, Integer>();
 			// Read the header of the map
 			readTextLine(reader);
 			String line;
@@ -318,7 +327,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 				final String split[] = line.split("\t");
 				if (attributes.get(VERSION_ATTRIBUTE_NAME).equals("1")) {
 					// Deprecated representation --- backward compatibility
-					final LexicalEntry<Y> lexicalEntry = LexicalEntry.parse(
+					final LexicalEntry<MR> lexicalEntry = LexicalEntry.parse(
 							split[0], decoderHelper.getCategoryServices(),
 							Lexicon.SAVED_LEXICON_ORIGIN);
 					final int id = Integer.valueOf(split[1]);
@@ -328,7 +337,7 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 				} else {
 					final List<String> tokens = Arrays.asList(Arrays
 							.copyOfRange(split, 0, split.length - 2));
-					final Category<Y> category = decoderHelper
+					final Category<MR> category = decoderHelper
 							.getCategoryServices().parse(
 									split[split.length - 2]);
 					final int id = Integer.valueOf(split[split.length - 1]);
@@ -336,16 +345,16 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 				}
 			}
 			
-			return new LexicalFeatureSet<X, Y>(initialFixedScorer, featureTag,
-					initialScorer, idMapping);
+			return new LexicalFeatureSet<DI, MR>(initialFixedScorer,
+					featureTag, initialScorer, idMapping);
 		}
 		
 		@Override
-		protected void doEncode(LexicalFeatureSet<X, Y> object,
+		protected void doEncode(LexicalFeatureSet<DI, MR> object,
 				BufferedWriter writer) throws IOException {
 			// Store mapping of lexical items to feature IDs
 			writer.write("LEX_ITEMS_MAP_START\n");
-			for (final Entry<Pair<List<String>, Category<Y>>, Integer> entry : object.idMapping
+			for (final Entry<Pair<List<String>, Category<MR>>, Integer> entry : object.idMapping
 					.entrySet()) {
 				writer.write(String.format("%s\t%s\t%d\n", ListUtils.join(entry
 						.getKey().first(), "\t"), entry.getKey().second(),
@@ -356,8 +365,8 @@ public class LexicalFeatureSet<X, Y> extends AbstractLexicalFeatureSet<X, Y> {
 		
 		@Override
 		protected Map<String, File> encodeDependentFiles(
-				LexicalFeatureSet<X, Y> object, File directory, File parentFile)
-				throws IOException {
+				LexicalFeatureSet<DI, MR> object, File directory,
+				File parentFile) throws IOException {
 			final Map<String, File> dependentFiles = new HashMap<String, File>();
 			
 			// Store scorers to separate files

@@ -29,13 +29,14 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
-import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
@@ -69,14 +70,14 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class TemplateCoarseGenlex implements
-		ILexiconGenerator<Sentence, LogicalExpression> {
+public class TemplateCoarseGenlex
+		implements
+		ILexiconGenerator<Sentence, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
 	private static final ILogger								LOG	= LoggerFactory
 																			.create(TemplateCoarseGenlex.class);
 	
 	private final Set<List<LogicalConstant>>					abstractConstantSeqs;
 	private final int											maxTokens;
-	private final IModelImmutable<Sentence, LogicalExpression>	model;
 	private final IParser<Sentence, LogicalExpression>			parser;
 	private final int											parsingBeam;
 	private final Set<Pair<List<Type>, List<LogicalConstant>>>	potentialConstantSeqs;
@@ -85,11 +86,9 @@ public class TemplateCoarseGenlex implements
 	protected TemplateCoarseGenlex(Set<LexicalTemplate> templates,
 			Set<Pair<List<Type>, List<LogicalConstant>>> pontetialConstantSeqs,
 			Set<List<LogicalConstant>> abstractConstantSeqs, int maxTokens,
-			IModelImmutable<Sentence, LogicalExpression> model,
 			IParser<Sentence, LogicalExpression> parser, int parsingBeam) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
 		this.abstractConstantSeqs = abstractConstantSeqs;
-		this.model = model;
 		this.parser = parser;
 		this.parsingBeam = parsingBeam;
 		this.templates = Collections.unmodifiableSet(templates);
@@ -97,7 +96,9 @@ public class TemplateCoarseGenlex implements
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(Sentence dataItem) {
+	public ILexicon<LogicalExpression> generate(Sentence dataItem,
+			IModelImmutable<Sentence, LogicalExpression> model,
+			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getTokens();
 		final int numTokens = tokens.size();
 		
@@ -107,10 +108,9 @@ public class TemplateCoarseGenlex implements
 		for (int i = 0; i < numTokens; ++i) {
 			for (int j = i; j < numTokens && j - i + 1 < maxTokens; ++j) {
 				for (final List<LogicalConstant> constants : abstractConstantSeqs) {
-					abstractLexemes
-							.add(new Lexeme(tokens.subList(i, j + 1),
-									constants,
-									ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
+					abstractLexemes.add(new Lexeme(CollectionUtils.subList(
+							tokens, i, j + 1), constants,
+							ILexiconGenerator.GENLEX_LEXICAL_ORIGIN));
 				}
 			}
 		}
@@ -194,22 +194,19 @@ public class TemplateCoarseGenlex implements
 	}
 	
 	public static class Builder {
-		private static final String										CONST_SEED_NAME	= "absconst";
+		private static final String								CONST_SEED_NAME	= "absconst";
 		
-		protected final Set<LogicalConstant>							constants		= new HashSet<LogicalConstant>();
-		protected final int												maxTokens;
-		protected final IModelImmutable<Sentence, LogicalExpression>	model;
-		protected final IParser<Sentence, LogicalExpression>			parser;
+		protected final Set<LogicalConstant>					constants		= new HashSet<LogicalConstant>();
+		protected final int										maxTokens;
+		protected final IParser<Sentence, LogicalExpression>	parser;
 		
-		protected final int												parsingBeam;
+		protected final int										parsingBeam;
 		
-		protected final Set<LexicalTemplate>							templates		= new HashSet<LexicalTemplate>();
+		protected final Set<LexicalTemplate>					templates		= new HashSet<LexicalTemplate>();
 		
 		public Builder(int maxTokens,
-				IModelImmutable<Sentence, LogicalExpression> model,
 				IParser<Sentence, LogicalExpression> parser, int parsingBeam) {
 			this.maxTokens = maxTokens;
-			this.model = model;
 			this.parser = parser;
 			this.parsingBeam = parsingBeam;
 		}
@@ -253,9 +250,8 @@ public class TemplateCoarseGenlex implements
 		}
 		
 		public TemplateCoarseGenlex build() {
-			return new TemplateCoarseGenlex(templates,
-					createPotentialLists(), createAbstractLists(), maxTokens,
-					model, parser, parsingBeam);
+			return new TemplateCoarseGenlex(templates, createPotentialLists(),
+					createAbstractLists(), maxTokens, parser, parsingBeam);
 		}
 		
 		protected Set<List<LogicalConstant>> createAbstractLists() {

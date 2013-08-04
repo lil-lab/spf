@@ -23,10 +23,10 @@ import java.util.List;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
+import edu.uw.cs.utils.compare.IBooleanComparator;
 
 /**
  * Replaces all the occurrences of the given sub-expression with the replacement
@@ -36,10 +36,44 @@ import edu.uw.cs.lil.tiny.mr.lambda.Variable;
  */
 public class ReplaceExpression implements ILogicalExpressionVisitor {
 	
-	private final BooleanComparator<LogicalExpression>	comparator;
-	private final LogicalExpression						replacement;
-	private final LogicalExpression						subExp;
-	private LogicalExpression							tempReturn	= null;
+	public static final IBooleanComparator<LogicalExpression>	EQUALS_COMPARATOR		= new IBooleanComparator<LogicalExpression>() {
+																							@Override
+																							public boolean compare(
+																									LogicalExpression o1,
+																									LogicalExpression o2) {
+																								return o1
+																										.equals(o2);
+																							}
+																						};
+	
+	public static final IBooleanComparator<LogicalExpression>	INSTANCE_COMPARATOR		= new IBooleanComparator<LogicalExpression>() {
+																							@Override
+																							public boolean compare(
+																									LogicalExpression o1,
+																									LogicalExpression o2) {
+																								return o1 == o2;
+																							}
+																						};
+	
+	public static final IBooleanComparator<LogicalExpression>	VAR_INSTANCE_COMPARATOR	= new IBooleanComparator<LogicalExpression>() {
+																							@Override
+																							public boolean compare(
+																									LogicalExpression o1,
+																									LogicalExpression o2) {
+																								if (o1 instanceof Variable
+																										|| o2 instanceof Variable) {
+																									return o1 == o2;
+																								} else {
+																									return o1
+																											.equals(o2);
+																								}
+																							}
+																						};
+	
+	private final IBooleanComparator<LogicalExpression>			comparator;
+	private final LogicalExpression								replacement;
+	private final LogicalExpression								subExp;
+	private LogicalExpression									tempReturn				= null;
 	
 	/**
 	 * Usage only through 'of' static method.
@@ -49,26 +83,23 @@ public class ReplaceExpression implements ILogicalExpressionVisitor {
 	 * @param useInstanceComparison
 	 */
 	private ReplaceExpression(LogicalExpression subExp,
-			LogicalExpression relacement, boolean useInstanceComparison) {
+			LogicalExpression relacement,
+			IBooleanComparator<LogicalExpression> comparator) {
 		this.subExp = subExp;
 		this.replacement = relacement;
-		if (useInstanceComparison) {
-			this.comparator = new InstanceComparator();
-		} else {
-			this.comparator = new ContentComparator();
-		}
+		this.comparator = comparator;;
 	}
 	
 	public static LogicalExpression of(LogicalExpression exp,
 			LogicalExpression subExp, LogicalExpression replacement) {
-		return of(exp, subExp, replacement, false);
+		return of(exp, subExp, replacement, EQUALS_COMPARATOR);
 	}
 	
 	public static LogicalExpression of(LogicalExpression exp,
 			LogicalExpression subExp, LogicalExpression replacement,
-			boolean useInstanceComparison) {
+			IBooleanComparator<LogicalExpression> comparator) {
 		final ReplaceExpression visitor = new ReplaceExpression(subExp,
-				replacement, useInstanceComparison);
+				replacement, comparator);
 		visitor.visit(exp);
 		return visitor.getResult();
 	}
@@ -98,8 +129,7 @@ public class ReplaceExpression implements ILogicalExpressionVisitor {
 				// Need to check that the new argument is actually a variable,
 				// to avoid a runtime exception
 				if (newArg instanceof Variable) {
-					tempReturn = new Lambda((Variable) newArg, newBody,
-							LogicLanguageServices.getTypeRepository());
+					tempReturn = new Lambda((Variable) newArg, newBody);
 				} else {
 					// Case we don't have a legal expression, just return null
 					tempReturn = null;
@@ -144,9 +174,7 @@ public class ReplaceExpression implements ILogicalExpressionVisitor {
 				}
 			}
 			if (literalChanged) {
-				tempReturn = new Literal(newPredicate, args,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				tempReturn = new Literal(newPredicate, args);
 			} else {
 				tempReturn = literal;
 			}
@@ -175,25 +203,4 @@ public class ReplaceExpression implements ILogicalExpressionVisitor {
 			tempReturn = variable;
 		}
 	}
-	
-	private static interface BooleanComparator<E> {
-		public boolean compare(E o1, E o2);
-	}
-	
-	private static class ContentComparator implements
-			BooleanComparator<LogicalExpression> {
-		@Override
-		public boolean compare(LogicalExpression o1, LogicalExpression o2) {
-			return o1.equals(o2);
-		}
-	}
-	
-	private static class InstanceComparator implements
-			BooleanComparator<LogicalExpression> {
-		@Override
-		public boolean compare(LogicalExpression o1, LogicalExpression o2) {
-			return o1 == o2;
-		}
-	}
-	
 }

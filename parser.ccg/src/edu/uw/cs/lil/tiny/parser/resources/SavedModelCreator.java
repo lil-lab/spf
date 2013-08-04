@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.parser.resources;
 
 import java.io.IOException;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
@@ -29,17 +30,17 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.DecoderServices;
 
-public class SavedModelCreator<X, Y> implements
-		IResourceObjectCreator<Model<X, Y>> {
+public class SavedModelCreator<DI extends IDataItem<?>, MR> implements
+		IResourceObjectCreator<Model<DI, MR>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public Model<X, Y> create(Parameters parameters,
+	public Model<DI, MR> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
 		try {
 			return DecoderServices
 					.decode(parameters.getAsFile("dir"),
-							(DecoderHelper<Y>) resourceRepo
+							(DecoderHelper<MR>) resourceRepo
 									.getResource(ParameterizedExperiment.DECODER_HELPER_RESOURCE));
 		} catch (final IOException e) {
 			throw new IllegalStateException("failed to load model from: "

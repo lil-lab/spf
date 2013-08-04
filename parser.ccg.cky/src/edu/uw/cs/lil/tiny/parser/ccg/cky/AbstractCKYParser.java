@@ -42,6 +42,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.lil.tiny.parser.graph.AbstractGraphParser;
+import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.DirectAccessBoundedPriorityQueue;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -248,8 +249,8 @@ public abstract class AbstractCKYParser<MR> extends
 			Chart<MR> chart, List<ILexiconImmutable<MR>> lexicons,
 			IDataItemModel<MR> model) {
 		final AbstractCellFactory<MR> cellFactory = chart.getCellFactory();
-		final List<String> subString = chart.getTokens()
-				.subList(begin, end + 1);
+		final List<String> subString = CollectionUtils.subList(
+				chart.getTokens(), begin, end + 1);
 		final List<Cell<MR>> cells = new LinkedList<Cell<MR>>();
 		// Iterate over all lexicons and get lexical entries
 		for (final ILexiconImmutable<MR> lexicon : lexicons) {

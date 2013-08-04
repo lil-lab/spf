@@ -30,6 +30,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.IPredicateSimplifier;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType;
+import edu.uw.cs.utils.collections.CollectionUtils;
 
 /**
  * This class holds simplification code shared by {@link ApplyAndSimplify} and
@@ -83,10 +84,8 @@ public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 			} else if (args.size() == 1) {
 				return literal.getPredicate();
 			} else {
-				return new Literal(literal.getPredicate(), args.subList(0,
-						args.size() - 1),
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				return new Literal(literal.getPredicate(),
+						CollectionUtils.subList(args, 0, args.size() - 1));
 			}
 		} else {
 			return null;
@@ -125,8 +124,7 @@ public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 			// Need to check that the new argument is actually a variable,
 			// to avoid a runtime exception
 			if (newArg instanceof Variable) {
-				tempReturn = new Lambda((Variable) newArg, newBody,
-						LogicLanguageServices.getTypeRepository());
+				tempReturn = new Lambda((Variable) newArg, newBody);
 			} else {
 				// Case we don't have a legal expression, just return null
 				tempReturn = null;
@@ -195,7 +193,7 @@ public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 			// it actually consumed arguments
 			if (changeDueToLambdaApplication) {
 				// The updated arguments list includes the remaining arguments
-				finalArguments = simplifiedArgs.subList(
+				finalArguments = CollectionUtils.subList(simplifiedArgs,
 						argsIterator.nextIndex(), simplifiedArgs.size());
 			} else {
 				finalArguments = simplifiedArgs;
@@ -215,9 +213,7 @@ public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 			} else {
 				// Create a new literal. The arguments are re-used, if possible,
 				// by the previous code, so need to do any comparison here.
-				newExp = new Literal(newPred, finalArguments,
-						LogicLanguageServices.getTypeComparator(),
-						LogicLanguageServices.getTypeRepository());
+				newExp = new Literal(newPred, finalArguments);
 			}
 		} else {
 			// Case neither the predicate nor the arguments changed, so just

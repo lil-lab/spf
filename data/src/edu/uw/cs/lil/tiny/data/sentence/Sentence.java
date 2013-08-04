@@ -32,6 +32,7 @@ import edu.uw.cs.utils.collections.ListUtils;
  * @author Yoav Artzi
  */
 public class Sentence implements IDataItem<Sentence> {
+	private static final long	serialVersionUID	= -6156378613751917459L;
 	private final String		string;
 	private final List<String>	tokens;
 	
