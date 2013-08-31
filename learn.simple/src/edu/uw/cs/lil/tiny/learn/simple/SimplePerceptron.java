@@ -21,6 +21,7 @@ package edu.uw.cs.lil.tiny.learn.simple;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.learn.ILearner;
@@ -31,6 +32,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -42,7 +44,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <MR>
  */
 public class SimplePerceptron<DI extends ILabeledDataItem<LANG, MR>, LANG, MR>
-		implements ILearner<DI, MR, Model<DI, MR>> {
+		implements ILearner<LANG, DI, MR, Model<IDataItem<LANG>, MR>> {
 	private static final ILogger		LOG	= LoggerFactory
 													.create(SimplePerceptron.class);
 	
@@ -58,7 +60,7 @@ public class SimplePerceptron<DI extends ILabeledDataItem<LANG, MR>, LANG, MR>
 	}
 	
 	@Override
-	public void train(Model<DI, MR> model) {
+	public void train(Model<IDataItem<LANG>, MR> model) {
 		for (int iterationNumber = 0; iterationNumber < numIterations; ++iterationNumber) {
 			// Training iteration, go over all training samples
 			LOG.info("=========================");
@@ -83,7 +85,13 @@ public class SimplePerceptron<DI extends ILabeledDataItem<LANG, MR>, LANG, MR>
 				
 				// Correct parse
 				final List<? extends IParse<MR>> correctParses = parserOutput
-						.getMaxParses(dataItem.getLabel());
+						.getMaxParses(new IFilter<MR>() {
+							
+							@Override
+							public boolean isValid(MR e) {
+								return dataItem.getLabel().equals(e);
+							}
+						});
 				
 				// Violating parses
 				final List<IParse<MR>> violatingBadParses = new LinkedList<IParse<MR>>();

@@ -96,7 +96,8 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 		}
 	}
 	
-	private void processSingleBestParse(ILabeledDataItem<SAMPLE, MR> dataItem,
+	private void processSingleBestParse(
+			final ILabeledDataItem<SAMPLE, MR> dataItem,
 			IModelImmutable<IDataItem<SAMPLE>, MR> model,
 			final IParserOutput<MR> modelParserOutput, final IParse<MR> parse,
 			boolean withWordSkipping, ITestingStatistics<SAMPLE, MR> stats) {
@@ -124,7 +125,13 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 			
 			// Check if we had the correct parse and it just wasn't the best
 			final List<? extends IParse<MR>> correctParses = modelParserOutput
-					.getMaxParses(dataItem.getLabel());
+					.getMaxParses(new IFilter<MR>() {
+						
+						@Override
+						public boolean isValid(MR e) {
+							return dataItem.getLabel().equals(e);
+						}
+					});
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
 				for (final IParse<MR> correctParse : correctParses) {
@@ -161,7 +168,8 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 		}
 	}
 	
-	private void test(int itemCounter, ILabeledDataItem<SAMPLE, MR> dataItem,
+	private void test(int itemCounter,
+			final ILabeledDataItem<SAMPLE, MR> dataItem,
 			IModelImmutable<IDataItem<SAMPLE>, MR> model,
 			ITestingStatistics<SAMPLE, MR> stats) {
 		LOG.info("%d : ==================", itemCounter);
@@ -201,7 +209,14 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 			}
 			// Check if we had the correct parse and it just wasn't the best
 			final List<? extends IParse<MR>> correctParses = modelParserOutput
-					.getMaxParses(dataItem.getLabel());
+					.getMaxParses(new IFilter<MR>() {
+						
+						@Override
+						public boolean isValid(MR e) {
+							return dataItem.getLabel().equals(e);
+						}
+					});
+			
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
 				for (final IParse<MR> correctParse : correctParses) {
@@ -258,7 +273,13 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 					// Check if we had the correct parse and it just wasn't
 					// the best
 					final List<? extends IParse<MR>> correctParses = parserOutputWithSkipping
-							.getMaxParses(dataItem.getLabel());
+							.getMaxParses(new IFilter<MR>() {
+								
+								@Override
+								public boolean isValid(MR e) {
+									return dataItem.getLabel().equals(e);
+								}
+							});
 					LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 					if (!correctParses.isEmpty()) {
 						for (final IParse<MR> correctParse : correctParses) {

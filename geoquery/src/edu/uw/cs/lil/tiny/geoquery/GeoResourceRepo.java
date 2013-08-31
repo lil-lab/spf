@@ -18,7 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.geoquery;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.resources.CompositeDataCollectionCreator;
 import edu.uw.cs.lil.tiny.data.resources.LabeledValidatorCreator;
 import edu.uw.cs.lil.tiny.data.resources.SentenceLengthFilterCreator;
@@ -33,6 +32,8 @@ import edu.uw.cs.lil.tiny.genlex.ccg.unification.resources.UnificationModelInitC
 import edu.uw.cs.lil.tiny.learn.validation.resources.ValidationPerceptronCreator;
 import edu.uw.cs.lil.tiny.learn.validation.resources.ValidationStocGradCreator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
+import edu.uw.cs.lil.tiny.mr.lambda.ccg.SimpleFullParseFilter;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.multi.MultiCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources.FactoredLexiconCreator;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources.LexemeCooccurrenceScorerCreator;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.resources.LexemeFeatureSetCreator;
@@ -41,14 +42,33 @@ import edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources.LexicalFeatureSetC
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources.SkippingSensitiveLexicalEntryScorerCreator;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.resources.UniformScorerCreator;
 import edu.uw.cs.lil.tiny.parser.ccg.features.lambda.resources.LogicalExpressionCoordinationFeatureSetCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.OverloadedRulesCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.basic.PrepositionTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ForwardTypeRaisedComposition;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.PluralExistentialTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ThatlessRelative;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ApplicationCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.CompositionCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.SkippingRuleCreator;
 import edu.uw.cs.lil.tiny.parser.resources.LexiconModelInitCreator;
 import edu.uw.cs.lil.tiny.parser.resources.ModelCreator;
 import edu.uw.cs.lil.tiny.parser.resources.ModelLoggerCreator;
 import edu.uw.cs.lil.tiny.test.resources.TesterCreator;
-import edu.uw.cs.utils.composites.Pair;
 
 public class GeoResourceRepo extends ResourceCreatorRepository {
 	public GeoResourceRepo() {
+		// Parser creators
+		registerResourceCreator(new OverloadedRulesCreator<LogicalExpression>());
+		registerResourceCreator(new ApplicationCreator<LogicalExpression>());
+		registerResourceCreator(new CompositionCreator<LogicalExpression>());
+		registerResourceCreator(new PrepositionTypeShifting.Creator());
+		registerResourceCreator(new SkippingRuleCreator<LogicalExpression>());
+		registerResourceCreator(new ForwardTypeRaisedComposition.Creator());
+		registerResourceCreator(new ThatlessRelative.Creator());
+		registerResourceCreator(new PluralExistentialTypeShifting.Creator());
+		registerResourceCreator(new MultiCKYParser.Creator<LogicalExpression>());
+		registerResourceCreator(new SimpleFullParseFilter.Creator());
+		
 		registerResourceCreator(new SingleSentenceDatasetCreator());
 		registerResourceCreator(new CompositeDataCollectionCreator<SingleSentence>());
 		registerResourceCreator(new ModelCreator<Sentence, LogicalExpression>());
@@ -58,14 +78,14 @@ public class GeoResourceRepo extends ResourceCreatorRepository {
 		registerResourceCreator(new LexemeFeatureSetCreator<Sentence>());
 		registerResourceCreator(new UniformScorerCreator<LogicalExpression>());
 		registerResourceCreator(new SkippingSensitiveLexicalEntryScorerCreator<LogicalExpression>());
-		registerResourceCreator(new LogicalExpressionCoordinationFeatureSetCreator<IDataItem<Sentence>>());
+		registerResourceCreator(new LogicalExpressionCoordinationFeatureSetCreator<Sentence>());
 		registerResourceCreator(new FactoredLexiconCreator());
 		registerResourceCreator(new SingleSentenceDatasetCreator());
 		registerResourceCreator(new TemplateSupervisedGenlexCreator());
 		registerResourceCreator(new SingleSentenceDatasetCreator());
-		registerResourceCreator(new ValidationPerceptronCreator<Pair<Sentence, LogicalExpression>, IDataItem<Pair<Sentence, LogicalExpression>>, LogicalExpression>());
-		registerResourceCreator(new ValidationStocGradCreator<Pair<Sentence, LogicalExpression>, IDataItem<Pair<Sentence, LogicalExpression>>, LogicalExpression>());
-		registerResourceCreator(new LabeledValidatorCreator<Sentence, LogicalExpression>());
+		registerResourceCreator(new ValidationPerceptronCreator<Sentence, SingleSentence, LogicalExpression>());
+		registerResourceCreator(new ValidationStocGradCreator<Sentence, SingleSentence, LogicalExpression>());
+		registerResourceCreator(new LabeledValidatorCreator<SingleSentence, LogicalExpression>());
 		registerResourceCreator(new TesterCreator<Sentence, LogicalExpression>());
 		registerResourceCreator(new LexiconModelInitCreator<Sentence, LogicalExpression>());
 		registerResourceCreator(new UnificationGenlexCreator());

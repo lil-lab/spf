@@ -7,5 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg"/>
 	<classpathentry kind="src" path="/parser.ccg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

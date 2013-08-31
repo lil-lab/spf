@@ -37,18 +37,18 @@ import edu.uw.cs.utils.collections.ISerializableScorer;
  * Scores lexical entries by their origin.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public class OriginLexicalEntryScorer<Y> implements
-		ISerializableScorer<LexicalEntry<Y>> {
+public class OriginLexicalEntryScorer<MR> implements
+		ISerializableScorer<LexicalEntry<MR>> {
 	
 	private static final long							serialVersionUID	= 1019435407737659964L;
-	private final IScorer<LexicalEntry<Y>>				defaultScorer;
-	private final Map<String, IScorer<LexicalEntry<Y>>>	originScorers;
+	private final IScorer<LexicalEntry<MR>>				defaultScorer;
+	private final Map<String, IScorer<LexicalEntry<MR>>>	originScorers;
 	
 	public OriginLexicalEntryScorer(
-			Map<String, IScorer<LexicalEntry<Y>>> originScorers,
-			IScorer<LexicalEntry<Y>> defaultScorer) {
+			Map<String, IScorer<LexicalEntry<MR>>> originScorers,
+			IScorer<LexicalEntry<MR>> defaultScorer) {
 		this.originScorers = originScorers;
 		this.defaultScorer = defaultScorer;
 	}
@@ -59,7 +59,7 @@ public class OriginLexicalEntryScorer<Y> implements
 	}
 	
 	@Override
-	public double score(LexicalEntry<Y> lex) {
+	public double score(LexicalEntry<MR> lex) {
 		if (originScorers.containsKey(lex.getOrigin())) {
 			return originScorers.get(lex.getOrigin()).score(lex);
 		} else {

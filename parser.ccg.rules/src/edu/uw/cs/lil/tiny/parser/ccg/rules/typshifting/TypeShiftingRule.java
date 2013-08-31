@@ -26,24 +26,21 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
-public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
+public class TypeShiftingRule<MR> implements IBinaryParseRule<MR> {
 	
-	private final IBinaryParseRule<Y>		baseBianryRule;
-	private final String					ruleName;
+	private final IBinaryParseRule<MR>		baseBianryRule;
 	private final String					ruleNameL;
 	private final String					ruleNameLR;
 	private final String					ruleNameR;
-	private final ITypeShiftingFunction<Y>	typeShiftingFunction;
+	private final ITypeShiftingFunction<MR>	typeShiftingFunction;
 	
-	public TypeShiftingRule(String ruleName,
-			ITypeShiftingFunction<Y> typeShiftingFunction,
-			IBinaryParseRule<Y> baseBianryRule) {
-		this.ruleName = ruleName;
+	public TypeShiftingRule(ITypeShiftingFunction<MR> typeShiftingFunction,
+			IBinaryParseRule<MR> baseBianryRule) {
 		this.typeShiftingFunction = typeShiftingFunction;
 		this.baseBianryRule = baseBianryRule;
-		this.ruleNameL = ruleName + "_l";
-		this.ruleNameR = ruleName + "_l";
-		this.ruleNameLR = ruleName + "_lr";
+		this.ruleNameL = typeShiftingFunction.getName() + "_l";
+		this.ruleNameR = typeShiftingFunction.getName() + "_l";
+		this.ruleNameLR = typeShiftingFunction.getName() + "_lr";
 		
 		// Verify overloading is valid
 		if (!baseBianryRule.isOverLoadable()) {
@@ -54,12 +51,12 @@ public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
-		final List<ParseRuleResult<Y>> results = new LinkedList<ParseRuleResult<Y>>();
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
+		final List<ParseRuleResult<MR>> results = new LinkedList<ParseRuleResult<MR>>();
 		
-		final Category<Y> raisedLeft = typeShiftingFunction.typeRaise(left);
-		final Category<Y> raisedRight = typeShiftingFunction.typeRaise(right);
+		final Category<MR> raisedLeft = typeShiftingFunction.typeShift(left);
+		final Category<MR> raisedRight = typeShiftingFunction.typeShift(right);
 		
 		if (raisedLeft != null) {
 			// Raise only left
@@ -102,13 +99,6 @@ public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
 		} else if (!baseBianryRule.equals(other.baseBianryRule)) {
 			return false;
 		}
-		if (ruleName == null) {
-			if (other.ruleName != null) {
-				return false;
-			}
-		} else if (!ruleName.equals(other.ruleName)) {
-			return false;
-		}
 		if (typeShiftingFunction == null) {
 			if (other.typeShiftingFunction != null) {
 				return false;
@@ -125,8 +115,6 @@ public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
 		int result = 1;
 		result = prime * result
 				+ ((baseBianryRule == null) ? 0 : baseBianryRule.hashCode());
-		result = prime * result
-				+ ((ruleName == null) ? 0 : ruleName.hashCode());
 		result = prime
 				* result
 				+ ((typeShiftingFunction == null) ? 0 : typeShiftingFunction
@@ -139,12 +127,12 @@ public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
 		return false;
 	}
 	
-	private void doBaseApplication(Category<Y> left, Category<Y> right,
+	private void doBaseApplication(Category<MR> left, Category<MR> right,
 			boolean isCompleteSentence, String shiftingRuleName,
-			List<ParseRuleResult<Y>> results) {
-		for (final ParseRuleResult<Y> result : baseBianryRule.apply(left,
+			List<ParseRuleResult<MR>> results) {
+		for (final ParseRuleResult<MR> result : baseBianryRule.apply(left,
 				right, isCompleteSentence)) {
-			results.add(new ParseRuleResult<Y>(shiftingRuleName + "+"
+			results.add(new ParseRuleResult<MR>(shiftingRuleName + "+"
 					+ result.getRuleName(), result.getResultCategory()));
 			if (isCompleteSentence) {
 				// Case the span represented by the two categories is the
@@ -152,11 +140,12 @@ public class TypeShiftingRule<Y> implements IBinaryParseRule<Y> {
 				// final result as well. Since the top-most category will never
 				// be combined with anything, this is the only opportunity to
 				// apply the type-shifting rule to it.
-				final Category<Y> raisedResult = typeShiftingFunction
-						.typeRaise(result.getResultCategory());
+				final Category<MR> raisedResult = typeShiftingFunction
+						.typeShift(result.getResultCategory());
 				if (raisedResult != null) {
-					results.add(new ParseRuleResult<Y>(shiftingRuleName + "+"
-							+ result.getRuleName() + "+" + ruleName + "_o",
+					results.add(new ParseRuleResult<MR>(shiftingRuleName + "+"
+							+ result.getRuleName() + "+"
+							+ typeShiftingFunction.getName() + "_o",
 							raisedResult));
 				}
 			}

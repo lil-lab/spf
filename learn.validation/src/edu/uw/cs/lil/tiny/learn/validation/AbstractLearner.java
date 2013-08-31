@@ -62,8 +62,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  *            Meaning representation type.
  */
 public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO extends IParserOutput<MR>, MR>
-		implements
-		ILearner<IDataItem<SAMPLE>, MR, Model<IDataItem<SAMPLE>, MR>> {
+		implements ILearner<SAMPLE, DI, MR, Model<IDataItem<SAMPLE>, MR>> {
 	private static final ILogger													LOG	= LoggerFactory
 																								.create(AbstractLearner.class);
 	

@@ -22,9 +22,10 @@ package edu.uw.cs.lil.tiny.ccg.categories;
  * Category services, such as composition and application.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
+ *            Semantic type
  */
-public interface ICategoryServices<Y> {
+public interface ICategoryServices<MR> {
 	
 	/**
 	 * Apply the function category to the argument category.
@@ -33,7 +34,7 @@ public interface ICategoryServices<Y> {
 	 * @param argument
 	 * @return null if the application fails.
 	 */
-	Category<Y> apply(ComplexCategory<Y> function, Category<Y> argument);
+	Category<MR> apply(ComplexCategory<MR> function, Category<MR> argument);
 	
 	/**
 	 * Compose the given categories, so the logical forms will compose to f(g).
@@ -42,8 +43,8 @@ public interface ICategoryServices<Y> {
 	 * @param gCategory
 	 * @return null if the composition fails.
 	 */
-	Category<Y> compose(ComplexCategory<Y> fCategory,
-			ComplexCategory<Y> gCategory);
+	Category<MR> compose(ComplexCategory<MR> fCategory,
+			ComplexCategory<MR> gCategory);
 	
 	@Override
 	boolean equals(Object obj);
@@ -51,17 +52,17 @@ public interface ICategoryServices<Y> {
 	/**
 	 * Returns an empty category.
 	 */
-	Category<Y> getEmptyCategory();
+	Category<MR> getEmptyCategory();
 	
 	/**
 	 * Returns a NP category with no semantics.
 	 */
-	Category<Y> getNounPhraseCategory();
+	Category<MR> getNounPhraseCategory();
 	
 	/**
 	 * Returns a S category with no semantics.
 	 */
-	Category<Y> getSentenceCategory();
+	Category<MR> getSentenceCategory();
 	
 	@Override
 	int hashCode();
@@ -72,7 +73,7 @@ public interface ICategoryServices<Y> {
 	 * @param string
 	 * @return
 	 */
-	Category<Y> parse(String string);
+	Category<MR> parse(String string);
 	
 	/**
 	 * Parse the semantics from the given string.
@@ -80,5 +81,5 @@ public interface ICategoryServices<Y> {
 	 * @param string
 	 * @return
 	 */
-	Y parseSemantics(String string);
+	MR parseSemantics(String string);
 }

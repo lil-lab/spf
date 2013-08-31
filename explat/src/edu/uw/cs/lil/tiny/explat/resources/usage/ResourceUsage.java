@@ -44,6 +44,10 @@ public class ResourceUsage {
 		this.paramUsages = Collections.unmodifiableList(paramUsages);
 	}
 	
+	public static Builder builder(String resourceName, Class<?> resourceClass) {
+		return new Builder(resourceName, resourceClass);
+	}
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder(resourceName).append('\n')
@@ -73,6 +77,13 @@ public class ResourceUsage {
 		
 		public Builder addParam(ParamUsage paramUsage) {
 			this.paramUsages.add(paramUsage);
+			return this;
+		}
+		
+		public Builder addParam(String name, Class<?> valueType,
+				String description) {
+			this.paramUsages.add(new ParamUsage(name, valueType.getName(),
+					description));
 			return this;
 		}
 		

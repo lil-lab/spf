@@ -81,7 +81,7 @@ public class UnificationGenlex
 	
 	@Override
 	public ILexicon<LogicalExpression> generate(
-			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
+			final ILabeledDataItem<Sentence, LogicalExpression> dataItem,
 			IModelImmutable<Sentence, LogicalExpression> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		
@@ -95,7 +95,13 @@ public class UnificationGenlex
 		// If no correct parses exist, create a new lexical entry for the
 		// complete sentence and return a lexicon contaning only it
 		final List<? extends IParse<LogicalExpression>> correctParses = parserOutput
-				.getMaxParses(dataItem.getLabel());
+				.getMaxParses(new IFilter<LogicalExpression>() {
+					
+					@Override
+					public boolean isValid(LogicalExpression e) {
+						return dataItem.getLabel().equals(e);
+					}
+				});
 		if (correctParses.isEmpty()) {
 			return new Lexicon<LogicalExpression>(
 					CollectionUtils

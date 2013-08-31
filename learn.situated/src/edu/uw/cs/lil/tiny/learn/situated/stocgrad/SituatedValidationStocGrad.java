@@ -80,7 +80,7 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI extends ID
 			double c,
 			IValidator<DI, ERESULT> validator,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>> genlex) {
+			ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>> genlex) {
 		super(numIterations, trainingData, trainingDataDebug,
 				maxSentenceLength, lexiconGenerationBeamSize, parser,
 				parserOutputLogger, categoryServices, genlex);
@@ -98,16 +98,18 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI extends ID
 	}
 	
 	@Override
-	public void train(JointModel<DI, STATE, MR, ESTEP> model) {
+	public void train(
+			JointModel<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP> model) {
 		stocGradientNumUpdates = 0;
 		super.train(model);
 	}
 	
 	@Override
-	protected void parameterUpdate(final DI dataItem,
+	protected void parameterUpdate(
+			final DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<DI, STATE, MR, ESTEP> model, int itemCounter,
-			int epochNumber) {
+			JointModel<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP> model,
+			int itemCounter, int epochNumber) {
 		
 		// Parse with current model
 		final IJointGraphParserOutput<MR, ERESULT> parserOutput = graphParser
@@ -226,60 +228,60 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI extends ID
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																	alpha0						= 0.1;
+		private double																								alpha0						= 0.1;
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																	c							= 0.0001;
+		private double																								c							= 0.0001;
 		
 		/**
 		 * Required for lexical induction.
 		 */
-		private ICategoryServices<MR>													categoryServices			= null;
+		private ICategoryServices<MR>																				categoryServices			= null;
 		
 		/**
 		 * GENLEX procedure. If 'null' skip lexical induction.
 		 */
-		private ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>>	genlex						= null;
+		private ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>>	genlex						= null;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																		lexiconGenerationBeamSize	= 20;
+		private int																									lexiconGenerationBeamSize	= 20;
 		
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private int																		maxSentenceLength			= Integer.MAX_VALUE;
+		private int																									maxSentenceLength			= Integer.MAX_VALUE;
 		
 		/** Number of training iterations */
-		private int																		numIterations				= 4;
+		private int																									numIterations				= 4;
 		
-		private final IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT>			parser;
+		private final IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT>										parser;
 		
-		private IJointOutputLogger<MR, ESTEP, ERESULT>									parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
-																														
-																														public void log(
-																																IJointOutput<MR, ERESULT> output,
-																																IJointDataItemModel<MR, ESTEP> dataItemModel) {
-																															// Stub
-																															
-																														}
-																													};
+		private IJointOutputLogger<MR, ESTEP, ERESULT>																parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
+																																					
+																																					public void log(
+																																							IJointOutput<MR, ERESULT> output,
+																																							IJointDataItemModel<MR, ESTEP> dataItemModel) {
+																																						// Stub
+																																						
+																																					}
+																																				};
 		
 		/** Training data */
-		private final IDataCollection<DI>												trainingData;
+		private final IDataCollection<DI>																			trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<DI, Pair<MR, ERESULT>>												trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
+		private Map<DI, Pair<MR, ERESULT>>																			trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
 		
-		private final IValidator<DI, ERESULT>											validator;
+		private final IValidator<DI, ERESULT>																		validator;
 		
 		public Builder(IDataCollection<DI> trainingData,
 				IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT> parser,
@@ -308,7 +310,7 @@ public class SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI extends ID
 		}
 		
 		public Builder<STATE, MR, ESTEP, ERESULT, DI> setGenlex(
-				ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>> genlex,
+				ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>> genlex,
 				ICategoryServices<MR> categoryServices) {
 			this.genlex = genlex;
 			this.categoryServices = categoryServices;

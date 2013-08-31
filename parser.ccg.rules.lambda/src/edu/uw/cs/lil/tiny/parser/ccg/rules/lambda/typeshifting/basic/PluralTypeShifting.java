@@ -39,31 +39,79 @@ public class PluralTypeShifting extends
 		AbstractTypeShiftingFunctionForThreading {
 	
 	private final LogicalConstant	aPred;
-	private final Type				ET;
+	private final Type				eToT;
+	private final String			name;
 	
 	public PluralTypeShifting(
 			ICategoryServices<LogicalExpression> categoryServices) {
-		ET = LogicLanguageServices.getTypeRepository().getTypeCreateIfNeeded(
-				"<e,t>");
-		aPred = (LogicalConstant) categoryServices
+		this(categoryServices, "shift_plural");
+	}
+	
+	public PluralTypeShifting(
+			ICategoryServices<LogicalExpression> categoryServices, String name) {
+		this.name = name;
+		this.eToT = LogicLanguageServices.getTypeRepository()
+				.getTypeCreateIfNeeded("<e,t>");
+		this.aPred = (LogicalConstant) categoryServices
 				.parseSemantics("a:<<e,t>,e>");
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof PluralTypeShifting;
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PluralTypeShifting other = (PluralTypeShifting) obj;
+		if (aPred == null) {
+			if (other.aPred != null) {
+				return false;
+			}
+		} else if (!aPred.equals(other.aPred)) {
+			return false;
+		}
+		if (eToT == null) {
+			if (other.eToT != null) {
+				return false;
+			}
+		} else if (!eToT.equals(other.eToT)) {
+			return false;
+		}
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public String getName() {
+		return name;
 	}
 	
 	@Override
 	public int hashCode() {
-		return PluralTypeShifting.class.getName().hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((aPred == null) ? 0 : aPred.hashCode());
+		result = prime * result + ((eToT == null) ? 0 : eToT.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
 	}
 	
 	@Override
-	public Category<LogicalExpression> typeRaise(
+	public Category<LogicalExpression> typeShift(
 			Category<LogicalExpression> category) {
 		if (category.getSyntax().equals(Syntax.N)
-				&& category.getSem().getType().isExtendingOrExtendedBy(ET)) {
+				&& category.getSem().getType().isExtendingOrExtendedBy(eToT)) {
 			final List<LogicalExpression> args = new ArrayList<LogicalExpression>(
 					1);
 			args.add(category.getSem());

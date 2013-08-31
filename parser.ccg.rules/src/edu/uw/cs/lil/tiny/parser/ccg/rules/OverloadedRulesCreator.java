@@ -16,32 +16,48 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.data.resources;
+package edu.uw.cs.lil.tiny.parser.ccg.rules;
 
-import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
-import edu.uw.cs.lil.tiny.data.utils.LabeledValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.typshifting.ITypeShiftingFunction;
 
-public class LabeledValidatorCreator<DI extends ILabeledDataItem<?, Z>, Z>
-		implements IResourceObjectCreator<LabeledValidator<DI, Z>> {
+/**
+ * Creator for building a set of binary rules overloaded with type shifting
+ * functions.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ */
+public class OverloadedRulesCreator<MR> implements
+		IResourceObjectCreator<BinaryRulesSet<MR>> {
 	
 	private String	type;
 	
-	public LabeledValidatorCreator() {
-		this("validator.labeled");
+	public OverloadedRulesCreator() {
+		this("rule.set.overload");
 	}
 	
-	public LabeledValidatorCreator(String type) {
+	public OverloadedRulesCreator(String type) {
 		this.type = type;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public LabeledValidator<DI, Z> create(Parameters params,
-			IResourceRepository repo) {
-		return new LabeledValidator<DI, Z>();
+	public BinaryRulesSet<MR> create(Parameters params, IResourceRepository repo) {
+		final RuleSetBuilder<MR> builder = new RuleSetBuilder<MR>();
+		
+		for (final String id : params.getSplit("rules")) {
+			builder.add((IBinaryParseRule<MR>) repo.getResource(id));
+		}
+		
+		for (final String id : params.getSplit("functions")) {
+			builder.add((ITypeShiftingFunction<MR>) repo.getResource(id));
+		}
+		
+		return builder.build();
 	}
 	
 	@Override
@@ -51,8 +67,12 @@ public class LabeledValidatorCreator<DI extends ILabeledDataItem<?, Z>, Z>
 	
 	@Override
 	public ResourceUsage usage() {
-		return new ResourceUsage.Builder(type(), LabeledValidator.class)
-				.build();
+		return ResourceUsage
+				.builder(type, BinaryRulesSet.class)
+				.addParam("rules", IBinaryParseRule.class,
+						"Binary parse rules.")
+				.addParam("functions", ITypeShiftingFunction.class,
+						"Type shifting functions.").build();
 	}
 	
 }

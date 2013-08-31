@@ -18,69 +18,53 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 
-/**
- * Forward application rule:
- * <ul>
- * <li>X/Y Y => X</li>
- * </ul>
- */
-public class ForwardApplication<MR> extends AbstractApplication<MR> {
-	private static final String	RULE_NAME	= "fapply";
+public class ApplicationCreator<MR> implements
+		IResourceObjectCreator<BinaryRulesSet<MR>> {
 	
-	public ForwardApplication(ICategoryServices<MR> categoryServices) {
-		super(RULE_NAME, categoryServices);
+	private String	type;
+	
+	public ApplicationCreator() {
+		this("rule.application");
+	}
+	
+	public ApplicationCreator(String type) {
+		this.type = type;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public BinaryRulesSet<MR> create(Parameters params, IResourceRepository repo) {
+		final List<IBinaryParseRule<MR>> rules = new ArrayList<IBinaryParseRule<MR>>(
+				2);
+		rules.add(new ForwardApplication<MR>(
+				(ICategoryServices<MR>) repo
+						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE)));
+		rules.add(new BackwardApplication<MR>(
+				(ICategoryServices<MR>) repo
+						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE)));
+		return new BinaryRulesSet<MR>(rules);
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
-			Category<MR> right, boolean isCompleteSentence) {
-		return doApplication(left, right, false);
+	public String type() {
+		return type;
 	}
 	
-	public static class Creator<MR> implements
-			IResourceObjectCreator<ForwardApplication<MR>> {
-		
-		private String	type;
-		
-		public Creator() {
-			this("rule.application.forward");
-		}
-		
-		public Creator(String type) {
-			this.type = type;
-		}
-		
-		@SuppressWarnings("unchecked")
-		@Override
-		public ForwardApplication<MR> create(Parameters params,
-				IResourceRepository repo) {
-			return new ForwardApplication<MR>(
-					(ICategoryServices<MR>) repo
-							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));
-		}
-		
-		@Override
-		public String type() {
-			return type;
-		}
-		
-		@Override
-		public ResourceUsage usage() {
-			return ResourceUsage.builder(type, ForwardApplication.class)
-					.build();
-		}
-		
+	@Override
+	public ResourceUsage usage() {
+		return ResourceUsage.builder(type, AbstractApplication.class).build();
 	}
 	
 }

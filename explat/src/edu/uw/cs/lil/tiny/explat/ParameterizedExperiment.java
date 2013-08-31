@@ -51,9 +51,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 	public static final String			CATEGORY_SERVICES_RESOURCE	= "categoryServices";
 	public static final String			DECODER_HELPER_RESOURCE		= "decoderHelper";
 	public static final String			DOMAIN_ONTOLOGY_RESOURCE	= "domainOntology";
+	public static final String			EXECUTOR_RESOURCE			= "executor";
 	public static final String			ONTOLOGY_RESOURCE			= "ontology";
-	public static final String			PARSER_RESOURCE				= "parser";
 	
+	public static final String			PARSER_RESOURCE				= "parser";
 	private static final String			INCLUDE_DIRECTIVE			= "include";
 	private static final Pattern		LINE_REPEAT_PATTERN			= new Pattern(
 																			"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
@@ -316,6 +317,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			}
 		}
 		
+		public boolean getAsBoolean(String name) {
+			return "true".equals(get(name));
+		}
+		
 		public File getAsFile(String name) {
 			return makeAbsolute(new File(get(name)));
 		}
@@ -329,6 +334,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 				}
 			}
 			return ret;
+		}
+		
+		public int getAsInteger(String name) {
+			return Integer.valueOf(get(name));
 		}
 		
 		public List<String> getSplit(String name) {

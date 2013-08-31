@@ -22,6 +22,11 @@ import java.util.Collection;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
 /**
@@ -48,6 +53,44 @@ public class BackwardComposition<Y> extends AbstractComposition<Y> {
 	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
 			Category<Y> right, boolean isCompleteSentence) {
 		return doComposition(right, left, true);
+	}
+	
+	public static class Creator<MR> implements
+			IResourceObjectCreator<BackwardComposition<MR>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("rule.composition.backward");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public BackwardComposition<MR> create(Parameters params,
+				IResourceRepository repo) {
+			return new BackwardComposition<MR>(
+					(ICategoryServices<MR>) repo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE),
+					"true".equals(params.get("eisnerNormalForm")));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type, BackwardComposition.class)
+					.addParam("eisnerNormalForm", "boolean",
+							"Use Eisner normal form for composition (default: false).")
+					.build();
+		}
+		
 	}
 	
 }

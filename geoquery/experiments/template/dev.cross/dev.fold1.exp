@@ -3,6 +3,8 @@ outputDir=logs1
 globalLog=logs1/global.log
 
 # Resources
+# Parser
+include=../../include.parser.exp
 # Model
 include=../include.model.exp
 # Validation function

@@ -93,6 +93,12 @@ public interface IModelImmutable<DI extends IDataItem<?>, MR> extends
 	 */
 	IHashVectorImmutable getTheta();
 	
+	/**
+	 * Verified that the given weight vector is valid (i.e., doesn't try to
+	 * update invalid feature weights).
+	 */
+	boolean isValidWeightVector(IHashVectorImmutable vector);
+	
 	double score(IParseStep<MR> parseStep, DI dataItem);
 	
 	double score(LexicalEntry<MR> entry);

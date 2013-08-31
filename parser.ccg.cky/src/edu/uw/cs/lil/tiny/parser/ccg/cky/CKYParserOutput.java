@@ -18,15 +18,16 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.IFilter;
 
@@ -60,11 +61,11 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	private static <MR> List<CKYParse<MR>> findBestParses(
-			List<CKYParse<MR>> all, MR semantics) {
+			List<CKYParse<MR>> all, IFilter<MR> filter) {
 		final List<CKYParse<MR>> best = new LinkedList<CKYParse<MR>>();
 		double bestScore = -Double.MAX_VALUE;
 		for (final CKYParse<MR> p : all) {
-			if ((semantics == null || p.getSemantics().equals(semantics))) {
+			if (filter == null || filter.isValid(p.getSemantics())) {
 				if (p.getScore() == bestScore) {
 					best.add(p);
 				}
@@ -117,17 +118,22 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	@Override
-	public List<LexicalEntry<MR>> getMaxLexicalEntries(MR semantics) {
-		final List<LexicalEntry<MR>> entries = new LinkedList<LexicalEntry<MR>>();
-		for (final IParse<MR> p : findBestParses(allParses, semantics)) {
-			entries.addAll(p.getMaxLexicalEntries());
-		}
-		return entries;
+	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter) {
+		return findBestParses(allParses, filter);
 	}
 	
 	@Override
-	public List<? extends IParse<MR>> getMaxParses(MR semantics) {
-		return findBestParses(allParses, semantics);
+	public List<? extends IGraphParse<MR>> getParses(final IFilter<MR> filter) {
+		final List<? extends IGraphParse<MR>> parses = new ArrayList<IGraphParse<MR>>(
+				allParses);
+		CollectionUtils.filterInPlace(parses, new IFilter<IGraphParse<MR>>() {
+			
+			@Override
+			public boolean isValid(IGraphParse<MR> e) {
+				return filter.isValid(e.getSemantics());
+			}
+		});
+		return parses;
 	}
 	
 	@Override

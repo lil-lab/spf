@@ -26,6 +26,11 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ComplexCategory;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.AbstractApplication;
@@ -39,7 +44,8 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.AbstractApplication;
  * 
  * @author Luke Zettlemoyer
  */
-public class PluralExistentialTypeShifting extends AbstractApplication<LogicalExpression> {
+public class PluralExistentialTypeShifting extends
+		AbstractApplication<LogicalExpression> {
 	private static String								RULE_NAME	= "plural_exists";
 	
 	private final ComplexCategory<LogicalExpression>	workerCategory;
@@ -48,7 +54,7 @@ public class PluralExistentialTypeShifting extends AbstractApplication<LogicalEx
 			ICategoryServices<LogicalExpression> categoryServices) {
 		super(RULE_NAME, categoryServices);
 		workerCategory = (ComplexCategory<LogicalExpression>) categoryServices
-		.parse("(S\\NP)/(S\\NP/NP)/N : (lambda $0:<e,t> (lambda $1:<e,<e,t>> (lambda $2:e (exists:<<e,t>,t> (lambda $3:e (and:<t*,t> ($0 $3) ($1 $3 $2)))))))");
+				.parse("(S\\NP)/(S\\NP/NP)/N : (lambda $0:<e,t> (lambda $1:<e,<e,t>> (lambda $2:e (exists:<<e,t>,t> (lambda $3:e (and:<t*,t> ($0 $3) ($1 $3 $2)))))))");
 	}
 	
 	@Override
@@ -62,12 +68,47 @@ public class PluralExistentialTypeShifting extends AbstractApplication<LogicalEx
 		if (!(right.getSyntax().equals(Syntax.N))) {
 			return Collections.emptyList();
 		}
-
+		
 		final List<ParseRuleResult<LogicalExpression>> first = doApplication(
 				workerCategory, right, false);
 		if (first.size() == 0) {
 			return Collections.emptyList();
 		}
 		return doApplication(first.get(0).getResultCategory(), left, false);
+	}
+	
+	public static class Creator implements
+			IResourceObjectCreator<PluralExistentialTypeShifting> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("rule.shift.pluralexists");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public PluralExistentialTypeShifting create(Parameters params,
+				IResourceRepository repo) {
+			return new PluralExistentialTypeShifting(
+					(ICategoryServices<LogicalExpression>) repo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage.builder(type,
+					PluralExistentialTypeShifting.class).build();
+		}
+		
 	}
 }

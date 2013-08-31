@@ -80,20 +80,20 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
 		implements
 		ILexiconGenerator<DI, LogicalExpression, IJointModelImmutable<DI, STATE, LogicalExpression, ESTEP>> {
-	private static final ILogger																	LOG	= LoggerFactory
-																												.create(JointTemplatedAbstractLexiconGenerator.class);
+	private static final ILogger													LOG	= LoggerFactory
+																								.create(JointTemplatedAbstractLexiconGenerator.class);
 	
-	private final Set<List<LogicalConstant>>														abstractConstantSeqs;
-	private final IParser<Sentence, LogicalExpression>												baseParser;
-	private final int																				generationParsingBeam;
-	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>					jointParser;
-	private final double																			margin;
-	private final int																				maxTokens;
+	private final Set<List<LogicalConstant>>										abstractConstantSeqs;
+	private final IParser<Sentence, LogicalExpression>								baseParser;
+	private final int																generationParsingBeam;
+	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
+	private final double															margin;
+	private final int																maxTokens;
 	
-	private final Set<Pair<List<Type>, List<LogicalConstant>>>										potentialConstantSeqs;
-	private final Set<LexicalTemplate>																templates;
+	private final Set<Pair<List<Type>, List<LogicalConstant>>>						potentialConstantSeqs;
+	private final Set<LexicalTemplate>												templates;
 	
-	private final IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>>	validator;
+	private final IValidator<DI, Pair<LogicalExpression, ERESULT>>					validator;
 	
 	protected JointTemplatedAbstractLexiconGenerator(
 			Set<LexicalTemplate> templates,
@@ -104,7 +104,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			int generationParsingBeam,
 			IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
 			double margin,
-			IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
+			IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
 		this.abstractConstantSeqs = abstractConstantSeqs;
 		this.baseParser = baseParser;
@@ -273,27 +273,27 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 	}
 	
 	public static class Builder<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>> {
-		private static final String																		CONST_SEED_NAME	= "absconst";
+		private static final String															CONST_SEED_NAME	= "absconst";
 		
-		protected final IParser<Sentence, LogicalExpression>											baseParser;
-		protected final Set<LogicalConstant>															constants		= new HashSet<LogicalConstant>();
-		protected final int																				generationParsingBeam;
-		protected final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>				jointParser;
+		protected final IParser<Sentence, LogicalExpression>								baseParser;
+		protected final Set<LogicalConstant>												constants		= new HashSet<LogicalConstant>();
+		protected final int																	generationParsingBeam;
+		protected final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
 		
-		protected double																				margin			= 0.0;
+		protected double																	margin			= 0.0;
 		
-		protected final int																				maxTokens;
+		protected final int																	maxTokens;
 		
-		protected final Set<LexicalTemplate>															templates		= new HashSet<LexicalTemplate>();
+		protected final Set<LexicalTemplate>												templates		= new HashSet<LexicalTemplate>();
 		
-		protected final IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>>	validator;
+		protected final IValidator<DI, Pair<LogicalExpression, ERESULT>>					validator;
 		
 		public Builder(
 				int maxTokens,
 				IParser<Sentence, LogicalExpression> parser,
 				int generationParsingBeam,
 				IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
-				IValidator<IDataItem<Pair<Sentence, STATE>>, Pair<LogicalExpression, ERESULT>> validator) {
+				IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
 			this.maxTokens = maxTokens;
 			this.baseParser = parser;
 			this.generationParsingBeam = generationParsingBeam;

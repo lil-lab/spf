@@ -23,21 +23,26 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.utils.collections.ListUtils;
 
-public class BinaryRulesSet<Y> implements IBinaryParseRule<Y> {
+public class BinaryRulesSet<MR> implements IBinaryParseRule<MR> {
 	
-	private final List<IBinaryParseRule<Y>>	rules;
+	private final List<IBinaryParseRule<MR>>	rules;
 	
-	public BinaryRulesSet(List<IBinaryParseRule<Y>> rules) {
+	public BinaryRulesSet(List<IBinaryParseRule<MR>> rules) {
 		this.rules = rules;
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean completeSentence) {
-		final List<ParseRuleResult<Y>> results = new LinkedList<ParseRuleResult<Y>>();
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean completeSentence) {
+		final List<ParseRuleResult<MR>> results = new LinkedList<ParseRuleResult<MR>>();
 		
-		for (final IBinaryParseRule<Y> rule : rules) {
+		for (final IBinaryParseRule<MR> rule : rules) {
 			results.addAll(rule.apply(left, right, completeSentence));
 		}
 		
@@ -77,12 +82,54 @@ public class BinaryRulesSet<Y> implements IBinaryParseRule<Y> {
 	
 	@Override
 	public boolean isOverLoadable() {
-		for (final IBinaryParseRule<Y> rule : rules) {
+		for (final IBinaryParseRule<MR> rule : rules) {
 			if (!rule.isOverLoadable()) {
 				return false;
 			}
 		}
 		return true;
+	}
+	
+	public static class Creator<MR> implements
+			IResourceObjectCreator<BinaryRulesSet<MR>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("rule.set");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@Override
+		public BinaryRulesSet<MR> create(Parameters params,
+				final IResourceRepository repo) {
+			return new BinaryRulesSet<MR>(ListUtils.map(
+					params.getSplit("rules"),
+					new ListUtils.Mapper<String, IBinaryParseRule<MR>>() {
+						
+						@Override
+						public IBinaryParseRule<MR> process(String obj) {
+							return repo.getResource(obj);
+						}
+					}));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage
+					.builder(type, BinaryRulesSet.class)
+					.addParam("rules", IBinaryParseRule.class,
+							"Binary parse rules.").build();
+		}
+		
 	}
 	
 }

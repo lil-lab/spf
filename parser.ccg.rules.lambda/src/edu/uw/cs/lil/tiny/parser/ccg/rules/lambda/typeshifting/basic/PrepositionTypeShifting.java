@@ -22,6 +22,10 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.ComplexSyntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Slash;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 
 /**
@@ -31,22 +35,57 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
  */
 public class PrepositionTypeShifting extends
 		AbstractTypeShiftingFunctionForThreading {
+	
 	private static final Syntax	N_BS_N_SYNTAX	= new ComplexSyntax(Syntax.N,
 														Syntax.N,
 														Slash.BACKWARD);
+	private final String		name;
+	
+	public PrepositionTypeShifting() {
+		this("shift_pp");
+	}
+	
+	public PrepositionTypeShifting(String name) {
+		this.name = name;
+	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof PrepositionTypeShifting;
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PrepositionTypeShifting other = (PrepositionTypeShifting) obj;
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public String getName() {
+		return name;
 	}
 	
 	@Override
 	public int hashCode() {
-		return PrepositionTypeShifting.class.getName().hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
 	}
 	
 	@Override
-	public Category<LogicalExpression> typeRaise(
+	public Category<LogicalExpression> typeShift(
 			Category<LogicalExpression> category) {
 		if (category.getSyntax().equals(Syntax.PP)) {
 			final LogicalExpression raisedSemantics = typeRaiseSemantics(category
@@ -56,6 +95,38 @@ public class PrepositionTypeShifting extends
 			}
 		}
 		return null;
+	}
+	
+	public static class Creator implements
+			IResourceObjectCreator<PrepositionTypeShifting> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("rule.shifting.pp");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@Override
+		public PrepositionTypeShifting create(Parameters params,
+				IResourceRepository repo) {
+			return new PrepositionTypeShifting();
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type,
+					PrepositionTypeShifting.class).build();
+		}
+		
 	}
 	
 }

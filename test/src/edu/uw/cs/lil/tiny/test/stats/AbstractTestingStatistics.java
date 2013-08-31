@@ -18,20 +18,58 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.test.stats;
 
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 
 public abstract class AbstractTestingStatistics<SAMPLE, LABEL> implements
 		ITestingStatistics<SAMPLE, LABEL> {
 	
-	private final String	metricName;
-	private final String	prefix;
+	private final String											metricName;
+	private final String											prefix;
+	protected final IStatistics<ILabeledDataItem<SAMPLE, LABEL>>	stats;
 	
-	public AbstractTestingStatistics(String metricName) {
-		this(null, metricName);
-	}
-	
-	public AbstractTestingStatistics(String prefix, String metricName) {
+	public AbstractTestingStatistics(String prefix, String metricName,
+			IStatistics<ILabeledDataItem<SAMPLE, LABEL>> stats) {
 		this.prefix = prefix;
 		this.metricName = metricName;
+		this.stats = stats;
+	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder ret = new StringBuilder("=== ").append(
+				getMetricName()).append(" statistics:\n");
+		ret.append("Recall: ").append(stats.getCorrects()).append('/')
+				.append(stats.getTotal()).append(" = ").append(stats.recall())
+				.append('\n');
+		ret.append("Precision: ").append(stats.getCorrects()).append('/')
+				.append(stats.getTotal() - stats.getFailures()).append(" = ")
+				.append(stats.precision()).append('\n');
+		ret.append("F1: ").append(stats.f1()).append('\n');
+		ret.append("SKIP Recall: ")
+				.append(stats.getSloppyCorrects() + stats.getCorrects())
+				.append('/').append(stats.getTotal()).append(" = ")
+				.append(stats.sloppyRecall()).append('\n');
+		ret.append("SKIP Precision: ")
+				.append(stats.getSloppyCorrects() + stats.getCorrects())
+				.append('/')
+				.append(stats.getTotal() - stats.getSloppyFailures())
+				.append(" = ").append(stats.sloppyPrecision()).append('\n');
+		ret.append("SKIP F1: ").append(stats.sloppyF1());
+		return ret.toString();
+	}
+	
+	@Override
+	public String toTabDelimitedString() {
+		final StringBuilder ret = new StringBuilder(getPrefix())
+				.append("\tmetric=").append(getMetricName()).append("\t");
+		ret.append("recall=").append(stats.recall()).append('\t');
+		ret.append("precision=").append(stats.precision()).append('\t');
+		ret.append("f1=").append(stats.f1()).append('\t');
+		ret.append("skippingRecall=").append(stats.sloppyRecall()).append('\t');
+		ret.append("skippingPrecision=").append(stats.sloppyPrecision())
+				.append('\t');
+		ret.append("skippingF1=").append(stats.sloppyF1());
+		return ret.toString();
 	}
 	
 	protected String getMetricName() {

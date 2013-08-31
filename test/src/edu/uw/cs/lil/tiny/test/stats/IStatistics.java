@@ -16,12 +16,52 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.explat.resources;
+package edu.uw.cs.lil.tiny.test.stats;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import edu.uw.cs.lil.tiny.data.IDataItem;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Creatable {
+/**
+ * Accumulates testing statistics.
+ * 
+ * @author Yoav Artzi
+ */
+public interface IStatistics<DI extends IDataItem<?>> {
 	
+	double f1();
+	
+	double getCorrects();
+	
+	double getFailures();
+	
+	double getIncorrects();
+	
+	double getSloppyCorrects();
+	
+	double getSloppyFailures();
+	
+	double getSloppyIncorrects();
+	
+	double getTotal();
+	
+	double precision();
+	
+	double recall();
+	
+	void recordCorrect(DI dataItem);
+	
+	void recordFailure(DI dataItem);
+	
+	void recordIncorrect(DI dataItem);
+	
+	void recordSloppyCorrect(DI dataItem);
+	
+	void recordSloppyFailure(DI dataItem);
+	
+	void recordSloppyIncorrect(DI dataItem);
+	
+	double sloppyF1();
+	
+	double sloppyPrecision();
+	
+	double sloppyRecall();
 }

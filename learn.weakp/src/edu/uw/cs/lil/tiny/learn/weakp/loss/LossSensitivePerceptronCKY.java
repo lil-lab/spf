@@ -70,7 +70,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, MR>>
 		implements
-		ILearner<IDataItem<Sentence>, MR, Model<IDataItem<Sentence>, MR>> {
+		ILearner<Sentence, IDataItem<Sentence>, MR, Model<IDataItem<Sentence>, MR>> {
 	private static final ILogger											LOG	= LoggerFactory
 																						.create(LossSensitivePerceptronCKY.class
 																								.getName());

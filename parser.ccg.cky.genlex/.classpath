@@ -8,5 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

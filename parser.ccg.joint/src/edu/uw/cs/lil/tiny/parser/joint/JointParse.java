@@ -33,19 +33,21 @@ import edu.uw.cs.utils.composites.Pair;
  * of its execution.
  * 
  * @author Yoav Artzi
- * @param <LF>
+ * @param <MR>
+ *            Semantic type
  * @param <ERESULT>
+ *            Execution result type
  */
-public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
+public class JointParse<MR, ERESULT> implements IJointParse<MR, ERESULT> {
 	
 	private final IExecResultWrapper<ERESULT>	execResult;
-	private final IParse<LF>					innerParse;
+	private final IParse<MR>					innerParse;
 	
-	private final Pair<LF, ERESULT>				resultPair;
+	private final Pair<MR, ERESULT>				resultPair;
 	private final double						score;
 	private IHashVectorImmutable				viterbiFeatures;
 	
-	public JointParse(IParse<LF> innerParse,
+	public JointParse(IParse<MR> innerParse,
 			IExecResultWrapper<ERESULT> execResult) {
 		this.innerParse = innerParse;
 		this.execResult = execResult;
@@ -84,7 +86,7 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public LinkedHashSet<LexicalEntry<LF>> getAllLexicalEntries() {
+	public LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntries() {
 		return innerParse.getAllLexicalEntries();
 	}
 	
@@ -113,7 +115,7 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public LinkedHashSet<LexicalEntry<LF>> getMaxLexicalEntries() {
+	public LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries() {
 		return innerParse.getMaxLexicalEntries();
 	}
 	
@@ -123,7 +125,7 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public Pair<LF, ERESULT> getResult() {
+	public Pair<MR, ERESULT> getResult() {
 		return resultPair;
 	}
 	
@@ -133,7 +135,7 @@ public class JointParse<LF, ERESULT> implements IJointParse<LF, ERESULT> {
 	}
 	
 	@Override
-	public LF getSemantics() {
+	public MR getSemantics() {
 		return innerParse.getSemantics();
 	}
 	

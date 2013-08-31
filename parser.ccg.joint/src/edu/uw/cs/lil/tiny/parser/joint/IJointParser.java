@@ -31,28 +31,28 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <STATE>
  *            World state (e.g., task, starting position, state of the world
  *            etc.).
- * @param <LF>
- *            Logical form (e.g., LogicalExpression).
+ * @param <MR>
+ *            Type of the semantics (e.g., LogicalExpression).
  * @param <ESTEP>
  *            Execution step.
  * @param <ERESULT>
  *            Execution result.
  */
-public interface IJointParser<LANG, STATE, LF, ESTEP, ERESULT> extends
-		IParser<LANG, LF> {
+public interface IJointParser<LANG, STATE, MR, ESTEP, ERESULT> extends
+		IParser<LANG, MR> {
 	
-	IJointOutput<LF, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
-			IJointDataItemModel<LF, ESTEP> model);
+	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+			IJointDataItemModel<MR, ESTEP> model);
 	
-	IJointOutput<LF, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
-			IJointDataItemModel<LF, ESTEP> model, boolean allowWordSkipping);
+	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping);
 	
-	IJointOutput<LF, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
-			IJointDataItemModel<LF, ESTEP> model, boolean allowWordSkipping,
-			ILexicon<LF> tempLexicon);
+	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
+			ILexicon<MR> tempLexicon);
 	
-	IJointOutput<LF, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
-			IJointDataItemModel<LF, ESTEP> model, boolean allowWordSkipping,
-			ILexicon<LF> tempLexicon, Integer beamSize);
+	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
+			ILexicon<MR> tempLexicon, Integer beamSize);
 	
 }

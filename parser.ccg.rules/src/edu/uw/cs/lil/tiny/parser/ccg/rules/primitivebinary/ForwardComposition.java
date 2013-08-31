@@ -22,6 +22,11 @@ import java.util.Collection;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
 /**
@@ -32,22 +37,60 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
  * 
  * @author Yoav Artzi
  */
-public class ForwardComposition<Y> extends AbstractComposition<Y> {
+public class ForwardComposition<MR> extends AbstractComposition<MR> {
 	private static String	RULE_NAME	= "fcomp";
 	
-	public ForwardComposition(ICategoryServices<Y> categoryServices) {
+	public ForwardComposition(ICategoryServices<MR> categoryServices) {
 		super(RULE_NAME, categoryServices);
 	}
 	
-	public ForwardComposition(ICategoryServices<Y> categoryServices,
+	public ForwardComposition(ICategoryServices<MR> categoryServices,
 			boolean useEisnerNormalForm) {
 		super(RULE_NAME, categoryServices, useEisnerNormalForm);
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		return doComposition(left, right, false);
+	}
+	
+	public static class Creator<MR> implements
+			IResourceObjectCreator<ForwardComposition<MR>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("rule.composition.forward");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public ForwardComposition<MR> create(Parameters params,
+				IResourceRepository repo) {
+			return new ForwardComposition<MR>(
+					(ICategoryServices<MR>) repo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE),
+					"true".equals(params.get("eisnerNormalForm")));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type, ForwardComposition.class)
+					.addParam("eisnerNormalForm", "boolean",
+							"Use Eisner normal form for composition (default: false).")
+					.build();
+		}
+		
 	}
 	
 }

@@ -21,6 +21,10 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex;
 import java.util.Collection;
 import java.util.Collections;
 
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
@@ -50,5 +54,46 @@ public class MarkAwareCKYBinaryParsingRule<MR> extends CKYBinaryParsingRule<MR> 
 		}
 		
 		return super.apply(left, right, isCompleteSentence);
+	}
+	
+	public static class Creator<MR> implements
+			IResourceObjectCreator<MarkAwareCKYBinaryParsingRule<MR>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("ckyrule.marked");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public MarkAwareCKYBinaryParsingRule<MR> create(Parameters params,
+				IResourceRepository repo) {
+			return new MarkAwareCKYBinaryParsingRule<MR>(
+					(IBinaryParseRule<MR>) repo.getResource(params
+							.get("baseRule")),
+					params.getAsInteger("maxEntries"));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage
+					.builder(type, MarkAwareCKYBinaryParsingRule.class)
+					.addParam("baseRule", IBinaryParseRule.class,
+							"Base binary parse rule.")
+					.addParam("maxEntries", Integer.class,
+							"Max number of marked lexical entries per parse tree.")
+					.build();
+		}
+		
 	}
 }

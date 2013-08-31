@@ -20,12 +20,20 @@ package edu.uw.cs.lil.tiny.parser.ccg.rules.typshifting;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 
-public interface ITypeShiftingFunction<Y> {
+/**
+ * Type shifting parsing operation. Shifts a single category.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ */
+public interface ITypeShiftingFunction<MR> {
 	@Override
 	boolean equals(Object obj);
+	
+	String getName();
 	
 	@Override
 	int hashCode();
 	
-	Category<Y> typeRaise(Category<Y> category);
+	Category<MR> typeShift(Category<MR> category);
 }

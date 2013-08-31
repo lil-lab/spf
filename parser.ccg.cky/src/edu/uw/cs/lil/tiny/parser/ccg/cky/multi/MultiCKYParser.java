@@ -28,6 +28,12 @@ import java.util.Set;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
+import edu.uw.cs.lil.tiny.explat.DistributedExperiment;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
@@ -36,6 +42,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.filter.IFilter;
@@ -138,13 +145,13 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 		return chart;
 	}
 	
-	public static class Builder<Y> {
+	public static class Builder<MR> {
 		
-		private final List<CKYBinaryParsingRule<Y>>			binaryParseRules			= new LinkedList<CKYBinaryParsingRule<Y>>();
+		private final List<CKYBinaryParsingRule<MR>>		binaryParseRules			= new LinkedList<CKYBinaryParsingRule<MR>>();
 		
-		private final ICategoryServices<Y>					categoryServices;
+		private final ICategoryServices<MR>					categoryServices;
 		
-		private final IFilter<Category<Y>>					completeParseFilter;
+		private final IFilter<Category<MR>>					completeParseFilter;
 		
 		private final ITinyExecutor							executor;
 		
@@ -160,57 +167,148 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 		
 		private boolean										pruneLexicalCells			= false;
 		
-		private final List<ISentenceLexiconGenerator<Y>>	sentenceLexicalGenerators	= new LinkedList<ISentenceLexiconGenerator<Y>>();
+		private final List<ISentenceLexiconGenerator<MR>>	sentenceLexicalGenerators	= new LinkedList<ISentenceLexiconGenerator<MR>>();
 		
-		private ISentenceLexiconGenerator<Y>				wordSkippingLexicalGenerator;
+		private ISentenceLexiconGenerator<MR>				wordSkippingLexicalGenerator;
 		
-		public Builder(ICategoryServices<Y> categoryServices,
-				ITinyExecutor executor, IFilter<Category<Y>> completeParseFilter) {
+		public Builder(ICategoryServices<MR> categoryServices,
+				ITinyExecutor executor,
+				IFilter<Category<MR>> completeParseFilter) {
 			this.categoryServices = categoryServices;
 			this.executor = executor;
 			this.completeParseFilter = completeParseFilter;
-			this.wordSkippingLexicalGenerator = new SimpleWordSkippingLexicalGenerator<Y>(
+			this.wordSkippingLexicalGenerator = new SimpleWordSkippingLexicalGenerator<MR>(
 					categoryServices);
 		}
 		
-		public Builder<Y> addBinaryParseRule(CKYBinaryParsingRule<Y> rule) {
+		public Builder<MR> addBinaryParseRule(CKYBinaryParsingRule<MR> rule) {
 			binaryParseRules.add(rule);
 			return this;
 		}
 		
-		public Builder<Y> addSentenceLexicalGenerator(
-				ISentenceLexiconGenerator<Y> generator) {
+		public Builder<MR> addSentenceLexicalGenerator(
+				ISentenceLexiconGenerator<MR> generator) {
 			sentenceLexicalGenerators.add(generator);
 			return this;
 		}
 		
-		public MultiCKYParser<Y> build() {
-			return new MultiCKYParser<Y>(maxNumberOfCellsInSpan,
+		public MultiCKYParser<MR> build() {
+			return new MultiCKYParser<MR>(maxNumberOfCellsInSpan,
 					binaryParseRules, sentenceLexicalGenerators,
 					wordSkippingLexicalGenerator, categoryServices, executor,
 					pruneLexicalCells, preChartPruning, completeParseFilter);
 		}
 		
-		public Builder<Y> setMaxNumberOfCellsInSpan(int maxNumberOfCellsInSpan) {
+		public Builder<MR> setMaxNumberOfCellsInSpan(int maxNumberOfCellsInSpan) {
 			this.maxNumberOfCellsInSpan = maxNumberOfCellsInSpan;
 			return this;
 		}
 		
-		public Builder<Y> setPreChartPruning(boolean preChartPruning) {
+		public Builder<MR> setPreChartPruning(boolean preChartPruning) {
 			this.preChartPruning = preChartPruning;
 			return this;
 		}
 		
-		public Builder<Y> setPruneLexicalCells(boolean pruneLexicalCells) {
+		public Builder<MR> setPruneLexicalCells(boolean pruneLexicalCells) {
 			this.pruneLexicalCells = pruneLexicalCells;
 			return this;
 		}
 		
-		public Builder<Y> setWordSkippingLexicalGenerator(
-				ISentenceLexiconGenerator<Y> wordSkippingLexicalGenerator) {
+		public Builder<MR> setWordSkippingLexicalGenerator(
+				ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator) {
 			this.wordSkippingLexicalGenerator = wordSkippingLexicalGenerator;
 			return this;
 		}
+	}
+	
+	public static class Creator<MR> implements
+			IResourceObjectCreator<MultiCKYParser<MR>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("parser.cky.multi");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public MultiCKYParser<MR> create(Parameters params,
+				IResourceRepository repo) {
+			final Builder<MR> builder = new Builder<MR>(
+					(ICategoryServices<MR>) repo
+							.getResource(DistributedExperiment.CATEGORY_SERVICES_RESOURCE),
+					(ITinyExecutor) repo
+							.getResource(ParameterizedExperiment.EXECUTOR_RESOURCE),
+					(IFilter<Category<MR>>) repo.getResource(params
+							.get("parseFilter")));
+			
+			if (params.contains("beam")) {
+				builder.setMaxNumberOfCellsInSpan(params.getAsInteger("beam"));
+			}
+			
+			if (params.contains("preChartPruning")) {
+				builder.setPreChartPruning(params
+						.getAsBoolean("preChartPruning"));
+			}
+			
+			if (params.contains("pruneLexicalCells")) {
+				builder.setPruneLexicalCells(params
+						.getAsBoolean("pruneLexicalCells"));
+			}
+			
+			if (params.contains("wordSkippingLexGen")) {
+				builder.setWordSkippingLexicalGenerator((ISentenceLexiconGenerator<MR>) repo
+						.getResource(params.get("wordSkippingLexGen")));
+			}
+			
+			for (final String id : params.getSplit("generators")) {
+				builder.addSentenceLexicalGenerator((ISentenceLexiconGenerator<MR>) repo
+						.getResource(id));
+			}
+			
+			for (final String id : params.getSplit("rules")) {
+				builder.addBinaryParseRule(new CKYBinaryParsingRule<MR>(
+						(IBinaryParseRule<MR>) repo.getResource(id)));
+			}
+			
+			for (final String id : params.getSplit("ckyRules")) {
+				builder.addBinaryParseRule((CKYBinaryParsingRule<MR>) repo
+						.getResource(id));
+			}
+			
+			return builder.build();
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage
+					.builder(type, MultiCKYParser.class)
+					.addParam("parseFilter", IFilter.class,
+							"Filter to determine complete parses.")
+					.addParam("beam", Integer.class,
+							"Beam to use for cell pruning (default: 50).")
+					.addParam("preChartPruning", Boolean.class,
+							"Prune categories before adding to the chart (default: false)")
+					.addParam("pruneLexicalCells", Boolean.class,
+							"Prune lexical entries similarly to conventional categories (default: false)")
+					.addParam("wordSkippingLexGen",
+							ISentenceLexiconGenerator.class,
+							"Lexical generator for word skipping (defaults to simple skipping).")
+					.addParam("generators", ISentenceLexiconGenerator.class,
+							"List of dynamic sentence lexical generators.")
+					.addParam("rules", IBinaryParseRule.class,
+							"Binary parsing rules.").build();
+		}
+		
 	}
 	
 	private abstract class AbstractJob extends LoggingRunnable {

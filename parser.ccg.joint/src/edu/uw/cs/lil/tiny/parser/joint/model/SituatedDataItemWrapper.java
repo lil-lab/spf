@@ -29,7 +29,7 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <DI>
  * @param <STATE>
  */
-public class SituatedDataItemWrapper<DI extends IDataItem<Pair<IDataItem<Sentence>, STATE>>, STATE>
+public class SituatedDataItemWrapper<DI extends IDataItem<Pair<Sentence, STATE>>, STATE>
 		implements IDataItem<Sentence> {
 	
 	private static final long			serialVersionUID	= 9125402561551010485L;

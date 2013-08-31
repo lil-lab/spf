@@ -21,14 +21,12 @@ package edu.uw.cs.lil.tiny.geoquery;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
@@ -38,6 +36,7 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLe
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexiconServices;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.explat.DistributedExperiment;
 import edu.uw.cs.lil.tiny.explat.Job;
 import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
@@ -48,28 +47,11 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Ontology;
 import edu.uw.cs.lil.tiny.mr.lambda.ccg.LogicalExpressionCategoryServices;
-import edu.uw.cs.lil.tiny.mr.lambda.ccg.SimpleFullParseFilter;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.multi.MultiCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.ModelLogger;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleSetBuilder;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.basic.PrepositionTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ForwardTypeRaisedComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.PluralExistentialTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ThatlessRelative;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.BackwardApplication;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.BackwardComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ForwardApplication;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ForwardComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.BackwardSkippingRule;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.ForwardSkippingRule;
-import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.storage.DecoderHelper;
 import edu.uw.cs.lil.tiny.storage.DecoderServices;
 import edu.uw.cs.lil.tiny.test.Tester;
@@ -77,28 +59,26 @@ import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory.Type;
 import edu.uw.cs.utils.collections.ListUtils;
-import edu.uw.cs.utils.collections.SetUtils;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LogLevel;
 import edu.uw.cs.utils.log.Logger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 public class GeoExperiment extends DistributedExperiment {
-	private static final ILogger					LOG				= LoggerFactory
-																			.create(GeoExperiment.class);
+	private static final ILogger					LOG	= LoggerFactory
+																.create(GeoExperiment.class);
 	
 	private final LogicalExpressionCategoryServices	categoryServices;
 	
 	private final DecoderHelper<LogicalExpression>	decoderHelper;
 	
-	private final ResourceCreatorRepository			resCreatorRepo	= new GeoResourceRepo();
-	
 	public GeoExperiment(File initFile) throws IOException {
-		this(initFile, Collections.<String, String> emptyMap());
+		this(initFile, Collections.<String, String> emptyMap(),
+				new GeoResourceRepo());
 	}
 	
-	public GeoExperiment(File initFile, Map<String, String> envParams)
-			throws IOException {
+	public GeoExperiment(File initFile, Map<String, String> envParams,
+			ResourceCreatorRepository resCreatorRepo) throws IOException {
 		super(initFile, envParams);
 		
 		LogLevel.DEV.set();
@@ -110,7 +90,12 @@ public class GeoExperiment extends DistributedExperiment {
 		final File typesFile = globalParams.getAsFile("types");
 		final List<File> seedLexiconFiles = globalParams.getAsFiles("seedlex");
 		final List<File> npLexiconFiles = globalParams.getAsFiles("nplist");
-		final int parserBeamSize = Integer.parseInt(globalParams.get("beam"));
+		
+		// //////////////////////////////////////////
+		// Executor resource
+		// //////////////////////////////////////////
+		
+		storeResource(EXECUTOR_RESOURCE, this);
 		
 		// //////////////////////////////////////////
 		// Use tree hash vector
@@ -197,48 +182,6 @@ public class GeoExperiment extends DistributedExperiment {
 					Origin.FIXED_DOMAIN);
 		}
 		storeResource("npLexicon", npLexicon);
-		
-		// //////////////////////////////////////////////////
-		// CKY Parser
-		// //////////////////////////////////////////////////
-		
-		final RuleSetBuilder<LogicalExpression> ruleSetBuilder = new RuleSetBuilder<LogicalExpression>();
-		
-		// Unary type shifting
-		ruleSetBuilder.add("pp", new PrepositionTypeShifting());
-		
-		// Binary rules
-		ruleSetBuilder.add(new ForwardComposition<LogicalExpression>(
-				categoryServices));
-		ruleSetBuilder.add(new BackwardComposition<LogicalExpression>(
-				categoryServices));
-		ruleSetBuilder.add(new ForwardApplication<LogicalExpression>(
-				categoryServices));
-		ruleSetBuilder.add(new BackwardApplication<LogicalExpression>(
-				categoryServices));
-		
-		final List<IBinaryParseRule<LogicalExpression>> rules = new ArrayList<IBinaryParseRule<LogicalExpression>>(
-				3);
-		rules.add(ruleSetBuilder.build());
-		rules.add(new ForwardSkippingRule<LogicalExpression>(categoryServices));
-		rules.add(new BackwardSkippingRule<LogicalExpression>(categoryServices));
-		rules.add(new ForwardTypeRaisedComposition(categoryServices));
-		rules.add(new ThatlessRelative(categoryServices));
-		rules.add(new PluralExistentialTypeShifting(categoryServices));
-		final BinaryRulesSet<LogicalExpression> ruleSet = new BinaryRulesSet<LogicalExpression>(
-				rules);
-		
-		final IGraphParser<Sentence, LogicalExpression> baseParser = new MultiCKYParser.Builder<LogicalExpression>(
-				categoryServices, this,
-				new SimpleFullParseFilter<LogicalExpression>(
-						SetUtils.createSingleton((Syntax) Syntax.S)))
-				.setPruneLexicalCells(true)
-				.setPreChartPruning(true)
-				.addBinaryParseRule(
-						new CKYBinaryParsingRule<LogicalExpression>(ruleSet))
-				.setMaxNumberOfCellsInSpan(parserBeamSize).build();
-		
-		storeResource(PARSER_RESOURCE, baseParser);
 		
 		// //////////////////////////////////////////////////
 		// Read resources
@@ -397,11 +340,11 @@ public class GeoExperiment extends DistributedExperiment {
 	@SuppressWarnings("unchecked")
 	private Job createTrainJob(Parameters params) throws FileNotFoundException {
 		// The model to use
-		final Model<Sentence, LogicalExpression> model = (Model<Sentence, LogicalExpression>) getResource(params
+		final Model<IDataItem<Sentence>, LogicalExpression> model = (Model<IDataItem<Sentence>, LogicalExpression>) getResource(params
 				.get("model"));
 		
 		// The learning
-		final ILearner<Sentence, LogicalExpression, Model<Sentence, LogicalExpression>> learner = (ILearner<Sentence, LogicalExpression, Model<Sentence, LogicalExpression>>) getResource(params
+		final ILearner<Sentence, SingleSentence, LogicalExpression, Model<IDataItem<Sentence>, LogicalExpression>> learner = (ILearner<Sentence, SingleSentence, LogicalExpression, Model<IDataItem<Sentence>, LogicalExpression>>) getResource(params
 				.get("learner"));
 		
 		return new Job(params.get("id"), new HashSet<String>(

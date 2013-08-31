@@ -16,32 +16,46 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.data.resources;
+package edu.uw.cs.lil.tiny.parser.ccg.rules.skipping;
 
-import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
-import edu.uw.cs.lil.tiny.data.utils.LabeledValidator;
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 
-public class LabeledValidatorCreator<DI extends ILabeledDataItem<?, Z>, Z>
-		implements IResourceObjectCreator<LabeledValidator<DI, Z>> {
+public class SkippingRuleCreator<MR> implements
+		IResourceObjectCreator<IBinaryParseRule<MR>> {
 	
 	private String	type;
 	
-	public LabeledValidatorCreator() {
-		this("validator.labeled");
+	public SkippingRuleCreator() {
+		this("rule.skipping");
 	}
 	
-	public LabeledValidatorCreator(String type) {
+	public SkippingRuleCreator(String type) {
 		this.type = type;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public LabeledValidator<DI, Z> create(Parameters params,
+	public IBinaryParseRule<MR> create(Parameters params,
 			IResourceRepository repo) {
-		return new LabeledValidator<DI, Z>();
+		final List<IBinaryParseRule<MR>> rules = new ArrayList<IBinaryParseRule<MR>>(
+				2);
+		rules.add(new ForwardSkippingRule<MR>(
+				(ICategoryServices<MR>) repo
+						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE)));
+		rules.add(new BackwardSkippingRule<MR>(
+				(ICategoryServices<MR>) repo
+						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE)));
+		return new BinaryRulesSet<MR>(rules);
 	}
 	
 	@Override
@@ -51,8 +65,7 @@ public class LabeledValidatorCreator<DI extends ILabeledDataItem<?, Z>, Z>
 	
 	@Override
 	public ResourceUsage usage() {
-		return new ResourceUsage.Builder(type(), LabeledValidator.class)
-				.build();
+		return ResourceUsage.builder(type, AbstractSkippingRule.class).build();
 	}
 	
 }

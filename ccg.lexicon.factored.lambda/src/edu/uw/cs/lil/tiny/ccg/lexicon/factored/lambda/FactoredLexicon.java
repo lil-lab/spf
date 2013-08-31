@@ -181,8 +181,9 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 				}
 			}
 			return added;
+		} else {
+			return addAll(lexicon.toCollection());
 		}
-		return addAll(lexicon.toCollection());
 	}
 	
 	@Override

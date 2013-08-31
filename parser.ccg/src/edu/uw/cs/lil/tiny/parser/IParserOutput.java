@@ -20,7 +20,7 @@ package edu.uw.cs.lil.tiny.parser;
 
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.utils.filter.IFilter;
 
 /**
  * Parsing output. Packs all parses.
@@ -47,22 +47,22 @@ public interface IParserOutput<MR> {
 	List<? extends IParse<MR>> getBestParses();
 	
 	/**
-	 * Get all lexical entries participating in all max scoring parses for the
-	 * given semantics.
+	 * Get all complete max scoring valid parses (can get multiple parses, since
+	 * syntax is not constrained).
 	 * 
-	 * @param semantics
+	 * @param filter
 	 * @return
 	 */
-	List<LexicalEntry<MR>> getMaxLexicalEntries(MR semantics);
+	List<? extends IParse<MR>> getMaxParses(IFilter<MR> filter);
 	
 	/**
-	 * Get all complete max scoring parses for the given semantics (can get
-	 * multiple parses, since syntax is not constrained).
+	 * Get all complete valid parses (can get multiple parses, since syntax is
+	 * not constrained).
 	 * 
-	 * @param semantics
+	 * @param filter
 	 * @return
 	 */
-	List<? extends IParse<MR>> getMaxParses(MR semantics);
+	List<? extends IParse<MR>> getParses(IFilter<MR> filter);
 	
 	/**
 	 * Return parsing time in milliseconds.

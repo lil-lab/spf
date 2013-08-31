@@ -29,7 +29,7 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
  * @author Tom Kwiatkowski
  * @author Yoav Artzi
  */
-public interface IBinaryParseRule<Y> {
+public interface IBinaryParseRule<MR> {
 	
 	/**
 	 * Takes two categories, left and right, as input. Assumes these categories
@@ -39,7 +39,7 @@ public interface IBinaryParseRule<Y> {
 	 *            Boolean indicating if the span covered by the two categories
 	 *            provided is the complete sentence.
 	 */
-	Collection<ParseRuleResult<Y>> apply(Category<Y> left, Category<Y> right,
+	Collection<ParseRuleResult<MR>> apply(Category<MR> left, Category<MR> right,
 			boolean isCompleteSentence);
 	
 	boolean equals(Object obj);

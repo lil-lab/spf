@@ -49,6 +49,7 @@ public class ModelLogger {
 	public <DI extends IDataItem<?>, MR> void log(
 			final IModelImmutable<DI, MR> model, PrintStream out) {
 		// Lexicon
+		out.println("Lexical entries:");
 		if (sortLexicalEntries) {
 			final Map<List<String>, List<LexicalEntry<MR>>> tokensToLexicalEntries = new HashMap<List<String>, List<LexicalEntry<MR>>>();
 			for (final LexicalEntry<MR> entry : model.getLexicon()

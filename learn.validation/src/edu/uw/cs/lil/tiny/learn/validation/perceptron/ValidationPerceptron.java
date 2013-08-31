@@ -242,8 +242,8 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	protected IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> dataItemModel, ILexicon<MR> generatedLexicon,
 			int beamSize) {
-		return parser.parse(dataItem, dataItemModel, false, generatedLexicon,
-				beamSize);
+		return parser.parse(dataItem, pruningFilter, dataItemModel, false,
+				generatedLexicon, beamSize);
 	}
 	
 	@Override

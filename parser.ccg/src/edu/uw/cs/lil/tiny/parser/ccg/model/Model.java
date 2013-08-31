@@ -111,16 +111,16 @@ public class Model<DI extends IDataItem<?>, MR> implements
 	 * when getting their initial scores.
 	 * 
 	 * @param entries
+	 * @return 'true' iff at least one new entry was introduced to the lexicon.
 	 */
-	public void addLexEntries(Collection<LexicalEntry<MR>> entries) {
-		for (final LexicalEntry<MR> entry : entries) {
+	public boolean addLexEntries(Collection<LexicalEntry<MR>> entries) {
+		final Set<LexicalEntry<MR>> addedEntries = lexicon.addAll(entries);
+		for (final LexicalEntry<MR> entry : addedEntries) {
 			for (final IIndependentLexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
 				lfs.addEntry(entry, theta);
 			}
 		}
-		for (final LexicalEntry<MR> entry : entries) {
-			lexicon.add(entry);
-		}
+		return !addedEntries.isEmpty();
 	}
 	
 	/**
@@ -128,9 +128,7 @@ public class Model<DI extends IDataItem<?>, MR> implements
 	 * not add already existing ones.
 	 * 
 	 * @param entry
-	 * @return 'true' iff a new entry was introduced to the lexicon. can be used
-	 *         to update the features without adding anything new to the
-	 *         lexicon.
+	 * @return 'true' iff a new entry was introduced to the lexicon.
 	 */
 	public boolean addLexEntry(LexicalEntry<MR> entry) {
 		final Set<LexicalEntry<MR>> addedEntries = lexicon.add(entry);

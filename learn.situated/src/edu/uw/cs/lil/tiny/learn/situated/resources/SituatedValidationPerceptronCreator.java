@@ -76,7 +76,7 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI e
 		
 		if (params.contains("genlex")) {
 			builder.setGenlex(
-					(ILexiconGenerator<DI, MR, IJointModelImmutable<DI, STATE, MR, ESTEP>>) repo
+					(ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>>) repo
 							.getResource(params.get("genlex")),
 					(ICategoryServices<MR>) repo
 							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));

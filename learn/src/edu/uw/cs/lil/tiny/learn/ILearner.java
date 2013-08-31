@@ -23,7 +23,16 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 
 /**
  * @author Yoav Artzi
+ * @param <SAMPLE>
+ *            Inference sample
+ * @param <DI>
+ *            Learning data item, based on the inference sample, and,
+ *            potentially, some supervision
+ * @param <MR>
+ *            Type of semantics
+ * @param <MODEL>
+ *            Type of model
  */
-public interface ILearner<DI extends IDataItem<?>, MR, MODEL extends Model<DI, MR>> {
+public interface ILearner<SAMPLE, DI extends IDataItem<SAMPLE>, MR, MODEL extends Model<IDataItem<SAMPLE>, MR>> {
 	void train(MODEL model);
 }

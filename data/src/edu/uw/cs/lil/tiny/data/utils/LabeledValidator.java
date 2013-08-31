@@ -18,10 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.utils;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
-import edu.uw.cs.utils.log.ILogger;
-import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
  * Simple validator for labeled data items. Compares the hypothesis label to the
@@ -31,20 +28,12 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <X>
  * @param <Z>
  */
-public class LabeledValidator<X, Z> implements IValidator<IDataItem<X>, Z> {
-	private static final ILogger	LOG	= LoggerFactory
-												.create(LabeledValidator.class);
+public class LabeledValidator<DI extends ILabeledDataItem<?, Z>, Z> implements
+		IValidator<DI, Z> {
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean isValid(IDataItem<X> dataItem, Z label) {
-		if (dataItem instanceof ILabeledDataItem) {
-			return (((ILabeledDataItem<X, Z>) dataItem).getLabel())
-					.equals(label);
-		} else {
-			LOG.warn("Unable to validate with: %s", dataItem);
-			return false;
-		}
+	public boolean isValid(DI dataItem, Z label) {
+		return dataItem.getLabel().equals(label);
 	}
 	
 }

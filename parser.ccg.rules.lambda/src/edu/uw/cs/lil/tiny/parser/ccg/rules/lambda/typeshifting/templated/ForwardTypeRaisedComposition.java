@@ -29,6 +29,11 @@ import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.ComplexSyntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Slash;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
@@ -125,5 +130,43 @@ public class ForwardTypeRaisedComposition extends
 	@Override
 	public boolean isOverLoadable() {
 		return false;
+	}
+	
+	public static class Creator implements
+			IResourceObjectCreator<ForwardTypeRaisedComposition> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("rule.typeraise.composition.forward");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public ForwardTypeRaisedComposition create(Parameters params,
+				IResourceRepository repo) {
+			return new ForwardTypeRaisedComposition(
+					(ICategoryServices<LogicalExpression>) repo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE),
+					params.getAsBoolean("eisnerNormalForm"));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage
+					.builder(type, ForwardTypeRaisedComposition.class)
+					.addParam("eisnerNormalForm", "boolean",
+							"Use Eisner normal form for composition.").build();
+		}
+		
 	}
 }

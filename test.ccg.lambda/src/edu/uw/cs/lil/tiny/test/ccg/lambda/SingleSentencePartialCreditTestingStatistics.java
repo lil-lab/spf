@@ -34,36 +34,42 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsExtendedConstant;
-import edu.uw.cs.lil.tiny.test.stats.AbstractTestingStatistics;
+import edu.uw.cs.lil.tiny.test.stats.ITestingStatistics;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
-public class SingleSentencePartialCreditTestingStatistics extends
-		AbstractTestingStatistics<Sentence, LogicalExpression> {
+public class SingleSentencePartialCreditTestingStatistics implements
+		ITestingStatistics<Sentence, LogicalExpression> {
 	private static final String		DEFAULT_METRIC_NAME				= "PARTIAL_CREDIT";
 	
 	private static final ILogger	LOG								= LoggerFactory
 																			.create(SingleSentencePartialCreditTestingStatistics.class);
 	
+	private final String			metricName;
 	private int						numGoldPartialPairs				= 0;
+	
 	private int						numLabelPartialPairs			= 0;
+	
 	private int						numMatchedPartialPairs			= 0;
+	
+	private final String			prefix;
 	private int						skippingNumGoldPartialPairs		= 0;
 	private int						skippingNumLabelPartialPairs	= 0;
 	private int						skippingNumMatchedPartialPairs	= 0;
 	
 	public SingleSentencePartialCreditTestingStatistics() {
-		super(DEFAULT_METRIC_NAME);
+		this(DEFAULT_METRIC_NAME);
 	}
 	
 	public SingleSentencePartialCreditTestingStatistics(String prefix) {
-		super(prefix, DEFAULT_METRIC_NAME);
+		this(prefix, DEFAULT_METRIC_NAME);
 	}
 	
 	public SingleSentencePartialCreditTestingStatistics(String prefix,
 			String metricName) {
-		super(prefix, metricName);
+		this.prefix = prefix;
+		this.metricName = metricName;
 	}
 	
 	@Override
@@ -215,6 +221,14 @@ public class SingleSentencePartialCreditTestingStatistics extends
 		return skippingNumGoldPartialPairs == 0.0 ? 0.0
 				: (double) skippingNumMatchedPartialPairs
 						/ skippingNumGoldPartialPairs;
+	}
+	
+	protected String getMetricName() {
+		return metricName;
+	}
+	
+	protected String getPrefix() {
+		return prefix == null ? "" : prefix;
 	}
 	
 	private static class GetPredConstPairs implements ILogicalExpressionVisitor {
