@@ -28,7 +28,7 @@ When using UW SPF, please acknowledge it by citing:
 
 Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf.  2013.
 
-[**Bibtex:**](./spf.bib)
+[**Bibtex:**](http://yoavartzi.com/pub/az-spf.2013.bib)
 
     @article{artzi2013uwspf,
         title={{UW SPF: The University of Washington Semantic Parsing Framework}},
