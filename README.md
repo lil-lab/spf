@@ -4,13 +4,21 @@
 
 **Contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), [Tom Kwiatkowski](http://homes.cs.washington.edu/~tomk/)
 
-## Documentations
+## Projects Using SPF
+
+[Navi](http://yoavartzi.com/navi) 
+
+## Documentation
 
 More coming soon … 
 
 In the meantime, see the ACL 2013 tutorial for general information about semantic parsing with CCGs. The slides are available [here](http://yoavartzi.com).
 
-# Building
+### Working with the Code
+
+The code is divided into many projects that have dependencies between them. You can work with the code with any editor and build  it with the accompanying ANT script. However, we recommend using Eclipse. Each of the directories is an Eclipse project and can easily imported into Eclipse. To do so select Import from the File menu and choose "Existing Projects into Workspace". The "Root Directory" should be the code directory and all projects should be selected by default. The dependencies will be imported automatically. To successfully build SPF in Eclipse you will need to set the classpath variable TINY_REPO to the code directory. To so go to Preferences -> Java -> Build Path -> Classpath Variables, add a new variable with the name TINY_REPO and a folder value that points to the code location. 
+
+## Building
 
 To compile SPF use: `ant dist`. The output JAR file will be in the `dist` directory. You can also download the compiled JAR file from the [Downloads](https://bitbucket.org/yoavartzi/spf/downloads) section.
 
@@ -20,7 +28,7 @@ When using UW SPF, please acknowledge it by citing:
 
 Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf.  2013.
 
-**Bibtex:**
+[**Bibtex:**](./spf.bib)
 
     @article{artzi2013uwspf,
         title={{UW SPF: The University of Washington Semantic Parsing Framework}},
