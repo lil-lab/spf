@@ -14,6 +14,15 @@ More coming soon …
 
 In the meantime, see the ACL 2013 tutorial for general information about semantic parsing with CCGs. The slides are available [here](http://yoavartzi.com).
 
+### Running example experiments
+
+The framework contains an example experiment using the GeoQuery corpus. To use development fold zero for testing, and training on the other sets, use:
+``java -jar dist/spf-1.4.jar geoquery/experiments/template/dev.cross/dev.fold0.exp``  
+The log and output files are written to the experiment directory:
+``geoquery/experiments/template/dev.cross/``
+
+You can look at the .exp file and see how it defines arguments and how it includes them from other files. Another critical point of entry is the class ``edu.uw.cs.lil.tiny.geoquery.GeoMain``.
+
 ### Working with the Code
 
 The code is divided into many projects that have dependencies between them. You can work with the code with any editor and build  it with the accompanying ANT script. However, we recommend using Eclipse. Each of the directories is an Eclipse project and can easily imported into Eclipse. To do so select Import from the File menu and choose "Existing Projects into Workspace". The "Root Directory" should be the code directory and all projects should be selected by default. The dependencies will be imported automatically. To successfully build SPF in Eclipse you will need to set the classpath variable TINY_REPO to the code directory. To so go to Preferences -> Java -> Build Path -> Classpath Variables, add a new variable with the name TINY_REPO and a folder value that points to the code location. 
