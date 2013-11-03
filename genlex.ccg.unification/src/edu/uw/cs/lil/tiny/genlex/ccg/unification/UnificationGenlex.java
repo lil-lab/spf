@@ -34,6 +34,7 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.IUnificationSplitter;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.SplittingServices.SplittingPair;
@@ -59,14 +60,13 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  * @author Luke Zettlemoyer
  */
-public class UnificationGenlex
+public class UnificationGenlex<DI extends SingleSentence>
 		implements
-		ILexiconGenerator<ILabeledDataItem<Sentence, LogicalExpression>, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
+		ILexiconGenerator<DI, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
 	
-	public static final String							SPLITTING_LEXICAL_ORIGIN	= "splitting";
-	private static final ILogger						LOG							= LoggerFactory
+	public static final ILogger							LOG							= LoggerFactory
 																							.create(UnificationGenlex.class);
-	
+	public static final String							SPLITTING_LEXICAL_ORIGIN	= "splitting";
 	private final boolean								conservative;
 	
 	private final AbstractCKYParser<LogicalExpression>	parser;
@@ -80,14 +80,13 @@ public class UnificationGenlex
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(
-			final ILabeledDataItem<Sentence, LogicalExpression> dataItem,
+	public ILexicon<LogicalExpression> generate(final DI dataItem,
 			IModelImmutable<Sentence, LogicalExpression> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		
 		// Parse the sentence with pruner
 		final CKYParserOutput<LogicalExpression> parserOutput = parser.parse(
-				dataItem, createPruningFilter(dataItem),
+				dataItem.getSample(), createPruningFilter(dataItem),
 				model.createDataItemModel(dataItem.getSample()));
 		LOG.info("Lexical generation parsing time %f",
 				parserOutput.getParsingTime() / 1000.0);
@@ -393,5 +392,4 @@ public class UnificationGenlex
 		}
 		
 	}
-	
 }

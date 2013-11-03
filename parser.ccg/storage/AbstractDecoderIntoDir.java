@@ -35,7 +35,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public abstract class AbstractDecoderIntoDir<C> extends AbstractDecoder<C> {
-	private static final ILogger	LOG					= LoggerFactory
+	public static final ILogger	LOG					= LoggerFactory
 																.create(AbstractDecoderIntoDir.class);
 	
 	protected static final String	ATTRIBUTE_FILE_NAME	= "attributes";

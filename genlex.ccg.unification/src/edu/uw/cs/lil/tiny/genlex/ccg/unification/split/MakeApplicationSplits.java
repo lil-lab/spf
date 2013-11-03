@@ -57,7 +57,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class MakeApplicationSplits {
 	
-	private static final ILogger	LOG	= LoggerFactory
+	public static final ILogger	LOG	= LoggerFactory
 												.create(MakeApplicationSplits.class);
 	
 	private MakeApplicationSplits() {

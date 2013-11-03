@@ -44,9 +44,9 @@ import edu.uw.cs.utils.log.thread.LoggingThreadFactory;
  * 
  * @author Yoav Artzi
  */
-public abstract class DistributedExperiment extends ParameterizedExperiment
-		implements IJobListener, ITinyExecutor {
-	private static final ILogger		LOG						= LoggerFactory
+public abstract class DistributedExperiment extends LoggedExperiment implements
+		IJobListener, ITinyExecutor {
+	public static final ILogger		LOG						= LoggerFactory
 																		.create(DistributedExperiment.class);
 	private final Set<String>			completedIds			= new HashSet<String>();
 	final private Object				completionSignalObject	= new Object();
@@ -59,6 +59,9 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	
 	private boolean						running					= true;
 	
+	/** Run one job at a time. */
+	private final boolean				serial;
+	
 	private final long					startingTime			= System.currentTimeMillis();
 	
 	public DistributedExperiment(File initFile) throws IOException {
@@ -68,6 +71,11 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 	public DistributedExperiment(File initFile, Map<String, String> envParams)
 			throws IOException {
 		super(initFile, envParams);
+		
+		// //////////////////////////////////////////
+		// Set the serial flag
+		// //////////////////////////////////////////
+		this.serial = globalParams.getAsBoolean("serial");
 		
 		// //////////////////////////////////////////
 		// Create the executor
@@ -119,6 +127,9 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 									.getDependencyIds())) {
 						executor.execute(queuedJob);
 						launchedIds.add(queuedJob.getId());
+						if (serial) {
+							break;
+						}
 					}
 				}
 			}
@@ -153,6 +164,9 @@ public abstract class DistributedExperiment extends ParameterizedExperiment
 				if (job.getDependencyIds().isEmpty()) {
 					executor.execute(job);
 					launchedIds.add(job.getId());
+					if (serial) {
+						break;
+					}
 				}
 			}
 		}

@@ -10,5 +10,6 @@
 	<classpathentry kind="src" path="/ccg.lexicon.factored.lambda"/>
 	<classpathentry kind="src" path="/ccg.lexicon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg"/>
+	<classpathentry kind="src" path="/data.situated"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

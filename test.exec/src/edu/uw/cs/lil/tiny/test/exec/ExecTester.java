@@ -40,7 +40,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <Z>
  */
 public class ExecTester<X, Z> {
-	private static final ILogger					LOG	= LoggerFactory
+	public static final ILogger					LOG	= LoggerFactory
 																.create(ExecTester.class
 																		.getName());
 	

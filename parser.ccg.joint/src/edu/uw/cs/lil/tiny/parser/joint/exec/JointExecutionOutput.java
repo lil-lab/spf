@@ -83,7 +83,8 @@ public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
 	
 	@Override
 	public List<IExecution<Pair<Y, Z>>> getExecutions(Pair<Y, Z> label) {
-		final List<IJointParse<Y, Z>> bases = jointOutput.getParsesFor(label);
+		final List<? extends IJointParse<Y, Z>> bases = jointOutput
+				.getParsesFor(label);
 		return ListUtils
 				.map(bases,
 						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {

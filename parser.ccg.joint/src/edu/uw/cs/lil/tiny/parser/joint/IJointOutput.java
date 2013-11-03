@@ -23,6 +23,7 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.filter.IFilter;
 
 /**
  * Output for joint inference of parsing and semantics evaluation.
@@ -35,19 +36,16 @@ public interface IJointOutput<MR, ERESULT> {
 	
 	/**
 	 * All joint parses. Including failed executions.
-	 * 
-	 * @return
 	 */
-	List<IJointParse<MR, ERESULT>> getAllParses();
+	List<? extends IJointParse<MR, ERESULT>> getAllParses();
 	
 	/**
 	 * All joint parses.
 	 * 
 	 * @param includeFails
 	 *            exclude failed execution iff 'false'
-	 * @return
 	 */
-	List<IJointParse<MR, ERESULT>> getAllParses(boolean includeFails);
+	List<? extends IJointParse<MR, ERESULT>> getAllParses(boolean includeFails);
 	
 	/**
 	 * Internal output of the base parser.
@@ -56,15 +54,17 @@ public interface IJointOutput<MR, ERESULT> {
 	 */
 	IParserOutput<MR> getBaseParserOutput();
 	
-	List<IJointParse<MR, ERESULT>> getBestParses();
+	List<? extends IJointParse<MR, ERESULT>> getBestParses();
 	
-	List<IJointParse<MR, ERESULT>> getBestParses(boolean includeFails);
+	List<? extends IJointParse<MR, ERESULT>> getBestParses(boolean includeFails);
 	
-	List<IJointParse<MR, ERESULT>> getBestParsesFor(Pair<MR, ERESULT> label);
+	List<? extends IJointParse<MR, ERESULT>> getBestParsesFor(
+			Pair<MR, ERESULT> label);
 	
-	List<IJointParse<MR, ERESULT>> getBestParsesForY(MR partialLabel);
+	List<? extends IJointParse<MR, ERESULT>> getBestParsesForY(MR partialLabel);
 	
-	List<IJointParse<MR, ERESULT>> getBestParsesForZ(ERESULT partialLabel);
+	List<? extends IJointParse<MR, ERESULT>> getBestParsesForZ(
+			ERESULT partialLabel);
 	
 	/**
 	 * Total inference time in milliseconds.
@@ -76,14 +76,36 @@ public interface IJointOutput<MR, ERESULT> {
 	List<LexicalEntry<MR>> getMaxLexicalEntries(Pair<MR, ERESULT> label);
 	
 	/**
+	 * Get highest scoring complete valid parses (can get multiple parses, since
+	 * syntax is not constrained).
+	 * 
+	 * @param filter
+	 * @return
+	 */
+	List<? extends IJointParse<MR, ERESULT>> getMaxParses(
+			IFilter<Pair<MR, ERESULT>> filter);
+	
+	/**
+	 * Get all complete valid parses (can get multiple parses, since syntax is
+	 * not constrained).
+	 * 
+	 * @param filter
+	 * @return
+	 */
+	List<? extends IJointParse<MR, ERESULT>> getParses(
+			IFilter<Pair<MR, ERESULT>> filter);
+	
+	/**
 	 * Get all parses for the given result.
 	 * 
 	 * @param label
 	 * @return null if no parse has this label
 	 */
-	List<IJointParse<MR, ERESULT>> getParsesFor(Pair<MR, ERESULT> label);
+	List<? extends IJointParse<MR, ERESULT>> getParsesFor(
+			Pair<MR, ERESULT> label);
 	
-	List<IJointParse<MR, ERESULT>> getParsesForY(MR partialLabel);
+	List<? extends IJointParse<MR, ERESULT>> getParsesForY(MR partialLabel);
 	
-	List<IJointParse<MR, ERESULT>> getParsesForZ(ERESULT partialLabel);
+	List<? extends IJointParse<MR, ERESULT>> getParsesForZ(ERESULT partialLabel);
+	
 }

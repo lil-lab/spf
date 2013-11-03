@@ -47,7 +47,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Tom Kwiatkowski
  */
 public class CKYParser<MR> extends AbstractCKYParser<MR> {
-	private static final ILogger				LOG	= LoggerFactory
+	public static final ILogger				LOG	= LoggerFactory
 															.create(CKYParser.class);
 	
 	/**

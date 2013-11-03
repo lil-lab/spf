@@ -4,7 +4,7 @@
     </description>
 	<!-- set global properties for this build -->
 	<property file="build.properties" />
-	<property name="version" value="1.4" />
+	<property name="version" value="1.4.1" />
 	<property name="build" location="build" />
 	<property name="build.src" location="build.src" />
 	<property name="dist" location="dist" />
@@ -30,6 +30,7 @@
 			<fileset dir="${src.ccg.lexicon}" includes="**/*.java" />
 			<fileset dir="${src.ccg.lexicon.factored.lambda}" includes="**/*.java" />
 			<fileset dir="${src.data}" includes="**/*.java" />
+			<fileset dir="${src.data.situated}" includes="**/*.java" />
 			<fileset dir="${src.genlex.ccg}" includes="**/*.java" />
 			<fileset dir="${src.genlex.ccg.template}" includes="**/*.java" />
 			<fileset dir="${src.genlex.ccg.unification}" includes="**/*.java" />
@@ -38,7 +39,6 @@
 			<fileset dir="${src.explat}" includes="**/*.java" />
 			<fileset dir="${src.learn}" includes="**/*.java" />
 			<fileset dir="${src.learn.validation}" includes="**/*.java" />
-			<fileset dir="${src.learn.weakp}" includes="**/*.java" />
 			<fileset dir="${src.learn.simple}" includes="**/*.java" />
 			<fileset dir="${src.learn.situated}" includes="**/*.java" />
 			<fileset dir="${src.mr.lambda}" includes="**/*.java" />

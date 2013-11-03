@@ -24,36 +24,39 @@ import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.utils.filter.IFilter;
 
-public interface IGraphParser<LANG, MR> extends IParser<LANG, MR> {
+/**
+ * Hyper-graph based parser.
+ * 
+ * @author Yoav Artzi
+ * @see IParser
+ */
+public interface IGraphParser<DI extends IDataItem<?>, MR> extends
+		IParser<DI, MR> {
 	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
+	IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model);
+	
+	IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping);
+	
+	IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon);
+	
+	IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
+			Integer beamSize);
+	
+	IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> model);
 	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
+	IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> model, boolean allowWordSkipping);
 	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
+	IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon);
 	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
+	IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer beamSize);
-	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model);
-	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping);
-	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping, ILexicon<MR> tempLexicon);
-	
-	IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
-			Integer beamSize);
 	
 }

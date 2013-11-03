@@ -137,7 +137,7 @@ public class SingleSentence implements
 	
 	@Override
 	public String toString() {
-		return new StringBuilder(sentence.toString()).append('\n')
+		return new StringBuilder(super.toString()).append('\n')
 				.append(semantics).toString();
 	}
 	

@@ -20,7 +20,7 @@ package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 
 /**
  * Wraps a situated data item to only expose the language component.
@@ -29,7 +29,7 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <DI>
  * @param <STATE>
  */
-public class SituatedDataItemWrapper<DI extends IDataItem<Pair<Sentence, STATE>>, STATE>
+public class SituatedDataItemWrapper<DI extends ISituatedDataItem<Sentence, STATE>, STATE>
 		implements IDataItem<Sentence> {
 	
 	private static final long			serialVersionUID	= 9125402561551010485L;

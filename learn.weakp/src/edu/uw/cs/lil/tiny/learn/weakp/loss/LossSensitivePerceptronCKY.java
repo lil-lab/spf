@@ -34,7 +34,6 @@ import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.learn.weakp.loss.parser.IScoreFunction;
 import edu.uw.cs.lil.tiny.learn.weakp.loss.parser.ccg.cky.chart.ScoreSensitiveCellFactory;
@@ -68,10 +67,9 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  * @param <MR>
  */
-public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, MR>>
-		implements
-		ILearner<Sentence, IDataItem<Sentence>, MR, Model<IDataItem<Sentence>, MR>> {
-	private static final ILogger											LOG	= LoggerFactory
+@Deprecated
+public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, MR>> {
+	public static final ILogger												LOG	= LoggerFactory
 																						.create(LossSensitivePerceptronCKY.class
 																								.getName());
 	private final ICategoryServices<MR>										categoryServices;
@@ -122,7 +120,6 @@ public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, M
 				lexiconGenerationValidator);
 	}
 	
-	@Override
 	public void train(Model<IDataItem<Sentence>, MR> model) {
 		for (int iterationNumber = 0; iterationNumber < numIterations; ++iterationNumber) {
 			// Training iteration, go over all training samples
@@ -162,7 +159,7 @@ public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, M
 						dataItem.getSample().getTokens().size());
 				
 				final IParserOutput<MR> generateLexiconParserOutput = parser
-						.parse(dataItem, Pruner.create(dataItem),
+						.parse(dataItem.getSample(), Pruner.create(dataItem),
 								dataItemModel, false, generatedLexicon,
 								lexiconGenerationBeamSize,
 								lexiconGenerationCellFactory);
@@ -281,7 +278,7 @@ public class LossSensitivePerceptronCKY<MR, DI extends ILossDataItem<Sentence, M
 				// based on the model. Create optimal/non-optimal sets and
 				// update on violations.
 				final IParserOutput<MR> modelParserOutput = parser.parse(
-						dataItem, dataItemModel);
+						dataItem.getSample(), dataItemModel);
 				stats.recordModelParsing(modelParserOutput.getParsingTime());
 				final Collection<? extends IParse<MR>> modelParses = modelParserOutput
 						.getAllParses();

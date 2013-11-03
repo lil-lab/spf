@@ -18,13 +18,22 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointModelImmutable<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
+/**
+ * Immutable model for joint inference.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Data item for inference.
+ * @param <MR>
+ *            Meaning representation.
+ * @param <ESTEP>
+ *            Execution step.
+ */
+public interface IJointModelImmutable<DI extends ISituatedDataItem<?, ?>, MR, ESTEP>
 		extends IModelImmutable<DI, MR> {
 	
 	/**

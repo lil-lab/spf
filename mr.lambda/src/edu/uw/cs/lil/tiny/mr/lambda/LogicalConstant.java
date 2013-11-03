@@ -40,7 +40,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public class LogicalConstant extends Term {
 	static private final Map<String, LogicalConstant>	INSTANCE_REPOSITORY	= new ConcurrentHashMap<String, LogicalConstant>();
 	
-	private static final ILogger						LOG					= LoggerFactory
+	public static final ILogger						LOG					= LoggerFactory
 																					.create(LogicalConstant.class);
 	
 	private static final long							serialVersionUID	= 4418490882304760062L;

@@ -37,9 +37,6 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	@Override
 	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter);
 	
-	@Override
-	public List<? extends IGraphParse<MR>> getParses(IFilter<MR> filter);
-	
 	/**
 	 * Compute expected feature values over all complete parses.
 	 * 
@@ -67,6 +64,9 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	List<? extends IGraphParse<MR>> getAllParses();
 	
 	List<? extends IGraphParse<MR>> getBestParses();
+	
+	@Override
+	List<? extends IGraphParse<MR>> getParses(IFilter<MR> filter);
 	
 	/**
 	 * Compute the normalization constant over all complete parses.

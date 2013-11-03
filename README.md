@@ -1,33 +1,16 @@
-# [_**UW SPF v1.4**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.4
+# [_**UW SPF v1.4.1**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.4.1
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)
 
 **Contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), [Tom Kwiatkowski](http://homes.cs.washington.edu/~tomk/)
 
-## Projects Using SPF
-
-[Navi](http://yoavartzi.com/navi) 
-
-## Documentation
+## Documentations
 
 More coming soon … 
 
 In the meantime, see the ACL 2013 tutorial for general information about semantic parsing with CCGs. The slides are available [here](http://yoavartzi.com).
 
-### Running example experiments
-
-The framework contains an example experiment using the GeoQuery corpus. To use development fold zero for testing, and training on the other sets, use:
-``java -jar dist/spf-1.4.jar geoquery/experiments/template/dev.cross/dev.fold0.exp``  
-The log and output files are written to the experiment directory:
-``geoquery/experiments/template/dev.cross/``
-
-You can look at the .exp file and see how it defines arguments and how it includes them from other files. Another critical point of entry is the class ``edu.uw.cs.lil.tiny.geoquery.GeoMain``.
-
-### Working with the Code
-
-The code is divided into many projects that have dependencies between them. You can work with the code with any editor and build  it with the accompanying ANT script. However, we recommend using Eclipse. Each of the directories is an Eclipse project and can easily imported into Eclipse. To do so select Import from the File menu and choose "Existing Projects into Workspace". The "Root Directory" should be the code directory and all projects should be selected by default. The dependencies will be imported automatically. To successfully build SPF in Eclipse you will need to set the classpath variable TINY_REPO to the code directory. To so go to Preferences -> Java -> Build Path -> Classpath Variables, add a new variable with the name TINY_REPO and a folder value that points to the code location. 
-
-## Building
+# Building
 
 To compile SPF use: `ant dist`. The output JAR file will be in the `dist` directory. You can also download the compiled JAR file from the [Downloads](https://bitbucket.org/yoavartzi/spf/downloads) section.
 
@@ -37,7 +20,7 @@ When using UW SPF, please acknowledge it by citing:
 
 Artzi, Yoav and Zettlemoyer, Luke. "UW SPF: The University of Washington Semantic Parsing Framework." http://yoavartzi.com/spf.  2013.
 
-[**Bibtex:**](http://yoavartzi.com/pub/az-spf.2013.bib)
+**Bibtex:**
 
     @article{artzi2013uwspf,
         title={{UW SPF: The University of Washington Semantic Parsing Framework}},

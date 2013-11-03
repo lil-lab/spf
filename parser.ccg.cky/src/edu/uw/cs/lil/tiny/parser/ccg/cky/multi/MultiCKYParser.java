@@ -58,7 +58,7 @@ import edu.uw.cs.utils.log.thread.LoggingRunnable;
  *            type of semantics.
  */
 public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
-	private static final ILogger	LOG	= LoggerFactory
+	public static final ILogger	LOG	= LoggerFactory
 												.create(MultiCKYParser.class);
 	private final ITinyExecutor		executor;
 	private final boolean			preChartPruning;

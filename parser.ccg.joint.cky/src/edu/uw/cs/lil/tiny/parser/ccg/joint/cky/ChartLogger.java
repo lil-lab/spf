@@ -40,7 +40,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 
 public class ChartLogger<ESTEP, ERESULT> implements
 		IJointOutputLogger<LogicalExpression, ESTEP, ERESULT> {
-	private static final ILogger	LOG	= LoggerFactory
+	public static final ILogger	LOG	= LoggerFactory
 												.create(ChartLogger.class);
 	private final File				outputDir;
 	

@@ -30,52 +30,49 @@ import edu.uw.cs.utils.filter.IFilter;
  * @param <LANG>
  * @param <MR>
  */
-public abstract class AbstractGraphParser<LANG, MR> implements
-		IGraphParser<LANG, MR> {
+public abstract class AbstractGraphParser<DI extends IDataItem<?>, MR>
+		implements IGraphParser<DI, MR> {
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model) {
 		return parse(dataItem, model, false);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping) {
 		return parse(dataItem, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping,
-			ILexicon<MR> tempLexicon) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon) {
 		return parse(dataItem, model, allowWordSkipping, tempLexicon, null);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping,
-			ILexicon<MR> tempLexicon, Integer beamSize) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
+			Integer beamSize) {
 		return parse(dataItem, null, model, allowWordSkipping, tempLexicon,
 				beamSize);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model) {
 		return parse(dataItem, pruningFilter, model, false);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, boolean allowWordSkipping) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping, ILexicon<MR> tempLexicon) {
+	public IGraphParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, boolean allowWordSkipping,
+			ILexicon<MR> tempLexicon) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping,
 				tempLexicon, null);
 	}

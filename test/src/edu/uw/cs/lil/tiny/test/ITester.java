@@ -22,9 +22,9 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.test.stats.ITestingStatistics;
 
-public interface ITester<SAMPLE, MR> {
+public interface ITester<SAMPLE extends IDataItem<?>, MR> {
 	
-	void test(IModelImmutable<IDataItem<SAMPLE>, MR> model,
+	void test(IModelImmutable<SAMPLE, MR> model,
 			ITestingStatistics<SAMPLE, MR> stats);
 	
 }

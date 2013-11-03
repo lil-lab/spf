@@ -49,7 +49,7 @@ import edu.uw.cs.utils.log.thread.InterruptedRuntimeException;
  * @author Yoav Artzi
  */
 public class Evaluation implements ILogicalExpressionVisitor {
-	private static final ILogger		LOG			= LoggerFactory
+	public static final ILogger		LOG			= LoggerFactory
 															.create(Evaluation.class);
 	private final Map<Variable, Object>	denotations	= new HashMap<Variable, Object>();
 	private final IEvaluationServices	services;

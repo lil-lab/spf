@@ -24,6 +24,7 @@ import java.util.Map;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
@@ -46,11 +47,16 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * Validation-based stochastic gradient learner.
  * 
  * @author Yoav Artzi
+ * @param <SAMPLE>
+ *            Data item to use for inference.
+ * @param <DI>
+ *            Data item for learning.
  * @param <MR>
+ *            Meaning representation.
  */
-public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
+public class ValidationStocGrad<SAMPLE extends IDataItem<SAMPLE>, DI extends ILabeledDataItem<SAMPLE, ?>, MR>
 		extends AbstractLearner<SAMPLE, DI, IGraphParserOutput<MR>, MR> {
-	private static final ILogger			LOG						= LoggerFactory
+	public static final ILogger				LOG						= LoggerFactory
 																			.create(ValidationStocGrad.class);
 	
 	private final double					alpha0;
@@ -63,22 +69,15 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	
 	private final IValidator<DI, MR>		validator;
 	
-	private ValidationStocGrad(
-			int numIterations,
-			IDataCollection<DI> trainingData,
-			Map<DI, MR> trainingDataDebug,
-			int maxSentenceLength,
-			int lexiconGenerationBeamSize,
+	private ValidationStocGrad(int numIterations,
+			IDataCollection<DI> trainingData, Map<DI, MR> trainingDataDebug,
+			int maxSentenceLength, int lexiconGenerationBeamSize,
 			IGraphParser<SAMPLE, MR> parser,
-			IOutputLogger<MR> parserOutputLogger,
-			double alpha0,
-			double c,
-			IValidator<DI, MR> validator,
-			ITester<SAMPLE, MR> tester,
-			boolean conflateGenlexAndPrunedParses,
-			boolean errorDriven,
+			IOutputLogger<MR> parserOutputLogger, double alpha0, double c,
+			IValidator<DI, MR> validator, ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses, boolean errorDriven,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>> genlex,
 			IFilter<DI> processingFilter) {
 		super(numIterations, trainingData, trainingDataDebug,
 				lexiconGenerationBeamSize, parserOutputLogger, tester,
@@ -102,7 +101,7 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	}
 	
 	@Override
-	public void train(Model<IDataItem<SAMPLE>, MR> model) {
+	public void train(Model<SAMPLE, MR> model) {
 		stocGradientNumUpdates = 0;
 		super.train(model);
 	}
@@ -110,8 +109,8 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	@Override
 	protected void parameterUpdate(final DI dataItem,
 			IGraphParserOutput<MR> realOutput,
-			IGraphParserOutput<MR> goodOutput,
-			Model<IDataItem<SAMPLE>, MR> model, int itemCounter, int epochNumber) {
+			IGraphParserOutput<MR> goodOutput, Model<SAMPLE, MR> model,
+			int itemCounter, int epochNumber) {
 		
 		if (realOutput.getAllParses().isEmpty()
 				|| goodOutput.getAllParses().isEmpty()) {
@@ -198,21 +197,21 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	@Override
 	protected IGraphParserOutput<MR> parse(DI dataItem,
 			IDataItemModel<MR> dataItemModel) {
-		return parser.parse(dataItem, dataItemModel);
+		return parser.parse(dataItem.getSample(), dataItemModel);
 	}
 	
 	@Override
 	protected IGraphParserOutput<MR> parse(DI dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel) {
-		return parser.parse(dataItem, pruningFilter, dataItemModel);
+		return parser.parse(dataItem.getSample(), pruningFilter, dataItemModel);
 	}
 	
 	@Override
 	protected IGraphParserOutput<MR> parse(DI dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> dataItemModel,
 			ILexicon<MR> generatedLexicon, int beamSize) {
-		return parser.parse(dataItem, pruningFilter, dataItemModel, false,
-				generatedLexicon, beamSize);
+		return parser.parse(dataItem.getSample(), pruningFilter, dataItemModel,
+				false, generatedLexicon, beamSize);
 	}
 	
 	@Override
@@ -220,87 +219,87 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 		return validator.isValid(dataItem, hypothesis);
 	}
 	
-	public static class Builder<SAMPLE, DI extends IDataItem<SAMPLE>, MR> {
+	public static class Builder<SAMPLE extends IDataItem<SAMPLE>, DI extends ILabeledDataItem<SAMPLE, ?>, MR> {
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																alpha0							= 1.0;
+		private double													alpha0							= 1.0;
 		
 		/**
 		 * Used to define the temperature of parameter updates. temp =
 		 * alpha_0/(1+c*tot_number_of_training_instances)
 		 */
-		private double																c								= 0.0001;
+		private double													c								= 0.0001;
 		
 		/**
 		 * Required for lexicon learning.
 		 */
-		private ICategoryServices<MR>												categoryServices				= null;
+		private ICategoryServices<MR>									categoryServices				= null;
 		
 		/**
 		 * Recycle the lexical induction parser output as the pruned one for
 		 * parameter update.
 		 */
-		private boolean																conflateGenlexAndPrunedParses	= false;
-		private boolean																errorDriven						= false;
+		private boolean													conflateGenlexAndPrunedParses	= false;
+		private boolean													errorDriven						= false;
 		
 		/**
 		 * Processing filter, if 'false', skip sample.
 		 */
-		private IFilter<DI>															filter							= new IFilter<DI>() {
-																														
-																														@Override
-																														public boolean isValid(
-																																DI e) {
-																															return true;
-																														}
-																													};
+		private IFilter<DI>												filter							= new IFilter<DI>() {
+																											
+																											@Override
+																											public boolean isValid(
+																													DI e) {
+																												return true;
+																											}
+																										};
 		
 		/**
 		 * GENLEX procedure. If 'null' skips lexicon induction.
 		 */
-		private ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex;
+		private ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>>	genlex;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																	lexiconGenerationBeamSize		= 20;
+		private int														lexiconGenerationBeamSize		= 20;
 		
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private final int															maxSentenceLength				= Integer.MAX_VALUE;
+		private final int												maxSentenceLength				= Integer.MAX_VALUE;
 		
 		/** Number of training iterations */
-		private int																	numIterations					= 4;
+		private int														numIterations					= 4;
 		
-		private final IGraphParser<SAMPLE, MR>										parser;
+		private final IGraphParser<SAMPLE, MR>							parser;
 		
-		private IOutputLogger<MR>													parserOutputLogger				= new IOutputLogger<MR>() {
-																														
-																														public void log(
-																																IParserOutput<MR> output,
-																																IDataItemModel<MR> dataItemModel) {
-																															// Stub
-																															
-																														}
-																													};
+		private IOutputLogger<MR>										parserOutputLogger				= new IOutputLogger<MR>() {
+																											
+																											public void log(
+																													IParserOutput<MR> output,
+																													IDataItemModel<MR> dataItemModel) {
+																												// Stub
+																												
+																											}
+																										};
 		
-		private ITester<SAMPLE, MR>													tester							= null;
+		private ITester<SAMPLE, MR>										tester							= null;
 		
 		/** Training data */
-		private final IDataCollection<DI>											trainingData;
+		private final IDataCollection<DI>								trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<DI, MR>															trainingDataDebug				= new HashMap<DI, MR>();
+		private Map<DI, MR>												trainingDataDebug				= new HashMap<DI, MR>();
 		
-		private final IValidator<DI, MR>											validator;
+		private final IValidator<DI, MR>								validator;
 		
 		public Builder(IDataCollection<DI> trainingData,
 				IGraphParser<SAMPLE, MR> parser, IValidator<DI, MR> validator) {
@@ -340,7 +339,7 @@ public class ValidationStocGrad<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 		}
 		
 		public Builder<SAMPLE, DI, MR> setGenlex(
-				ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+				ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>> genlex,
 				ICategoryServices<MR> categoryServices) {
 			this.genlex = genlex;
 			this.categoryServices = categoryServices;

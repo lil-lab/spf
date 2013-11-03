@@ -46,7 +46,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public class AToExists implements ILogicalExpressionVisitor {
 	private static final Stack<Pair<Variable, ? extends LogicalExpression>>							EMPTY_STACK	= new Stack<Pair<Variable, ? extends LogicalExpression>>();
 	
-	private static final ILogger																	LOG			= LoggerFactory
+	public static final ILogger																	LOG			= LoggerFactory
 																														.create(AToExists.class);
 	private final LogicalExpression																	aPredicate;
 	private final LogicalExpression																	existsPredicate;

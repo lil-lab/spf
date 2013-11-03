@@ -19,18 +19,14 @@
 package edu.uw.cs.lil.tiny.parser.joint;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
-import edu.uw.cs.utils.composites.Pair;
 
 /**
  * @author Yoav Artzi
- * @param <LANG>
- *            Type of the natural language structure (e.g., Sentence).
- * @param <STATE>
- *            World state (e.g., task, starting position, state of the world
- *            etc.).
+ * @param <DI>
+ *            Inference situated data item.
  * @param <MR>
  *            Type of the semantics (e.g., LogicalExpression).
  * @param <ESTEP>
@@ -38,20 +34,20 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <ERESULT>
  *            Execution result.
  */
-public interface IJointParser<LANG, STATE, MR, ESTEP, ERESULT> extends
-		IParser<LANG, MR> {
+public interface IJointParser<DI extends ISituatedDataItem<?, ?>, MR, ESTEP, ERESULT>
+		extends IParser<DI, MR> {
 	
-	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model);
 	
-	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping);
 	
-	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon);
 	
-	IJointOutput<MR, ERESULT> parse(IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer beamSize);
 	

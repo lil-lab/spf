@@ -27,12 +27,15 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
+import edu.uw.cs.lil.tiny.learn.validation.perceptron.ValidationPerceptron;
+import edu.uw.cs.lil.tiny.learn.validation.stocgrad.ValidationStocGrad;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
@@ -58,81 +61,77 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * </p>
  * 
  * @author Yoav Artzi
- * @param <MR>
- *            Meaning representation type.
+ * @see ValidationPerceptron
+ * @see ValidationStocGrad
  */
-public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO extends IParserOutput<MR>, MR>
-		implements ILearner<SAMPLE, DI, MR, Model<IDataItem<SAMPLE>, MR>> {
-	private static final ILogger													LOG	= LoggerFactory
-																								.create(AbstractLearner.class);
+public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends ILabeledDataItem<SAMPLE, ?>, PO extends IParserOutput<MR>, MR>
+		implements ILearner<SAMPLE, DI, Model<SAMPLE, MR>> {
+	public static final ILogger												LOG	= LoggerFactory
+																						.create(AbstractLearner.class);
 	
-	private final ICategoryServices<MR>												categoryServices;
+	private final ICategoryServices<MR>										categoryServices;
 	
 	/**
 	 * Recycle the lexical induction parser output as the pruned one for
 	 * parameter update.
 	 */
-	private final boolean															conflateGenlexAndPrunedParses;
+	private final boolean													conflateGenlexAndPrunedParses;
 	
 	/**
 	 * Number of training epochs.
 	 */
-	private final int																epochs;
+	private final int														epochs;
 	
 	/**
 	 * The learner is error driven, meaning: if it can parse a sentence, it will
 	 * skip lexical induction.
 	 */
-	private final boolean															errorDriven;
+	private final boolean													errorDriven;
 	
 	/**
 	 * GENLEX procedure. If 'null', skip lexicon learning.
 	 */
-	private final ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex;
+	private final ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>>	genlex;
 	
 	/**
 	 * Parser beam size for lexical generation.
 	 */
-	private final int																lexiconGenerationBeamSize;
+	private final int														lexiconGenerationBeamSize;
 	
-	private final IFilter<DI>														processingFilter;
+	private final IFilter<DI>												processingFilter;
 	
 	/**
 	 * Tester to use after each epoch.
 	 */
-	private final ITester<SAMPLE, MR>												tester;
+	private final ITester<SAMPLE, MR>										tester;
 	
 	/**
 	 * Training data.
 	 */
-	private final IDataCollection<DI>												trainingData;
+	private final IDataCollection<DI>										trainingData;
 	
 	/**
 	 * Mapping of training data samples to their gold labels.
 	 */
-	private final Map<DI, MR>														trainingDataDebug;
+	private final Map<DI, MR>												trainingDataDebug;
 	
 	/**
 	 * Parser output logger.
 	 */
-	protected final IOutputLogger<MR>												parserOutputLogger;
+	protected final IOutputLogger<MR>										parserOutputLogger;
 	
 	/**
 	 * Learning statistics.
 	 */
-	protected final OnlineLearningStats												stats;
+	protected final OnlineLearningStats										stats;
 	
-	protected AbstractLearner(
-			int numIterations,
-			IDataCollection<DI> trainingData,
-			Map<DI, MR> trainingDataDebug,
+	protected AbstractLearner(int numIterations,
+			IDataCollection<DI> trainingData, Map<DI, MR> trainingDataDebug,
 			int lexiconGenerationBeamSize,
-			IOutputLogger<MR> parserOutputLogger,
-			ITester<SAMPLE, MR> tester,
-			boolean conflateGenlexAndPrunedParses,
-			boolean errorDriven,
+			IOutputLogger<MR> parserOutputLogger, ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses, boolean errorDriven,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>> genlex,
 			IFilter<DI> processingFilter) {
 		this.epochs = numIterations;
 		this.trainingData = trainingData;
@@ -148,7 +147,8 @@ public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO e
 		this.stats = new OnlineLearningStats(numIterations, trainingData.size());
 	}
 	
-	public void train(Model<IDataItem<SAMPLE>, MR> model) {
+	@Override
+	public void train(Model<SAMPLE, MR> model) {
 		// Epochs
 		for (int epochNumber = 0; epochNumber < epochs; ++epochNumber) {
 			// Training epoch, iterate over all training samples
@@ -179,7 +179,7 @@ public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO e
 				try {
 					// Data item model
 					final IDataItemModel<MR> dataItemModel = model
-							.createDataItemModel(dataItem);
+							.createDataItemModel(dataItem.getSample());
 					
 					// ///////////////////////////
 					// Step I: Parse with current model. If we get a valid
@@ -323,9 +323,8 @@ public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO e
 	}
 	
 	private PO lexicalInduction(final DI dataItem,
-			IDataItemModel<MR> dataItemModel,
-			Model<IDataItem<SAMPLE>, MR> model, int dataItemNumber,
-			int epochNumber) {
+			IDataItemModel<MR> dataItemModel, Model<SAMPLE, MR> model,
+			int dataItemNumber, int epochNumber) {
 		// Generate lexical entries
 		final ILexicon<MR> generatedLexicon = genlex.generate(dataItem, model,
 				categoryServices);
@@ -478,7 +477,7 @@ public abstract class AbstractLearner<SAMPLE, DI extends IDataItem<SAMPLE>, PO e
 	 * @param model
 	 */
 	protected abstract void parameterUpdate(DI dataItem, PO realOutput,
-			PO goodOutput, Model<IDataItem<SAMPLE>, MR> model, int itemCounter,
+			PO goodOutput, Model<SAMPLE, MR> model, int itemCounter,
 			int epochNumber);
 	
 	/**

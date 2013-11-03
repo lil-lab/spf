@@ -19,35 +19,31 @@
 package edu.uw.cs.lil.tiny.parser.joint.graph;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
-import edu.uw.cs.utils.composites.Pair;
 
 /**
  * Joint inference procedure using a graph-based parser ({@link IGraphParser}).
  * 
  * @author Yoav Artzi
+ * @see IJointParser
  */
-public interface IJointGraphParser<LANG, STATE, MR, ESTEP, ERESULT> extends
-		IJointParser<LANG, STATE, MR, ESTEP, ERESULT>, IGraphParser<LANG, MR> {
+public interface IJointGraphParser<DI extends ISituatedDataItem<?, ?>, MR, ESTEP, ERESULT>
+		extends IJointParser<DI, MR, ESTEP, ERESULT>, IGraphParser<DI, MR> {
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(
-			IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(
-			IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(
-			IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(
-			IDataItem<Pair<LANG, STATE>> dataItem,
+	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer beamSize);
 	

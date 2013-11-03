@@ -19,9 +19,9 @@
 package edu.uw.cs.lil.tiny.learn.situated.resources;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.sentence.SituatedSentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
@@ -34,9 +34,8 @@ import edu.uw.cs.lil.tiny.learn.situated.stocgrad.SituatedValidationStocGrad.Bui
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
-import edu.uw.cs.utils.composites.Pair;
 
-public class SituatedValidationStocGradCreator<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
+public class SituatedValidationStocGradCreator<STATE, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SituatedSentence<STATE>, ?>>
 		implements
 		IResourceObjectCreator<SituatedValidationStocGrad<STATE, MR, ESTEP, ERESULT, DI>> {
 	
@@ -60,7 +59,7 @@ public class SituatedValidationStocGradCreator<STATE, MR, ESTEP, ERESULT, DI ext
 		
 		final Builder<STATE, MR, ESTEP, ERESULT, DI> builder = new SituatedValidationStocGrad.Builder<STATE, MR, ESTEP, ERESULT, DI>(
 				trainingData,
-				(IJointGraphParser<Sentence, STATE, MR, ESTEP, ERESULT>) repo
+				(IJointGraphParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT>) repo
 						.getResource(ParameterizedExperiment.PARSER_RESOURCE),
 				(IValidator<DI, ERESULT>) repo.getResource(params
 						.get("validator")));
@@ -72,7 +71,7 @@ public class SituatedValidationStocGradCreator<STATE, MR, ESTEP, ERESULT, DI ext
 		
 		if (params.contains("genlex")) {
 			builder.setGenlex(
-					(ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>>) repo
+					(ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>>) repo
 							.getResource(params.get("genlex")),
 					(ICategoryServices<MR>) repo
 							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));

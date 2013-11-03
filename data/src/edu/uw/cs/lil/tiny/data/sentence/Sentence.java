@@ -37,18 +37,20 @@ public class Sentence implements IDataItem<Sentence> {
 	private final List<String>	tokens;
 	
 	public Sentence(List<String> tokens) {
-		this.tokens = ListUtils.map(tokens,
+		// Escpae "%" characters, to avoid problems with logging and printing.
+		this.tokens = Collections.unmodifiableList(ListUtils.map(tokens,
 				new ListUtils.Mapper<String, String>() {
 					
 					@Override
 					public String process(String obj) {
 						return obj.replace("%", "%%");
 					}
-				});
+				}));
 		this.string = ListUtils.join(this.tokens, " ");
 	}
 	
 	public Sentence(String string) {
+		// Escpae "%" characters, to avoid problems with logging and printing.
 		this.string = string.replace("%", "%%");
 		this.tokens = Collections.unmodifiableList(tokenize(this.string));
 	}

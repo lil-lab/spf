@@ -56,7 +56,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class MakeCompositionSplits implements ILogicalExpressionVisitor {
 	
-	private static final ILogger						LOG		= LoggerFactory
+	public static final ILogger						LOG		= LoggerFactory
 																		.create(MakeCompositionSplits.class
 																				.getName());
 	

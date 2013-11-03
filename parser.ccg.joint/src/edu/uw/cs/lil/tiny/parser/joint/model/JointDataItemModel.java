@@ -18,19 +18,28 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
-import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.DataItemModel;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.utils.composites.Pair;
 
-public class JointDataItemModel<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
+/**
+ * Model for inference with a specific data item.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Inference data item.
+ * @param <MR>
+ *            Meaning representation.
+ * @param <ESTEP>
+ *            Execution step.
+ */
+public class JointDataItemModel<DI extends ISituatedDataItem<?, ?>, MR, ESTEP>
 		extends DataItemModel<DI, MR> implements IJointDataItemModel<MR, ESTEP> {
 	
-	private final DI											dataItem;
-	private final IJointModelImmutable<DI, STATE, MR, ESTEP>	model;
+	private final DI									dataItem;
+	private final IJointModelImmutable<DI, MR, ESTEP>	model;
 	
-	public JointDataItemModel(IJointModelImmutable<DI, STATE, MR, ESTEP> model,
+	public JointDataItemModel(IJointModelImmutable<DI, MR, ESTEP> model,
 			final DI dataItem) {
 		super(model, dataItem);
 		this.model = model;

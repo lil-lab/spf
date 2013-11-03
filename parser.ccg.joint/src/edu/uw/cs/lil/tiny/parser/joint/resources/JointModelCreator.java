@@ -20,8 +20,7 @@ package edu.uw.cs.lil.tiny.parser.joint.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
-import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
@@ -30,16 +29,15 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointFeatureSet;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
-import edu.uw.cs.utils.composites.Pair;
 
-public class JointModelCreator<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>
-		implements IResourceObjectCreator<JointModel<DI, STATE, MR, ESTEP>> {
+public class JointModelCreator<DI extends ISituatedDataItem<?, ?>, MR, ESTEP>
+		implements IResourceObjectCreator<JointModel<DI, MR, ESTEP>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public JointModel<DI, STATE, MR, ESTEP> create(Parameters parameters,
+	public JointModel<DI, MR, ESTEP> create(Parameters parameters,
 			IResourceRepository resourceRepo) {
-		final JointModel.Builder<DI, STATE, MR, ESTEP> builder = new JointModel.Builder<DI, STATE, MR, ESTEP>();
+		final JointModel.Builder<DI, MR, ESTEP> builder = new JointModel.Builder<DI, MR, ESTEP>();
 		
 		// Lexicon
 		builder.setLexicon((ILexicon<MR>) resourceRepo.getResource((parameters
@@ -59,11 +57,11 @@ public class JointModelCreator<DI extends IDataItem<Pair<Sentence, STATE>>, STAT
 		
 		// Joint feature sets
 		for (final String setId : parameters.getSplit("jointFeatures")) {
-			builder.addJointFeatureSet((IJointFeatureSet<DI, STATE, ESTEP>) resourceRepo
+			builder.addJointFeatureSet((IJointFeatureSet<DI, ESTEP>) resourceRepo
 					.getResource(setId));
 		}
 		
-		final JointModel<DI, STATE, MR, ESTEP> model = builder.build();
+		final JointModel<DI, MR, ESTEP> model = builder.build();
 		
 		return model;
 	}

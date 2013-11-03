@@ -34,8 +34,8 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
-import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
@@ -53,14 +53,14 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class TemplateSupervisedGenlex
+public class TemplateSupervisedGenlex<DI extends SingleSentence>
 		implements
-		ILexiconGenerator<ILabeledDataItem<Sentence, LogicalExpression>, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
+		ILexiconGenerator<DI, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
+	public static final ILogger					LOG			= LoggerFactory
+																	.create(TemplateSupervisedGenlex.class);
+	
 	private static final List<LogicalConstant>	EMPTY_LIST	= Collections
 																	.emptyList();
-	
-	private static final ILogger				LOG			= LoggerFactory
-																	.create(TemplateSupervisedGenlex.class);
 	private final int							maxTokens;
 	private final Set<LexicalTemplate>			templates;
 	private final Set<List<Type>>				typeSignatures;
@@ -81,8 +81,7 @@ public class TemplateSupervisedGenlex
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(
-			ILabeledDataItem<Sentence, LogicalExpression> dataItem,
+	public ILexicon<LogicalExpression> generate(DI dataItem,
 			IModelImmutable<Sentence, LogicalExpression> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getSample().getTokens();
@@ -152,7 +151,7 @@ public class TemplateSupervisedGenlex
 				ILexiconGenerator.GENLEX_LEXICAL_ORIGIN);
 	}
 	
-	public static class Builder {
+	public static class Builder<DI extends SingleSentence> {
 		protected final int						maxTokens;
 		protected final Set<LexicalTemplate>	templates	= new HashSet<LexicalTemplate>();
 		
@@ -160,19 +159,20 @@ public class TemplateSupervisedGenlex
 			this.maxTokens = maxTokens;
 		}
 		
-		public Builder addTemplate(LexicalTemplate template) {
+		public Builder<DI> addTemplate(LexicalTemplate template) {
 			templates.add(template);
 			return this;
 		}
 		
-		public Builder addTemplates(Iterable<LexicalTemplate> templateCollection) {
+		public Builder<DI> addTemplates(
+				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
 			}
 			return this;
 		}
 		
-		public Builder addTemplatesFromLexicon(
+		public Builder<DI> addTemplatesFromLexicon(
 				ILexicon<LogicalExpression> lexicon) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
 					.toCollection();
@@ -184,7 +184,7 @@ public class TemplateSupervisedGenlex
 			return this;
 		}
 		
-		public Builder addTemplatesFromModel(
+		public Builder<DI> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
 					.getLexicon().toCollection();
@@ -196,8 +196,8 @@ public class TemplateSupervisedGenlex
 			return this;
 		}
 		
-		public TemplateSupervisedGenlex build() {
-			return new TemplateSupervisedGenlex(maxTokens, templates);
+		public TemplateSupervisedGenlex<DI> build() {
+			return new TemplateSupervisedGenlex<DI>(maxTokens, templates);
 		}
 		
 	}

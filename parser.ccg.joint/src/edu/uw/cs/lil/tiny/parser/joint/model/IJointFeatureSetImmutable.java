@@ -19,12 +19,20 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IFeatureSet;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointFeatureSetImmutable<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, ESTEP>
+/**
+ * Immutable joint inference feature set to compute features over execution
+ * steps.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Inference data item.
+ * @param <ESTEP>
+ *            Execution step.
+ */
+public interface IJointFeatureSetImmutable<DI extends IDataItem<?>, ESTEP>
 		extends IFeatureSet {
 	
 	double score(ESTEP executionStep, IHashVector theta, DI dataItem);

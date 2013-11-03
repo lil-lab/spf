@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.learn;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 
 /**
@@ -26,13 +27,11 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
  * @param <SAMPLE>
  *            Inference sample
  * @param <DI>
- *            Learning data item, based on the inference sample, and,
- *            potentially, some supervision
- * @param <MR>
- *            Type of semantics
+ *            Learning data item, includes the inference sample, and,
+ *            potentially, some supervision.
  * @param <MODEL>
  *            Type of model
  */
-public interface ILearner<SAMPLE, DI extends IDataItem<SAMPLE>, MR, MODEL extends Model<IDataItem<SAMPLE>, MR>> {
+public interface ILearner<SAMPLE extends IDataItem<?>, DI extends ILabeledDataItem<SAMPLE, ?>, MODEL extends Model<SAMPLE, ?>> {
 	void train(MODEL model);
 }

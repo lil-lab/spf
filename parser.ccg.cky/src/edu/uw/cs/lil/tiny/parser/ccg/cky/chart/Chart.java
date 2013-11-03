@@ -52,7 +52,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @see Cell
  */
 public class Chart<MR> implements Iterable<Cell<MR>> {
-	private static final ILogger			LOG	= LoggerFactory
+	public static final ILogger			LOG	= LoggerFactory
 														.create(Chart.class
 																.getName());
 	

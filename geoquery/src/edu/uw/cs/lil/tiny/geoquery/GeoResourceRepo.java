@@ -81,14 +81,14 @@ public class GeoResourceRepo extends ResourceCreatorRepository {
 		registerResourceCreator(new LogicalExpressionCoordinationFeatureSetCreator<Sentence>());
 		registerResourceCreator(new FactoredLexiconCreator());
 		registerResourceCreator(new SingleSentenceDatasetCreator());
-		registerResourceCreator(new TemplateSupervisedGenlexCreator());
+		registerResourceCreator(new TemplateSupervisedGenlexCreator<SingleSentence>());
 		registerResourceCreator(new SingleSentenceDatasetCreator());
 		registerResourceCreator(new ValidationPerceptronCreator<Sentence, SingleSentence, LogicalExpression>());
 		registerResourceCreator(new ValidationStocGradCreator<Sentence, SingleSentence, LogicalExpression>());
 		registerResourceCreator(new LabeledValidatorCreator<SingleSentence, LogicalExpression>());
 		registerResourceCreator(new TesterCreator<Sentence, LogicalExpression>());
 		registerResourceCreator(new LexiconModelInitCreator<Sentence, LogicalExpression>());
-		registerResourceCreator(new UnificationGenlexCreator());
+		registerResourceCreator(new UnificationGenlexCreator<SingleSentence>());
 		registerResourceCreator(new SplitterCreator());
 		registerResourceCreator(new UnificationModelInitCreator());
 		registerResourceCreator(new LexemeCooccurrenceScorerCreator());

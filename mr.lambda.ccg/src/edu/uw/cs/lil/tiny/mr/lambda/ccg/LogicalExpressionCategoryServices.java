@@ -36,7 +36,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 
 public class LogicalExpressionCategoryServices extends
 		AbstractCategoryServices<LogicalExpression> {
-	private static final ILogger				LOG					= LoggerFactory
+	public static final ILogger				LOG					= LoggerFactory
 																			.create(LogicalExpressionCategoryServices.class);
 	
 	private final boolean						doTypeChecking;

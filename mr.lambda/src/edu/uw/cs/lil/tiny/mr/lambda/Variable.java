@@ -33,7 +33,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class Variable extends Term {
 	public static final String		PREFIX				= "$";
-	private static final ILogger	LOG					= LoggerFactory
+	public static final ILogger	LOG					= LoggerFactory
 																.create(Variable.class);
 	private static final long		serialVersionUID	= -2489052410662325680L;
 	

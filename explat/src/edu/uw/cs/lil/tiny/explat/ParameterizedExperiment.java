@@ -37,14 +37,8 @@ import jregex.Pattern;
 import jregex.Replacer;
 import jregex.Substitution;
 import jregex.TextBuffer;
-import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
-import edu.uw.cs.utils.log.ILogger;
-import edu.uw.cs.utils.log.Log;
-import edu.uw.cs.utils.log.LogLevel;
-import edu.uw.cs.utils.log.Logger;
-import edu.uw.cs.utils.log.LoggerFactory;
 
 public abstract class ParameterizedExperiment implements IResourceRepository {
 	
@@ -58,16 +52,12 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 	private static final String			INCLUDE_DIRECTIVE			= "include";
 	private static final Pattern		LINE_REPEAT_PATTERN			= new Pattern(
 																			"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
-	private static final ILogger		LOG							= LoggerFactory
-																			.create(ParameterizedExperiment.class);
 	private static final Pattern		VAR_REF						= new Pattern(
 																			"%\\{({var}[\\w@]+)\\}");
 	private final Map<String, Object>	resources					= new HashMap<String, Object>();
 	private final File					rootDir;
 	protected final Parameters			globalParams;
 	protected final List<Parameters>	jobParams;
-	
-	protected final File				outputDir;
 	
 	protected final List<Parameters>	resourceParams;
 	
@@ -106,38 +96,12 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 						.put(entry.getKey(), entry.getValue());
 			}
 			
-			// TODO [yoav] Find a place to close the default log, if opened a
-			// stream for it
-			
-			// Output directory
-			this.outputDir = globalParams.contains("outputDir") ? globalParams
-					.getAsFile("outputDir") : null;
-			Assert.ifNull(outputDir);
-			// Create the directory, just to be on the safe side
-			outputDir.mkdir();
-			
-			// Init logging and output stream
-			final File globalLogFile = globalParams.contains("globalLog") ? globalParams
-					.getAsFile("globalLog") : null;
-			if (globalLogFile == null) {
-				Logger.DEFAULT_LOG = new Log(System.err);
-			} else {
-				Logger.DEFAULT_LOG = new Log(globalLogFile);
-			}
-			Logger.setSkipPrefix(true);
-			LogLevel.setLogLevel(LogLevel.INFO);
-			
-			// Log global parameters
-			LOG.info("Parameters:");
-			for (final Pair<String, String> param : globalParams) {
-				LOG.info("%s=%s", param.first(), param.second());
-			}
-			
 			// Read resources
 			this.resourceParams = readSectionLines(reader);
 			
 			// Read jobs
 			this.jobParams = readSectionLines(reader);
+			
 		} finally {
 			reader.close();
 		}

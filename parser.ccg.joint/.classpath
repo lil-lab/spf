@@ -8,5 +8,6 @@
 	<classpathentry kind="src" path="/exec"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
 	<classpathentry kind="src" path="/ccg.lexicon"/>
+	<classpathentry kind="src" path="/data.situated"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

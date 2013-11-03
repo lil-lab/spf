@@ -27,7 +27,7 @@ package edu.uw.cs.lil.tiny.data;
  * @see IDataItem
  */
 public interface ILabeledDataItem<SAMPLE, LABEL> extends
-		ILossDataItem<SAMPLE, LABEL> {
+		ILossDataItem<SAMPLE, LABEL>, IDataItem<SAMPLE> {
 	
 	LABEL getLabel();
 	
@@ -35,7 +35,6 @@ public interface ILabeledDataItem<SAMPLE, LABEL> extends
 	 * Compares a label to the gold standard if such exist.
 	 * 
 	 * @param label
-	 * @return null if not gold standard exists.
 	 */
 	boolean isCorrect(LABEL label);
 }

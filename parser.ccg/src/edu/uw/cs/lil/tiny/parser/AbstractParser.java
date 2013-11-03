@@ -27,54 +27,51 @@ import edu.uw.cs.utils.filter.IFilter;
  * Generic method over-loading for {@link IParser}.
  * 
  * @author Yoav Artzi
- * @param <LANG>
- * @param <MR>
+ * @see IParser
  */
-public abstract class AbstractParser<LANG, MR> implements IParser<LANG, MR> {
+public abstract class AbstractParser<DI extends IDataItem<?>, MR> implements
+		IParser<DI, MR> {
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model) {
+	public IParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model) {
 		return parse(dataItem, model, false);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping) {
+	public IParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping) {
 		return parse(dataItem, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping,
-			ILexicon<MR> tempLexicon) {
+	public IParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon) {
 		return parse(dataItem, model, allowWordSkipping, tempLexicon, null);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IDataItemModel<MR> model, boolean allowWordSkipping,
-			ILexicon<MR> tempLexicon, Integer beamSize) {
+	public IParserOutput<MR> parse(DI dataItem, IDataItemModel<MR> model,
+			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
+			Integer beamSize) {
 		return parse(dataItem, null, model, allowWordSkipping, tempLexicon,
 				beamSize);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
+	public IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model) {
 		return parse(dataItem, pruningFilter, model, false);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping) {
+	public IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, boolean allowWordSkipping) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public IParserOutput<MR> parse(IDataItem<LANG> dataItem,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
-			boolean allowWordSkipping, ILexicon<MR> tempLexicon) {
+	public IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+			IDataItemModel<MR> model, boolean allowWordSkipping,
+			ILexicon<MR> tempLexicon) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping,
 				tempLexicon, null);
 	}

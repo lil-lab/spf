@@ -19,9 +19,9 @@
 package edu.uw.cs.lil.tiny.learn.situated.resources;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.sentence.SituatedSentence;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
@@ -36,7 +36,7 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.utils.composites.Pair;
 
-public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
+public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SituatedSentence<STATE>, ?>>
 		implements
 		IResourceObjectCreator<SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI>> {
 	
@@ -60,7 +60,7 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI e
 		
 		final Builder<STATE, MR, ESTEP, ERESULT, DI> builder = new SituatedValidationPerceptron.Builder<STATE, MR, ESTEP, ERESULT, DI>(
 				trainingData,
-				(IJointParser<Sentence, STATE, MR, ESTEP, ERESULT>) repo
+				(IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT>) repo
 						.getResource(ParameterizedExperiment.PARSER_RESOURCE),
 				(IValidator<DI, Pair<MR, ERESULT>>) repo.getResource(params
 						.get("validator")));
@@ -76,7 +76,7 @@ public class SituatedValidationPerceptronCreator<STATE, MR, ESTEP, ERESULT, DI e
 		
 		if (params.contains("genlex")) {
 			builder.setGenlex(
-					(ILexiconGenerator<DI, MR, IJointModelImmutable<IDataItem<Pair<Sentence, STATE>>, STATE, MR, ESTEP>>) repo
+					(ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>>) repo
 							.getResource(params.get("genlex")),
 					(ICategoryServices<MR>) repo
 							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));

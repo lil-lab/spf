@@ -10,5 +10,6 @@
 	<classpathentry kind="src" path="/explat"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="src" path="/genlex.ccg"/>
+	<classpathentry kind="src" path="/data.situated"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

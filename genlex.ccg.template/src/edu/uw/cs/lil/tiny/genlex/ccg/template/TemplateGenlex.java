@@ -52,10 +52,10 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class TemplateGenlex
+public class TemplateGenlex<DI extends Sentence>
 		implements
-		ILexiconGenerator<Sentence, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
-	private static final ILogger				LOG	= LoggerFactory
+		ILexiconGenerator<DI, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
+	public static final ILogger					LOG	= LoggerFactory
 															.create(TemplateGenlex.class);
 	
 	private final int							maxTokens;
@@ -73,7 +73,7 @@ public class TemplateGenlex
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(Sentence dataItem,
+	public ILexicon<LogicalExpression> generate(DI dataItem,
 			IModelImmutable<Sentence, LogicalExpression> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getTokens();
@@ -95,7 +95,7 @@ public class TemplateGenlex
 				ILexiconGenerator.GENLEX_LEXICAL_ORIGIN);
 	}
 	
-	public static class Builder {
+	public static class Builder<DI extends Sentence> {
 		protected final Set<LogicalConstant>	constants	= new HashSet<LogicalConstant>();
 		protected final int						maxTokens;
 		protected final Set<LexicalTemplate>	templates	= new HashSet<LexicalTemplate>();
@@ -104,26 +104,28 @@ public class TemplateGenlex
 			this.maxTokens = maxTokens;
 		}
 		
-		public Builder addConstants(Iterable<LogicalConstant> constantCollection) {
+		public Builder<DI> addConstants(
+				Iterable<LogicalConstant> constantCollection) {
 			for (final LogicalConstant constant : constantCollection) {
 				constants.add(constant);
 			}
 			return this;
 		}
 		
-		public Builder addTemplate(LexicalTemplate template) {
+		public Builder<DI> addTemplate(LexicalTemplate template) {
 			templates.add(template);
 			return this;
 		}
 		
-		public Builder addTemplates(Iterable<LexicalTemplate> templateCollection) {
+		public Builder<DI> addTemplates(
+				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
 			}
 			return this;
 		}
 		
-		public Builder addTemplatesFromLexicon(
+		public Builder<DI> addTemplatesFromLexicon(
 				ILexicon<LogicalExpression> lexicon) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
 					.toCollection();
@@ -135,7 +137,7 @@ public class TemplateGenlex
 			return this;
 		}
 		
-		public Builder addTemplatesFromModel(
+		public Builder<DI> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
 					.getLexicon().toCollection();
@@ -147,8 +149,8 @@ public class TemplateGenlex
 			return this;
 		}
 		
-		public TemplateGenlex build() {
-			return new TemplateGenlex(templates, createPotentialLists(),
+		public TemplateGenlex<DI> build() {
+			return new TemplateGenlex<DI>(templates, createPotentialLists(),
 					maxTokens);
 		}
 		

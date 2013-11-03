@@ -35,7 +35,7 @@ public class ExactMatchTestingStatistics<SAMPLE, LABEL> extends
 		AbstractTestingStatistics<SAMPLE, LABEL> {
 	private static final String		DEFAULT_METRIC_NAME	= "EXACT";
 	
-	private static final ILogger	LOG					= LoggerFactory
+	public static final ILogger	LOG					= LoggerFactory
 																.create(ExactMatchTestingStatistics.class);
 	
 	public ExactMatchTestingStatistics() {

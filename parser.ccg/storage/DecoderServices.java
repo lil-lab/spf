@@ -35,7 +35,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class DecoderServices {
-	private static final ILogger	LOG								= LoggerFactory
+	public static final ILogger	LOG								= LoggerFactory
 																			.create(DecoderServices.class);
 	private static final String		STATIC_GET_DECODER_METHOD_NAME	= "getDecoder";
 	

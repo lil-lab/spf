@@ -46,7 +46,7 @@ public class Lambda extends LogicalExpression {
 	public static final String		PREFIX				= LogicalExpression.PARENTHESIS_OPEN
 																+ HEAD_STRING;
 	
-	private static final ILogger	LOG					= LoggerFactory
+	public static final ILogger	LOG					= LoggerFactory
 																.create(Lambda.class);
 	private static final long		serialVersionUID	= -9074603389979811699L;
 	private final Variable			argument;

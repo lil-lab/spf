@@ -27,7 +27,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class GeoMain {
-	private static final ILogger	LOG	= LoggerFactory.create(GeoMain.class);
+	public static final ILogger	LOG	= LoggerFactory.create(GeoMain.class);
 	
 	public static void main(String[] args) {
 		if (args.length < 1) {

@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.learn.validation.resources;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
@@ -36,7 +37,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.test.ITester;
 import edu.uw.cs.utils.filter.IFilter;
 
-public class ValidationPerceptronCreator<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
+public class ValidationPerceptronCreator<SAMPLE extends IDataItem<?>, DI extends ILabeledDataItem<SAMPLE, ?>, MR>
 		implements IResourceObjectCreator<ValidationPerceptron<SAMPLE, DI, MR>> {
 	
 	private final String	type;
@@ -74,7 +75,7 @@ public class ValidationPerceptronCreator<SAMPLE, DI extends IDataItem<SAMPLE>, M
 		
 		if (params.contains("genlex")) {
 			builder.setGenlex(
-					(ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>) repo
+					(ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>>) repo
 							.getResource(params.get("genlex")),
 					(ICategoryServices<MR>) repo
 							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));

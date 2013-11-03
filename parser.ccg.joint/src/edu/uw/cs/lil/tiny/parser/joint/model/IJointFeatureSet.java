@@ -19,10 +19,17 @@
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.utils.composites.Pair;
 
-public interface IJointFeatureSet<DI extends IDataItem<Pair<Sentence, STATE>>, STATE, ESTEP>
-		extends IJointFeatureSetImmutable<DI, STATE, ESTEP> {
+/**
+ * Feature set for joint inference.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Inference data item.
+ * @param <ESTEP>
+ *            Execution step.
+ */
+public interface IJointFeatureSet<DI extends IDataItem<?>, ESTEP> extends
+		IJointFeatureSetImmutable<DI, ESTEP> {
 	
 }

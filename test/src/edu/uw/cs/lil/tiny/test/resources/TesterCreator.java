@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.test.resources;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
@@ -28,7 +29,7 @@ import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.utils.filter.IFilter;
 
-public class TesterCreator<SAMPLE, MR> implements
+public class TesterCreator<SAMPLE extends IDataItem<?>, MR> implements
 		IResourceObjectCreator<Tester<SAMPLE, MR>> {
 	
 	@SuppressWarnings("unchecked")

@@ -44,7 +44,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public class Literal extends LogicalExpression {
 	public static final String				PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
 	
-	private static final ILogger			LOG					= LoggerFactory
+	public static final ILogger			LOG					= LoggerFactory
 																		.create(Literal.class);
 	
 	private static final long				serialVersionUID	= -4209330309716600396L;

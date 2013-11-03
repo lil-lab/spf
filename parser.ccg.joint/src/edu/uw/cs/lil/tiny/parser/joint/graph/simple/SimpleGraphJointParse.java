@@ -20,8 +20,10 @@ package edu.uw.cs.lil.tiny.parser.joint.graph.simple;
 
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
 import edu.uw.cs.lil.tiny.parser.joint.JointParse;
+import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParse;
 
-public class SimpleGraphJointParse<MR, ERESULT> extends JointParse<MR, ERESULT> {
+public class SimpleGraphJointParse<MR, ERESULT> extends JointParse<MR, ERESULT>
+		implements IJointGraphParse<MR, ERESULT> {
 	
 	private final IGraphParse<MR>	baseParse;
 	

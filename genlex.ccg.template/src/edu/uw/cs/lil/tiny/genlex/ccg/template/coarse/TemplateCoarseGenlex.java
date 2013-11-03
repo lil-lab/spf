@@ -55,25 +55,28 @@ import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
  * Lexicon generator that uses a parser to do initial filtering of generated
- * lexical entries. The generation process is based on abstract lexical entries,
- * which is basically a set of all templates initialized with abstract
- * constants. Abstract constants have the most basic types only. The generation
- * process starts with generating all lexemes for the input sentence using
- * abstract constants. The set of abstract lexemes is combined into a factored
- * lexicon with all templates. Then the sentence is parsed using the current
- * model with the abstract temporary lexicon. This parse is not accurate
- * according to the model, since the model is unfamiliar the any of the abstract
- * constants and can't generate features over them. From this approximate parse,
- * all GENLEX entries that participate in complete parses are collected. Using
- * their tokens and templates, a new lexicon is generated using all possible
- * constants (from the ontology). This lexicon is returned.
+ * lexical entries. The generation process is based on under-specified lexical
+ * entries, which is basically a set of all templates initialized with
+ * under-specified constants. Under-specified constants have the most basic
+ * types only. The generation process starts with generating all lexemes for the
+ * input sentence using under-specified constants. The set of under-specified
+ * lexemes is combined into a factored lexicon with all templates. Then the
+ * sentence is parsed using the current model with the under-specified temporary
+ * lexicon. This parse is not accurate according to the model, since the model
+ * is unfamiliar the any of the under-specified constants and can't generate
+ * features over them. From this approximate parse, all GENLEX entries that
+ * participate in complete parses are collected. Using their tokens and
+ * templates, a new lexicon is generated using all possible constants (from the
+ * ontology). This lexicon is returned.
  * 
  * @author Yoav Artzi
+ * @param <DI>
+ *            Data item for generation.
  */
-public class TemplateCoarseGenlex
+public class TemplateCoarseGenlex<DI extends Sentence>
 		implements
-		ILexiconGenerator<Sentence, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
-	private static final ILogger								LOG	= LoggerFactory
+		ILexiconGenerator<DI, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
+	public static final ILogger									LOG	= LoggerFactory
 																			.create(TemplateCoarseGenlex.class);
 	
 	private final Set<List<LogicalConstant>>					abstractConstantSeqs;
@@ -96,7 +99,7 @@ public class TemplateCoarseGenlex
 	}
 	
 	@Override
-	public ILexicon<LogicalExpression> generate(Sentence dataItem,
+	public ILexicon<LogicalExpression> generate(DI dataItem,
 			IModelImmutable<Sentence, LogicalExpression> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getTokens();
@@ -193,7 +196,7 @@ public class TemplateCoarseGenlex
 		return lexicon;
 	}
 	
-	public static class Builder {
+	public static class Builder<DI extends Sentence> {
 		private static final String								CONST_SEED_NAME	= "absconst";
 		
 		protected final Set<LogicalConstant>					constants		= new HashSet<LogicalConstant>();
@@ -218,26 +221,28 @@ public class TemplateCoarseGenlex
 							type);
 		}
 		
-		public Builder addConstants(Iterable<LogicalConstant> constantCollection) {
+		public Builder<DI> addConstants(
+				Iterable<LogicalConstant> constantCollection) {
 			for (final LogicalConstant constant : constantCollection) {
 				constants.add(constant);
 			}
 			return this;
 		}
 		
-		public Builder addTemplate(LexicalTemplate template) {
+		public Builder<DI> addTemplate(LexicalTemplate template) {
 			templates.add(template);
 			return this;
 		}
 		
-		public Builder addTemplates(Iterable<LexicalTemplate> templateCollection) {
+		public Builder<DI> addTemplates(
+				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
 			}
 			return this;
 		}
 		
-		public Builder addTemplatesFromModel(
+		public Builder<DI> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
 					.getLexicon().toCollection();
@@ -249,9 +254,10 @@ public class TemplateCoarseGenlex
 			return this;
 		}
 		
-		public TemplateCoarseGenlex build() {
-			return new TemplateCoarseGenlex(templates, createPotentialLists(),
-					createAbstractLists(), maxTokens, parser, parsingBeam);
+		public TemplateCoarseGenlex<DI> build() {
+			return new TemplateCoarseGenlex<DI>(templates,
+					createPotentialLists(), createAbstractLists(), maxTokens,
+					parser, parsingBeam);
 		}
 		
 		protected Set<List<LogicalConstant>> createAbstractLists() {

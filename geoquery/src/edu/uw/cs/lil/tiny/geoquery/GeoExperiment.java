@@ -34,7 +34,6 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexiconServices;
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.explat.DistributedExperiment;
@@ -65,7 +64,7 @@ import edu.uw.cs.utils.log.Logger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 public class GeoExperiment extends DistributedExperiment {
-	private static final ILogger					LOG	= LoggerFactory
+	public static final ILogger						LOG	= LoggerFactory
 																.create(GeoExperiment.class);
 	
 	private final LogicalExpressionCategoryServices	categoryServices;
@@ -303,7 +302,7 @@ public class GeoExperiment extends DistributedExperiment {
 				.get("tester"));
 		
 		// The model to use
-		final Model<IDataItem<Sentence>, LogicalExpression> model = getResource(params
+		final Model<Sentence, LogicalExpression> model = getResource(params
 				.get("model"));
 		
 		// Create and return the job
@@ -340,11 +339,11 @@ public class GeoExperiment extends DistributedExperiment {
 	@SuppressWarnings("unchecked")
 	private Job createTrainJob(Parameters params) throws FileNotFoundException {
 		// The model to use
-		final Model<IDataItem<Sentence>, LogicalExpression> model = (Model<IDataItem<Sentence>, LogicalExpression>) getResource(params
+		final Model<Sentence, LogicalExpression> model = (Model<Sentence, LogicalExpression>) getResource(params
 				.get("model"));
 		
 		// The learning
-		final ILearner<Sentence, SingleSentence, LogicalExpression, Model<IDataItem<Sentence>, LogicalExpression>> learner = (ILearner<Sentence, SingleSentence, LogicalExpression, Model<IDataItem<Sentence>, LogicalExpression>>) getResource(params
+		final ILearner<Sentence, SingleSentence, Model<Sentence, LogicalExpression>> learner = (ILearner<Sentence, SingleSentence, Model<Sentence, LogicalExpression>>) getResource(params
 				.get("learner"));
 		
 		return new Job(params.get("id"), new HashSet<String>(

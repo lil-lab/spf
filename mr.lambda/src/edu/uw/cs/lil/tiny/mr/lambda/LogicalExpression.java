@@ -39,7 +39,7 @@ public abstract class LogicalExpression implements
 		IMeaningRepresentation<ILogicalExpressionVisitor>, Serializable {
 	public static char				PARENTHESIS_CLOSE	= ')';
 	public static char				PARENTHESIS_OPEN	= '(';
-	private static final ILogger	LOG					= LoggerFactory
+	public static final ILogger	LOG					= LoggerFactory
 																.create(LogicalExpression.class);
 	private static final long		serialVersionUID	= 751768060713295464L;
 	

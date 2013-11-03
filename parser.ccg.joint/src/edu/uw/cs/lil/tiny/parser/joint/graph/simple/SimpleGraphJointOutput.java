@@ -18,23 +18,21 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.graph.simple;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
-import edu.uw.cs.lil.tiny.parser.joint.JointOutput;
+import edu.uw.cs.lil.tiny.parser.joint.GenericJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParserOutput;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.IFilter;
 
 public class SimpleGraphJointOutput<MR, ERESULT> extends
-		JointOutput<MR, ERESULT> implements
-		IJointGraphParserOutput<MR, ERESULT> {
+		GenericJointOutput<MR, ERESULT, SimpleGraphJointParse<MR, ERESULT>>
+		implements IJointGraphParserOutput<MR, ERESULT> {
 	
 	private final IGraphParserOutput<MR>					baseParserOutput;
 	
@@ -45,8 +43,7 @@ public class SimpleGraphJointOutput<MR, ERESULT> extends
 	public SimpleGraphJointOutput(IGraphParserOutput<MR> baseParserOutput,
 			List<SimpleGraphJointParse<MR, ERESULT>> jointParses,
 			long parsingTime) {
-		super(baseParserOutput, new ArrayList<IJointParse<MR, ERESULT>>(
-				jointParses), parsingTime);
+		super(baseParserOutput, jointParses, parsingTime);
 		this.baseParserOutput = baseParserOutput;
 		this.jointParses = jointParses;
 		for (final SimpleGraphJointParse<MR, ERESULT> parse : jointParses) {

@@ -25,7 +25,6 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.IParse;
@@ -42,9 +41,9 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  * @param <MR>
  */
-public class LexiconPruner<DI extends IDataItem<Sentence>, MR> implements
+public class LexiconPruner<DI extends Sentence, MR> implements
 		IModelPostProcessor<DI, MR> {
-	private static final ILogger		LOG	= LoggerFactory
+	public static final ILogger			LOG	= LoggerFactory
 													.create(LexiconPruner.class
 															.getName());
 	

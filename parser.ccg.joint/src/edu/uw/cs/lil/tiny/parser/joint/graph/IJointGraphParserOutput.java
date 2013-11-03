@@ -18,9 +18,12 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.graph;
 
+import java.util.List;
+
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**
@@ -43,10 +46,55 @@ public interface IJointGraphParserOutput<MR, ERESULT> extends
 	 */
 	IHashVector expectedFeatures(IFilter<ERESULT> filter);
 	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getAllParses();
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getAllParses(
+			boolean includeFails);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getBestParses();
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getBestParses(
+			boolean includeFails);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getBestParsesFor(
+			Pair<MR, ERESULT> label);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getBestParsesForY(
+			MR partialLabel);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getBestParsesForZ(
+			ERESULT partialLabel);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getMaxParses(
+			IFilter<Pair<MR, ERESULT>> filter);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getParses(
+			IFilter<Pair<MR, ERESULT>> filter);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getParsesFor(
+			Pair<MR, ERESULT> label);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getParsesForY(MR partialLabel);
+	
+	@Override
+	List<? extends IJointGraphParse<MR, ERESULT>> getParsesForZ(
+			ERESULT partialLabel);
+	
 	double norm();
 	
 	/**
-	 * Normalization constant using a joint filter.
+	 * Normalization constant using a filter.
 	 * 
 	 * @param filter
 	 * @return

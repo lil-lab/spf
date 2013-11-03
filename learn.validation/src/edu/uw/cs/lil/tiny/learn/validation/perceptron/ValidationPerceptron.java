@@ -28,6 +28,7 @@ import java.util.Set;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
@@ -57,12 +58,16 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * </p>
  * 
  * @author Yoav Artzi
+ * @param <SAMPLE>
+ *            Data item to use for inference.
+ * @param <DI>
+ *            Data item for learning.
  * @param <MR>
- *            Meaning representation type.
+ *            Meaning representation.
  */
-public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
+public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabeledDataItem<SAMPLE, ?>, MR>
 		extends AbstractLearner<SAMPLE, DI, IParserOutput<MR>, MR> {
-	private static final ILogger		LOG	= LoggerFactory
+	public static final ILogger			LOG	= LoggerFactory
 													.create(ValidationPerceptron.class);
 	/**
 	 * Only consider highest scoring valid parses for correct parses for
@@ -77,18 +82,13 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	private final IParser<SAMPLE, MR>	parser;
 	private final IValidator<DI, MR>	validator;
 	
-	private ValidationPerceptron(
-			int numIterations,
-			IDataCollection<DI> trainingData,
-			Map<DI, MR> trainingDataDebug,
-			int lexiconGenerationBeamSize,
-			IParser<SAMPLE, MR> parser,
-			IOutputLogger<MR> parserOutputLogger,
-			ITester<SAMPLE, MR> tester,
-			boolean conflateGenlexAndPrunedParses,
-			boolean errorDriven,
+	private ValidationPerceptron(int numIterations,
+			IDataCollection<DI> trainingData, Map<DI, MR> trainingDataDebug,
+			int lexiconGenerationBeamSize, IParser<SAMPLE, MR> parser,
+			IOutputLogger<MR> parserOutputLogger, ITester<SAMPLE, MR> tester,
+			boolean conflateGenlexAndPrunedParses, boolean errorDriven,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+			ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>> genlex,
 			double margin, boolean hardUpdates, IValidator<DI, MR> validator,
 			IFilter<DI> processingFilter) {
 		super(numIterations, trainingData, trainingDataDebug,
@@ -164,11 +164,11 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	
 	@Override
 	protected void parameterUpdate(DI dataItem, IParserOutput<MR> realOutput,
-			IParserOutput<MR> goodOutput, Model<IDataItem<SAMPLE>, MR> model,
+			IParserOutput<MR> goodOutput, Model<SAMPLE, MR> model,
 			int itemCounter, int epochNumber) {
 		
 		final IDataItemModel<MR> dataItemModel = model
-				.createDataItemModel(dataItem);
+				.createDataItemModel(dataItem.getSample());
 		
 		// Split all parses to valid and invalid sets
 		final Pair<List<IParse<MR>>, List<IParse<MR>>> validInvalidSetsPair = createValidInvalidSets(
@@ -229,21 +229,21 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	@Override
 	protected IParserOutput<MR> parse(DI dataItem,
 			IDataItemModel<MR> dataItemModel) {
-		return parser.parse(dataItem, dataItemModel);
+		return parser.parse(dataItem.getSample(), dataItemModel);
 	}
 	
 	@Override
 	protected IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> dataItemModel) {
-		return parser.parse(dataItem, pruningFilter, dataItemModel);
+		return parser.parse(dataItem.getSample(), pruningFilter, dataItemModel);
 	}
 	
 	@Override
 	protected IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
 			IDataItemModel<MR> dataItemModel, ILexicon<MR> generatedLexicon,
 			int beamSize) {
-		return parser.parse(dataItem, pruningFilter, dataItemModel, false,
-				generatedLexicon, beamSize);
+		return parser.parse(dataItem.getSample(), pruningFilter, dataItemModel,
+				false, generatedLexicon, beamSize);
 	}
 	
 	@Override
@@ -256,78 +256,78 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public static class Builder<SAMPLE, DI extends IDataItem<SAMPLE>, MR> {
+	public static class Builder<SAMPLE extends IDataItem<?>, DI extends ILabeledDataItem<SAMPLE, ?>, MR> {
 		
 		/**
 		 * Required for lexicon learning.
 		 */
-		private ICategoryServices<MR>												categoryServices				= null;
+		private ICategoryServices<MR>									categoryServices				= null;
 		
 		/**
 		 * Recycle the lexical induction parser output as the pruned one for
 		 * parameter update.
 		 */
-		private boolean																conflateGenlexAndPrunedParses	= false;
+		private boolean													conflateGenlexAndPrunedParses	= false;
 		
-		private boolean																errorDriven						= false;
+		private boolean													errorDriven						= false;
 		
 		/**
 		 * GENLEX procedure. If 'null' skips lexicon induction.
 		 */
-		private ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>>	genlex							= null;
+		private ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>>	genlex							= null;
 		
 		/**
 		 * Use hard updates. Meaning: consider only highest-scored valid parses
 		 * for parameter updates, instead of all valid parses.
 		 */
-		private boolean																hardUpdates						= false;
+		private boolean													hardUpdates						= false;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																	lexiconGenerationBeamSize		= 20;
+		private int														lexiconGenerationBeamSize		= 20;
 		
 		/** Margin to scale the relative loss function */
-		private double																margin							= 1.0;
+		private double													margin							= 1.0;
 		
 		/** Number of training iterations */
-		private int																	numIterations					= 4;
+		private int														numIterations					= 4;
 		
-		private final IParser<SAMPLE, MR>											parser;
-		private IOutputLogger<MR>													parserOutputLogger				= new IOutputLogger<MR>() {
-																														
-																														public void log(
-																																IParserOutput<MR> output,
-																																IDataItemModel<MR> dataItemModel) {
-																															// Stub
-																															
-																														}
-																													};
+		private final IParser<SAMPLE, MR>								parser;
+		private IOutputLogger<MR>										parserOutputLogger				= new IOutputLogger<MR>() {
+																											
+																											public void log(
+																													IParserOutput<MR> output,
+																													IDataItemModel<MR> dataItemModel) {
+																												// Stub
+																												
+																											}
+																										};
 		
 		/**
 		 * Processing filter, if 'false', skip sample.
 		 */
-		private IFilter<DI>															processingFilter				= new IFilter<DI>() {
-																														
-																														@Override
-																														public boolean isValid(
-																																DI e) {
-																															return true;
-																														}
-																													};
+		private IFilter<DI>												processingFilter				= new IFilter<DI>() {
+																											
+																											@Override
+																											public boolean isValid(
+																													DI e) {
+																												return true;
+																											}
+																										};
 		
-		private ITester<SAMPLE, MR>													tester							= null;
+		private ITester<SAMPLE, MR>										tester							= null;
 		
 		/** Training data */
-		private final IDataCollection<DI>											trainingData;
+		private final IDataCollection<DI>								trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<DI, MR>															trainingDataDebug				= new HashMap<DI, MR>();
+		private Map<DI, MR>												trainingDataDebug				= new HashMap<DI, MR>();
 		
-		private final IValidator<DI, MR>											validator;
+		private final IValidator<DI, MR>								validator;
 		
 		public Builder(IDataCollection<DI> trainingData,
 				IParser<SAMPLE, MR> parser, IValidator<DI, MR> validator) {
@@ -357,7 +357,7 @@ public class ValidationPerceptron<SAMPLE, DI extends IDataItem<SAMPLE>, MR>
 		}
 		
 		public Builder<SAMPLE, DI, MR> setGenlex(
-				ILexiconGenerator<DI, MR, IModelImmutable<IDataItem<SAMPLE>, MR>> genlex,
+				ILexiconGenerator<DI, MR, IModelImmutable<SAMPLE, MR>> genlex,
 				ICategoryServices<MR> categoryServices) {
 			this.genlex = genlex;
 			this.categoryServices = categoryServices;

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.genlex.ccg.unification.resources;
 
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
@@ -28,8 +29,8 @@ import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.IUnificationSplitter;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 
-public class UnificationGenlexCreator implements
-		IResourceObjectCreator<UnificationGenlex> {
+public class UnificationGenlexCreator<DI extends SingleSentence> implements
+		IResourceObjectCreator<UnificationGenlex<DI>> {
 	
 	private final String	type;
 	
@@ -43,8 +44,9 @@ public class UnificationGenlexCreator implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public UnificationGenlex create(Parameters params, IResourceRepository repo) {
-		return new UnificationGenlex(
+	public UnificationGenlex<DI> create(Parameters params,
+			IResourceRepository repo) {
+		return new UnificationGenlex<DI>(
 				(AbstractCKYParser<LogicalExpression>) repo
 						.getResource(ParameterizedExperiment.PARSER_RESOURCE),
 				(IUnificationSplitter) repo.getResource(params.get("splitter")),

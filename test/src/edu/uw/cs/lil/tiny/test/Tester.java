@@ -36,8 +36,9 @@ import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
-public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
-	private static final ILogger											LOG	= LoggerFactory
+public class Tester<SAMPLE extends IDataItem<?>, MR> implements
+		ITester<SAMPLE, MR> {
+	public static final ILogger												LOG	= LoggerFactory
 																						.create(Tester.class
 																								.getName());
 	
@@ -57,13 +58,13 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 	}
 	
 	@Override
-	public void test(IModelImmutable<IDataItem<SAMPLE>, MR> model,
+	public void test(IModelImmutable<SAMPLE, MR> model,
 			ITestingStatistics<SAMPLE, MR> stats) {
 		test(testData, model, stats);
 	}
 	
 	private String lexToString(Iterable<LexicalEntry<MR>> lexicalEntries,
-			IModelImmutable<IDataItem<SAMPLE>, MR> model) {
+			IModelImmutable<SAMPLE, MR> model) {
 		final StringBuilder ret = new StringBuilder();
 		ret.append("[LexEntries and scores:\n");
 		for (final LexicalEntry<MR> entry : lexicalEntries) {
@@ -80,7 +81,7 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 	
 	private void logParse(ILabeledDataItem<SAMPLE, MR> dataItem,
 			IParse<MR> parse, boolean logLexicalItems, String tag,
-			IModelImmutable<IDataItem<SAMPLE>, MR> model) {
+			IModelImmutable<SAMPLE, MR> model) {
 		LOG.info("%s%s[S%.2f] %s",
 				dataItem.getLabel().equals(parse.getSemantics()) ? "* " : "  ",
 				tag == null ? "" : tag + " ", parse.getScore(), parse);
@@ -98,7 +99,7 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 	
 	private void processSingleBestParse(
 			final ILabeledDataItem<SAMPLE, MR> dataItem,
-			IModelImmutable<IDataItem<SAMPLE>, MR> model,
+			IModelImmutable<SAMPLE, MR> model,
 			final IParserOutput<MR> modelParserOutput, final IParse<MR> parse,
 			boolean withWordSkipping, ITestingStatistics<SAMPLE, MR> stats) {
 		final Set<LexicalEntry<MR>> lexicalEntries = parse
@@ -159,7 +160,7 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 	
 	private void test(
 			IDataCollection<? extends ILabeledDataItem<SAMPLE, MR>> dataset,
-			IModelImmutable<IDataItem<SAMPLE>, MR> model,
+			IModelImmutable<SAMPLE, MR> model,
 			ITestingStatistics<SAMPLE, MR> stats) {
 		int itemCounter = 0;
 		for (final ILabeledDataItem<SAMPLE, MR> item : dataset) {
@@ -170,14 +171,15 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 	
 	private void test(int itemCounter,
 			final ILabeledDataItem<SAMPLE, MR> dataItem,
-			IModelImmutable<IDataItem<SAMPLE>, MR> model,
+			IModelImmutable<SAMPLE, MR> model,
 			ITestingStatistics<SAMPLE, MR> stats) {
 		LOG.info("%d : ==================", itemCounter);
 		LOG.info("%s", dataItem);
 		
 		// Try a simple model parse
-		final IParserOutput<MR> modelParserOutput = parser.parse(dataItem,
-				model.createDataItemModel(dataItem));
+		final IParserOutput<MR> modelParserOutput = parser.parse(
+				dataItem.getSample(),
+				model.createDataItemModel(dataItem.getSample()));
 		LOG.info("Test parsing time %.2f",
 				modelParserOutput.getParsingTime() / 1000.0);
 		
@@ -238,7 +240,8 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 			// Potentially re-parse with word skipping
 			if (skipParsingFilter.isValid(dataItem.getSample())) {
 				final IParserOutput<MR> parserOutputWithSkipping = parser
-						.parse(dataItem, model.createDataItemModel(dataItem),
+						.parse(dataItem.getSample(),
+								model.createDataItemModel(dataItem.getSample()),
 								true);
 				LOG.info("EMPTY Parsing time %f",
 						parserOutputWithSkipping.getParsingTime() / 1000.0);
@@ -300,7 +303,7 @@ public class Tester<SAMPLE, MR> implements ITester<SAMPLE, MR> {
 		}
 	}
 	
-	public static class Builder<SAMPLE, MR> {
+	public static class Builder<SAMPLE extends IDataItem<?>, MR> {
 		
 		private final IParser<SAMPLE, MR>										parser;
 		

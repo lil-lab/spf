@@ -27,14 +27,16 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
  * Lexical entries generator.
  * 
  * @author Yoav Artzi
- * @param <SAMPLE>
- *            Type of sample data item.
+ * @param <DI>
+ *            Type of sample data item for generation.
  * @param <MR>
  *            Type of meaning representation.
+ * @param <MODEL>
+ *            Inference model.
  */
-public interface ILexiconGenerator<SAMPLE extends IDataItem<?>, MR, MODEL extends IModelImmutable<?, ?>> {
+public interface ILexiconGenerator<DI extends IDataItem<?>, MR, MODEL extends IModelImmutable<?, ?>> {
 	public static final String	GENLEX_LEXICAL_ORIGIN	= "genlex";
 	
-	ILexicon<MR> generate(SAMPLE dataItem, MODEL model,
+	ILexicon<MR> generate(DI dataItem, MODEL model,
 			ICategoryServices<MR> categoryServices);
 }

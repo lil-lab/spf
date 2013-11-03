@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.genlex.ccg.template.resources;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
@@ -27,8 +28,8 @@ import edu.uw.cs.lil.tiny.genlex.ccg.template.TemplateSupervisedGenlex;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 
-public class TemplateSupervisedGenlexCreator implements
-		IResourceObjectCreator<TemplateSupervisedGenlex> {
+public class TemplateSupervisedGenlexCreator<DI extends SingleSentence>
+		implements IResourceObjectCreator<TemplateSupervisedGenlex<DI>> {
 	
 	private final String	type;
 	
@@ -42,9 +43,9 @@ public class TemplateSupervisedGenlexCreator implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public TemplateSupervisedGenlex create(Parameters params,
+	public TemplateSupervisedGenlex<DI> create(Parameters params,
 			IResourceRepository repo) {
-		final TemplateSupervisedGenlex.Builder builder = new TemplateSupervisedGenlex.Builder(
+		final TemplateSupervisedGenlex.Builder<DI> builder = new TemplateSupervisedGenlex.Builder<DI>(
 				Integer.valueOf(params.get("maxTokens")));
 		
 		if (params.contains("templatesModel")) {

@@ -37,8 +37,8 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
@@ -77,23 +77,23 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * 
  * @author Yoav Artzi
  */
-public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>>
+public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends SAMPLE>
 		implements
-		ILexiconGenerator<DI, LogicalExpression, IJointModelImmutable<DI, STATE, LogicalExpression, ESTEP>> {
-	private static final ILogger													LOG	= LoggerFactory
-																								.create(JointTemplatedAbstractLexiconGenerator.class);
+		ILexiconGenerator<DI, LogicalExpression, IJointModelImmutable<SAMPLE, LogicalExpression, ESTEP>> {
+	public static final ILogger												LOG	= LoggerFactory
+																						.create(JointTemplatedAbstractLexiconGenerator.class);
 	
-	private final Set<List<LogicalConstant>>										abstractConstantSeqs;
-	private final IParser<Sentence, LogicalExpression>								baseParser;
-	private final int																generationParsingBeam;
-	private final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
-	private final double															margin;
-	private final int																maxTokens;
+	private final Set<List<LogicalConstant>>								abstractConstantSeqs;
+	private final IParser<Sentence, LogicalExpression>						baseParser;
+	private final int														generationParsingBeam;
+	private final IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT>	jointParser;
+	private final double													margin;
+	private final int														maxTokens;
 	
-	private final Set<Pair<List<Type>, List<LogicalConstant>>>						potentialConstantSeqs;
-	private final Set<LexicalTemplate>												templates;
+	private final Set<Pair<List<Type>, List<LogicalConstant>>>				potentialConstantSeqs;
+	private final Set<LexicalTemplate>										templates;
 	
-	private final IValidator<DI, Pair<LogicalExpression, ERESULT>>					validator;
+	private final IValidator<DI, Pair<LogicalExpression, ERESULT>>			validator;
 	
 	protected JointTemplatedAbstractLexiconGenerator(
 			Set<LexicalTemplate> templates,
@@ -102,7 +102,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			int maxTokens,
 			IParser<Sentence, LogicalExpression> baseParser,
 			int generationParsingBeam,
-			IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
+			IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT> jointParser,
 			double margin,
 			IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
@@ -123,7 +123,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 	
 	@Override
 	public ILexicon<LogicalExpression> generate(DI dataItem,
-			IJointModelImmutable<DI, STATE, LogicalExpression, ESTEP> model,
+			IJointModelImmutable<SAMPLE, LogicalExpression, ESTEP> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
 		final List<String> tokens = dataItem.getSample().first().getTokens();
 		final int numTokens = tokens.size();
@@ -272,27 +272,27 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 		return lexicon;
 	}
 	
-	public static class Builder<STATE, ESTEP, ERESULT, DI extends IDataItem<Pair<Sentence, STATE>>> {
-		private static final String															CONST_SEED_NAME	= "absconst";
+	public static class Builder<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends SAMPLE> {
+		private static final String												CONST_SEED_NAME	= "absconst";
 		
-		protected final IParser<Sentence, LogicalExpression>								baseParser;
-		protected final Set<LogicalConstant>												constants		= new HashSet<LogicalConstant>();
-		protected final int																	generationParsingBeam;
-		protected final IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT>	jointParser;
+		protected final IParser<Sentence, LogicalExpression>					baseParser;
+		protected final Set<LogicalConstant>									constants		= new HashSet<LogicalConstant>();
+		protected final int														generationParsingBeam;
+		protected final IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT>	jointParser;
 		
-		protected double																	margin			= 0.0;
+		protected double														margin			= 0.0;
 		
-		protected final int																	maxTokens;
+		protected final int														maxTokens;
 		
-		protected final Set<LexicalTemplate>												templates		= new HashSet<LexicalTemplate>();
+		protected final Set<LexicalTemplate>									templates		= new HashSet<LexicalTemplate>();
 		
-		protected final IValidator<DI, Pair<LogicalExpression, ERESULT>>					validator;
+		protected final IValidator<DI, Pair<LogicalExpression, ERESULT>>		validator;
 		
 		public Builder(
 				int maxTokens,
 				IParser<Sentence, LogicalExpression> parser,
 				int generationParsingBeam,
-				IJointParser<Sentence, STATE, LogicalExpression, ESTEP, ERESULT> jointParser,
+				IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT> jointParser,
 				IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
 			this.maxTokens = maxTokens;
 			this.baseParser = parser;
@@ -307,7 +307,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 							String.format("%s", CONST_SEED_NAME), type), type);
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> addConstants(
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> addConstants(
 				Iterable<LogicalConstant> constantCollection) {
 			for (final LogicalConstant constant : constantCollection) {
 				constants.add(constant);
@@ -315,13 +315,13 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> addTemplate(
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> addTemplate(
 				LexicalTemplate template) {
 			templates.add(template);
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> addTemplates(
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> addTemplates(
 				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
@@ -329,7 +329,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> addTemplatesFromLexicon(
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> addTemplatesFromLexicon(
 				ILexicon<LogicalExpression> lexicon) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
 					.toCollection();
@@ -341,7 +341,7 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			return this;
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> addTemplatesFromModel(
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> addTemplatesFromModel(
 				IModelImmutable<?, LogicalExpression> sourceModel) {
 			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = sourceModel
 					.getLexicon().toCollection();
@@ -353,14 +353,14 @@ public class JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI ex
 			return this;
 		}
 		
-		public JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI> build() {
-			return new JointTemplatedAbstractLexiconGenerator<STATE, ESTEP, ERESULT, DI>(
+		public JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE, DI> build() {
+			return new JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE, DI>(
 					templates, createPotentialLists(), createAbstractLists(),
 					maxTokens, baseParser, generationParsingBeam, jointParser,
 					margin, validator);
 		}
 		
-		public Builder<STATE, ESTEP, ERESULT, DI> setMargin(double margin) {
+		public Builder<ESTEP, ERESULT, SAMPLE, DI> setMargin(double margin) {
 			this.margin = margin;
 			return this;
 		}

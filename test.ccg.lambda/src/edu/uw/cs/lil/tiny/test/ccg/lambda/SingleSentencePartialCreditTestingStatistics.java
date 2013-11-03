@@ -43,7 +43,7 @@ public class SingleSentencePartialCreditTestingStatistics implements
 		ITestingStatistics<Sentence, LogicalExpression> {
 	private static final String		DEFAULT_METRIC_NAME				= "PARTIAL_CREDIT";
 	
-	private static final ILogger	LOG								= LoggerFactory
+	public static final ILogger	LOG								= LoggerFactory
 																			.create(SingleSentencePartialCreditTestingStatistics.class);
 	
 	private final String			metricName;

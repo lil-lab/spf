@@ -33,13 +33,14 @@ import edu.uw.cs.utils.composites.Pair;
  * @author Yoav Artzi
  * @param <Y>
  */
+@Deprecated
 public class TauFunction<Y> implements IUpdateWeightFunction<Y> {
-	private final RelativeLossFunction							deltaLossFunction;
-	private final double										margin;
-	private final int											numViolatingOptimalParse;
-	private final IHashVector									paramsVector;
-	private final double										valueForOptimalParses;
-	private final int[]											vCTotalValues;
+	private final RelativeLossFunction						deltaLossFunction;
+	private final double									margin;
+	private final int										numViolatingOptimalParse;
+	private final IHashVector								paramsVector;
+	private final double									valueForOptimalParses;
+	private final int[]										vCTotalValues;
 	private final List<Pair<Double, ? extends IParse<Y>>>	violatingOptimalParses;
 	
 	public TauFunction(

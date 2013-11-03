@@ -30,7 +30,6 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
-import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
@@ -50,7 +49,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 
 public abstract class AbstractCKYParser<MR> extends
 		AbstractGraphParser<Sentence, MR> {
-	private static final ILogger						LOG	= LoggerFactory
+	public static final ILogger							LOG	= LoggerFactory
 																	.create(AbstractCKYParser.class);
 	
 	/**
@@ -112,33 +111,32 @@ public abstract class AbstractCKYParser<MR> extends
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
-			IDataItemModel<MR> model) {
+	public CKYParserOutput<MR> parse(Sentence dataItem, IDataItemModel<MR> model) {
 		return parse(dataItem, model, false);
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IDataItemModel<MR> model, boolean allowWordSkipping) {
 		return parse(dataItem, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon) {
 		return parse(dataItem, model, allowWordSkipping, tempLexicon, null);
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer altBeamSize) {
 		return parse(dataItem, model, allowWordSkipping, tempLexicon,
 				altBeamSize, null);
 	}
 	
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer altBeamSize,
 			AbstractCellFactory<MR> cellFactory) {
@@ -147,20 +145,20 @@ public abstract class AbstractCKYParser<MR> extends
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
 		return parse(dataItem, pruningFilter, model, false);
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
 			boolean allowWordSkipping) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping, null);
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
 			boolean allowWordSkipping, ILexicon<MR> tempLexicon) {
 		return parse(dataItem, pruningFilter, model, allowWordSkipping,
@@ -168,7 +166,7 @@ public abstract class AbstractCKYParser<MR> extends
 	}
 	
 	@Override
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
 			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
 			Integer altBeamSize) {
@@ -176,21 +174,20 @@ public abstract class AbstractCKYParser<MR> extends
 				tempLexicon, altBeamSize, null);
 	}
 	
-	public CKYParserOutput<MR> parse(IDataItem<Sentence> dataItem,
+	public CKYParserOutput<MR> parse(Sentence dataItem,
 			IFilter<MR> pruningFilter, IDataItemModel<MR> model,
 			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
 			Integer altBeamSize, AbstractCellFactory<MR> scoreSensitiveFactory) {
 		// Store starting time
 		final long start = System.currentTimeMillis();
 		
-		final List<String> tokens = dataItem.getSample().getTokens();
+		final List<String> tokens = dataItem.getTokens();
 		
 		// Factory to create cells
 		final AbstractCellFactory<MR> cellFactory;
 		if (scoreSensitiveFactory == null) {
 			// Case we use model scoring for pruning
-			cellFactory = new CellFactory<MR>(dataItem.getSample().getTokens()
-					.size());
+			cellFactory = new CellFactory<MR>(dataItem.getTokens().size());
 		} else {
 			// Case we use an external scoring function for pruning
 			cellFactory = scoreSensitiveFactory;
@@ -206,16 +203,15 @@ public abstract class AbstractCKYParser<MR> extends
 		
 		// Lexicon for work skipping
 		if (allowWordSkipping) {
-			lexicons.add(new Lexicon<MR>(
-					wordSkippingLexicalGenerator.generateLexicon(
-							dataItem.getSample(), dataItem.getSample())));
+			lexicons.add(new Lexicon<MR>(wordSkippingLexicalGenerator
+					.generateLexicon(dataItem, dataItem)));
 		}
 		
 		// Lexicon with hueristically generated lexical entries. The entries are
 		// generated given the string of the sentence.
 		for (final ISentenceLexiconGenerator<MR> generator : sentenceLexiconGenerators) {
-			lexicons.add(new Lexicon<MR>(generator.generateLexicon(
-					dataItem.getSample(), dataItem.getSample())));
+			lexicons.add(new Lexicon<MR>(generator.generateLexicon(dataItem,
+					dataItem)));
 		}
 		
 		// The model lexicon
