@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
 import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
@@ -37,12 +38,12 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public abstract class LoggedExperiment extends ParameterizedExperiment {
 	public static final ILogger	LOG	= LoggerFactory
-												.create(LoggedExperiment.class);
-	protected final File			outputDir;
+											.create(LoggedExperiment.class);
+	protected final File		outputDir;
 	
-	public LoggedExperiment(File file, Map<String, String> envParams)
-			throws IOException {
-		super(file, envParams);
+	public LoggedExperiment(File file, Map<String, String> envParams,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		super(file, envParams, creatorRepo);
 		
 		// TODO [yoav] Find a place to close the default log, if opened a
 		// stream for it
@@ -60,6 +61,7 @@ public abstract class LoggedExperiment extends ParameterizedExperiment {
 		if (globalLogFile == null) {
 			Logger.DEFAULT_LOG = new Log(System.err);
 		} else {
+			LOG.info("Logging to: %s", globalLogFile);
 			Logger.DEFAULT_LOG = new Log(globalLogFile);
 		}
 		Logger.setSkipPrefix(true);

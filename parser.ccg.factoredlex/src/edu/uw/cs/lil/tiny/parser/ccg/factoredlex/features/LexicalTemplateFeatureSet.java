@@ -18,27 +18,22 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.AbstractLexicalFeatureSet;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
@@ -58,8 +53,6 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 	
 	private final String								featureTag;
 	
-	private final ISerializableScorer<LexicalTemplate>	initialFixedScorer;
-	
 	private final ISerializableScorer<LexicalTemplate>	initialScorer;
 	
 	private int											nextId				= 0;
@@ -69,11 +62,9 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 	private final Map<LexicalTemplate, Integer>			templateIds;
 	
 	private LexicalTemplateFeatureSet(String featureTag,
-			ISerializableScorer<LexicalTemplate> initialFixedScorer,
 			ISerializableScorer<LexicalTemplate> initialScorer,
 			Map<LexicalTemplate, Integer> templateIds, double scale) {
 		this.featureTag = featureTag;
-		this.initialFixedScorer = initialFixedScorer;
 		this.initialScorer = initialScorer;
 		this.templateIds = templateIds;
 		this.scale = scale;
@@ -83,11 +74,6 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 				nextId = entry.getValue() + 1;
 			}
 		}
-	}
-	
-	public static <DI extends IDataItem<?>> IDecoder<LexicalTemplateFeatureSet<DI>> getDecoder(
-			DecoderHelper<LogicalExpression> decoderHelper) {
-		return new Decoder<DI>(decoderHelper);
 	}
 	
 	@Override
@@ -104,23 +90,6 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 		templateIds.put(template, new Integer(num));
 		parametersVector.set(featureTag, String.valueOf(num),
 				initialScorer.score(template));
-		return true;
-	}
-	
-	@Override
-	public boolean addFixedEntry(LexicalEntry<LogicalExpression> entry,
-			IHashVector parametersVector) {
-		final LexicalTemplate template = getTemplate(entry);
-		if (template == null) {
-			return false;
-		}
-		if (templateIds.containsKey(template)) {
-			return false;
-		}
-		final int num = getNextId();
-		templateIds.put(template, new Integer(num));
-		parametersVector.set(featureTag, String.valueOf(num),
-				initialFixedScorer.score(template));
 		return true;
 	}
 	
@@ -228,31 +197,22 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 	
 	public static class Builder<DI extends IDataItem<?>> {
 		
-		private String									featureTag			= "XTMP";
+		private String									featureTag		= "XTMP";
 		
-		private ISerializableScorer<LexicalTemplate>	initialFixedScorer	= new UniformScorer<LexicalTemplate>(
-																					0.0);
+		private ISerializableScorer<LexicalTemplate>	initialScorer	= new UniformScorer<LexicalTemplate>(
+																				0.0);
 		
-		private ISerializableScorer<LexicalTemplate>	initialScorer		= new UniformScorer<LexicalTemplate>(
-																					0.0);
+		private double									scale			= 1.0;
 		
-		private double									scale				= 1.0;
-		
-		private final Map<LexicalTemplate, Integer>		templateIds			= new HashMap<LexicalTemplate, Integer>();
+		private final Map<LexicalTemplate, Integer>		templateIds		= new HashMap<LexicalTemplate, Integer>();
 		
 		public LexicalTemplateFeatureSet<DI> build() {
-			return new LexicalTemplateFeatureSet<DI>(featureTag,
-					initialFixedScorer, initialScorer, templateIds, scale);
+			return new LexicalTemplateFeatureSet<DI>(featureTag, initialScorer,
+					templateIds, scale);
 		}
 		
 		public Builder<DI> setFeatureTag(String featureTag) {
 			this.featureTag = featureTag;
-			return this;
-		}
-		
-		public Builder<DI> setInitialFixedScorer(
-				ISerializableScorer<LexicalTemplate> initialFixedScorer) {
-			this.initialFixedScorer = initialFixedScorer;
 			return this;
 		}
 		
@@ -269,103 +229,51 @@ public class LexicalTemplateFeatureSet<DI extends IDataItem<?>> extends
 		
 	}
 	
-	private static class Decoder<DI extends IDataItem<?>> extends
-			AbstractDecoderIntoFile<LexicalTemplateFeatureSet<DI>> {
+	public static class Creator<DI extends IDataItem<?>> implements
+			IResourceObjectCreator<LexicalTemplateFeatureSet<DI>> {
 		
-		private static final int						VERSION	= 1;
-		
-		private final DecoderHelper<LogicalExpression>	decoderHelper;
-		
-		public Decoder(DecoderHelper<LogicalExpression> decoderHelper) {
-			super(LexicalTemplateFeatureSet.class);
-			this.decoderHelper = decoderHelper;
-		}
-		
+		@SuppressWarnings("unchecked")
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				LexicalTemplateFeatureSet<DI> object) {
-			final HashMap<String, String> attributes = new HashMap<String, String>();
+		public LexicalTemplateFeatureSet<DI> create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			final LexicalTemplateFeatureSet.Builder<DI> builder = new LexicalTemplateFeatureSet.Builder<DI>();
 			
-			attributes.put("featureTag", object.featureTag);
-			attributes.put("scale", Double.toString(object.scale));
-			
-			return attributes;
-		}
-		
-		@Override
-		protected LexicalTemplateFeatureSet<DI> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			final String featureTag = attributes.get("featureTag");
-			final double scale = Double.valueOf(attributes.get("scale"));
-			
-			// Read scorers from external files
-			final ISerializableScorer<LexicalTemplate> initialScorer = DecoderServices
-					.decode(dependentFiles.get("initialScorer"), decoderHelper);
-			final ISerializableScorer<LexicalTemplate> initialFixedScorer = DecoderServices
-					.decode(dependentFiles.get("initialFixedScorer"),
-							decoderHelper);
-			
-			// Read lexItems mapping
-			final Map<LexicalTemplate, Integer> templateIds = new HashMap<LexicalTemplate, Integer>();
-			// Read the header of the map
-			readTextLine(reader);
-			String line;
-			while (!(line = readTextLine(reader))
-					.equals("LEX_TEMPLATES_MAP_END")) {
-				final String split[] = line.split("\t");
-				final LexicalTemplate template = LexicalTemplate.parse(
-						split[0], decoderHelper.getCategoryServices(),
-						Lexicon.SAVED_LEXICON_ORIGIN);
-				final int id = Integer.valueOf(split[1]);
-				templateIds.put(template, id);
+			if (parameters.contains("scale")) {
+				builder.setScale(Double.valueOf(parameters.get("scale")));
 			}
 			
-			final LexicalTemplateFeatureSet<DI> lfs = new LexicalTemplateFeatureSet<DI>(
-					featureTag, initialFixedScorer, initialScorer, templateIds,
-					scale);
-			return lfs;
-		}
-		
-		@Override
-		protected void doEncode(LexicalTemplateFeatureSet<DI> object,
-				BufferedWriter writer) throws IOException {
-			// Store mapping of lexical templates to feature IDs
-			writer.write("LEX_TEMPLATES_MAP_START\n");
-			for (final Map.Entry<LexicalTemplate, Integer> entry : object.templateIds
-					.entrySet()) {
-				writer.write(String.format("%s\t%d\n", entry.getKey(),
-						entry.getValue()));
+			if (parameters.contains("tag")) {
+				builder.setFeatureTag(parameters.get("tag"));
 			}
-			writer.write("LEX_TEMPLATES_MAP_END\n");
+			
+			if (parameters.contains("init")) {
+				builder.setInitialScorer((ISerializableScorer<LexicalTemplate>) resourceRepo
+						.getResource(parameters.get("init")));
+			}
+			
+			return builder.build();
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				LexicalTemplateFeatureSet<DI> object, File directory,
-				File parentFile) throws IOException {
-			final Map<String, File> dependentFiles = new HashMap<String, File>();
-			
-			// Store scorers to separate files
-			final File initialScorerFile = new File(directory,
-					parentFile.getName() + ".initialScorer");
-			DecoderServices.encode(object.initialScorer, initialScorerFile,
-					decoderHelper);
-			dependentFiles.put("initialScorer", initialScorerFile);
-			
-			final File initialFixedScorerFile = new File(directory,
-					parentFile.getName() + ".initialFixedScorer");
-			DecoderServices.encode(object.initialFixedScorer,
-					initialFixedScorerFile, decoderHelper);
-			dependentFiles.put("initialFixedScorer", initialFixedScorerFile);
-			
-			return dependentFiles;
+		public String type() {
+			return "feat.lextemplate";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					LexicalTemplateFeatureSet.class)
+					.setDescription(
+							"Feature set that generates features for using lexical templates")
+					.addParam("scale", "double",
+							"Scaling factor for generated features (default: 1.0)")
+					.addParam("tag", "string",
+							"Feature tag to use for generated features (default: XTMP)")
+					.addParam(
+							"init",
+							"id",
+							"Scorer used to score unknown templates (default: uniform scorer with value 0.0)")
+					.build();
 		}
 		
 	}

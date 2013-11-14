@@ -52,7 +52,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @see Cell
  */
 public class Chart<MR> implements Iterable<Cell<MR>> {
-	public static final ILogger			LOG	= LoggerFactory
+	public static final ILogger				LOG	= LoggerFactory
 														.create(Chart.class
 																.getName());
 	
@@ -111,7 +111,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			addNew(cell);
 		} else {
 			// Case adding the content of this cell to an existing cell
-			LOG.debug("IN-to-EXIST: %s --> %s", cell, existingCell);
+			LOG.debug("Adding to existing cell: %s --> %s", cell, existingCell);
 			// Adding to existing is done through a special model. In some cases
 			// it requires special operations on the queue, due to the potential
 			// of changing the score of the original cell.
@@ -247,7 +247,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	public double norm(IFilter<MR> filter) {
 		double norm = 0.0;
 		for (final Cell<MR> c : fullparses()) {
-			if (filter.isValid(c.getCategroy().getSem())) {
+			if (filter.isValid(c.getCategory().getSem())) {
 				norm += c.getInsideScore();
 			}
 		}
@@ -293,7 +293,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		final List<Cell<MR>> maxCells = new LinkedList<Cell<MR>>();
 		double highest = -Double.MAX_VALUE;
 		for (final Cell<MR> cell : fullparses()) {
-			if (semantics.equals(cell.getCategroy().getSem())) {
+			if (semantics.equals(cell.getCategory().getSem())) {
 				if (cell.getViterbiScore() > highest) {
 					highest = cell.getViterbiScore();
 					maxCells.clear();
@@ -319,9 +319,23 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	
 	@Override
 	public String toString() {
+		return toString(true);
+	}
+	
+	public String toString(boolean sortCells) {
 		final StringBuilder result = new StringBuilder();
 		
-		final Iterator<Cell<MR>> iterator = iterator();
+		final Iterator<Cell<MR>> iterator = sortCells ? iterator(new Comparator<Cell<MR>>() {
+			
+			@Override
+			public int compare(Cell<MR> o1, Cell<MR> o2) {
+				final int compare = Double.compare(o1.getPruneScore(),
+						o2.getPruneScore());
+				return compare == 0 ? Double.compare(o1.hashCode(),
+						o2.hashCode()) : -compare;
+			}
+		})
+				: iterator();
 		while (iterator.hasNext()) {
 			final Cell<MR> cell = iterator.next();
 			result.append(
@@ -350,7 +364,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		final int end = cell.getEnd();
 		final AbstractSpan<MR> span = chart[begin][end];
 		
-		LOG.debug("IN: %s", cell);
+		LOG.debug("Offering a new cell: %s", cell);
 		LOG.debug("Pre-offer size of span: %d", span.size());
 		LOG.debug("Pre-offer span minimum score: %s", span.minNonLexicalScore());
 		if (span.offer(cell)) {
@@ -480,15 +494,15 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * 
 	 * @author Yoav Artzi
 	 */
-	private static abstract class AbstractSpan<Y> implements Iterable<Cell<Y>> {
-		public abstract void addToExisting(Cell<Y> existingCell,
-				Cell<Y> newCell, IDataItemModel<Y> model);
+	private static abstract class AbstractSpan<MR> implements Iterable<Cell<MR>> {
+		public abstract void addToExisting(Cell<MR> existingCell,
+				Cell<MR> newCell, IDataItemModel<MR> model);
 		
-		public abstract Cell<Y> get(Cell<Y> cell);
+		public abstract Cell<MR> get(Cell<MR> cell);
 		
 		public abstract Pair<Double, Double> minNonLexicalScore();
 		
-		public abstract boolean offer(Cell<Y> cell);
+		public abstract boolean offer(Cell<MR> cell);
 		
 		public abstract int size();
 		
@@ -557,19 +571,19 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * cells. The queue is order invariant.
 	 * 
 	 * @author Yoav Artzi
-	 * @param <Y>
+	 * @param <MR>
 	 */
-	private static class SingleQueueSpan<Y> extends AbstractSpan<Y> {
-		private final OrderInvariantDirectAccessBoundedQueue<Cell<Y>>	queue;
+	private static class SingleQueueSpan<MR> extends AbstractSpan<MR> {
+		private final OrderInvariantDirectAccessBoundedQueue<Cell<MR>>	queue;
 		
 		public SingleQueueSpan(int capacity) {
-			this.queue = new OrderInvariantDirectAccessBoundedQueue<Cell<Y>>(
-					capacity, new Cell.ScoreComparator<Y>());
+			this.queue = new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
+					capacity, new Cell.ScoreComparator<MR>());
 		}
 		
 		@Override
-		public void addToExisting(Cell<Y> existingCell, Cell<Y> newCell,
-				IDataItemModel<Y> model) {
+		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell,
+				IDataItemModel<MR> model) {
 			// Adding the cell into an existing one, may change the score of the
 			// cell, so we have to remove it from the queue and re-insert it, if
 			// its max-children changed
@@ -580,12 +594,12 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		}
 		
 		@Override
-		public Cell<Y> get(Cell<Y> cell) {
+		public Cell<MR> get(Cell<MR> cell) {
 			return queue.get(cell);
 		}
 		
 		@Override
-		public Iterator<Cell<Y>> iterator() {
+		public Iterator<Cell<MR>> iterator() {
 			return queue.iterator();
 		}
 		
@@ -594,14 +608,14 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			if (queue.isEmpty()) {
 				return null;
 			} else {
-				final Cell<Y> peek = queue.peek();
+				final Cell<MR> peek = queue.peek();
 				return Pair
 						.of(peek.getPruneScore(), peek.getSecondPruneScore());
 			}
 		}
 		
 		@Override
-		public boolean offer(Cell<Y> cell) {
+		public boolean offer(Cell<MR> cell) {
 			return queue.offer(cell);
 		}
 		
@@ -612,18 +626,18 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		
 	}
 	
-	private static class TwoQueueSpan<Y> extends AbstractSpan<Y> {
-		private final Map<Cell<Y>, Cell<Y>>								lexicals	= new HashMap<Cell<Y>, Cell<Y>>();
-		private final OrderInvariantDirectAccessBoundedQueue<Cell<Y>>	nonLexicalQueue;
+	private static class TwoQueueSpan<MR> extends AbstractSpan<MR> {
+		private final Map<Cell<MR>, Cell<MR>>								lexicals	= new HashMap<Cell<MR>, Cell<MR>>();
+		private final OrderInvariantDirectAccessBoundedQueue<Cell<MR>>	nonLexicalQueue;
 		
 		public TwoQueueSpan(int capacity) {
-			this.nonLexicalQueue = new OrderInvariantDirectAccessBoundedQueue<Cell<Y>>(
-					capacity, new Cell.ScoreComparator<Y>());
+			this.nonLexicalQueue = new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
+					capacity, new Cell.ScoreComparator<MR>());
 		}
 		
 		@Override
-		public void addToExisting(Cell<Y> existingCell, Cell<Y> newCell,
-				IDataItemModel<Y> model) {
+		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell,
+				IDataItemModel<MR> model) {
 			if (existingCell.hasLexicalStep()) {
 				// No need to remove and re-insert since the lexical map
 				// maintains no ordering
@@ -640,7 +654,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		}
 		
 		@Override
-		public Cell<Y> get(Cell<Y> cell) {
+		public Cell<MR> get(Cell<MR> cell) {
 			if (lexicals.containsKey(cell)) {
 				return lexicals.get(cell);
 			} else {
@@ -649,12 +663,12 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		}
 		
 		@Override
-		public Iterator<Cell<Y>> iterator() {
-			final List<Iterator<? extends Cell<Y>>> iterators = new ArrayList<Iterator<? extends Cell<Y>>>(
+		public Iterator<Cell<MR>> iterator() {
+			final List<Iterator<? extends Cell<MR>>> iterators = new ArrayList<Iterator<? extends Cell<MR>>>(
 					2);
 			iterators.add(lexicals.values().iterator());
 			iterators.add(nonLexicalQueue.iterator());
-			return new CompositeIterator<Cell<Y>>(iterators);
+			return new CompositeIterator<Cell<MR>>(iterators);
 		}
 		
 		@Override
@@ -662,14 +676,14 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			if (nonLexicalQueue.isEmpty()) {
 				return null;
 			} else {
-				final Cell<Y> peek = nonLexicalQueue.peek();
+				final Cell<MR> peek = nonLexicalQueue.peek();
 				return Pair
 						.of(peek.getPruneScore(), peek.getSecondPruneScore());
 			}
 		}
 		
 		@Override
-		public boolean offer(Cell<Y> cell) {
+		public boolean offer(Cell<MR> cell) {
 			if (cell.hasLexicalStep()) {
 				lexicals.put(cell, cell);
 				return true;

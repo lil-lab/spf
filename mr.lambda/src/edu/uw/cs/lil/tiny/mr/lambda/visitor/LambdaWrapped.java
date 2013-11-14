@@ -26,6 +26,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
+import edu.uw.cs.lil.tiny.mr.lambda.Term;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 
 /**
@@ -80,19 +81,44 @@ public class LambdaWrapped implements ILogicalExpressionVisitor {
 	
 	@Override
 	public void visit(Literal literal) {
-		if (literal.getType().isComplex()) {
-			tempReturn = wrap(literal);
+		final LogicalExpression newPred;
+		if (literal.getPredicate() instanceof Term) {
+			newPred = literal.getPredicate();
 		} else {
-			tempReturn = literal;
+			literal.getPredicate().accept(this);
+			newPred = tempReturn;
 		}
 		
-		// Don't visit the arguments or predicate (this is a shallow process)
+		boolean argChanged = false;
+		final List<LogicalExpression> newArgs = new ArrayList<LogicalExpression>(
+				literal.getArguments().size());
+		for (final LogicalExpression arg : literal.getArguments()) {
+			arg.accept(this);
+			newArgs.add(tempReturn);
+			if (tempReturn != arg) {
+				argChanged = true;
+			}
+		}
+		
+		final Literal updatedLiteral;
+		if (!argChanged && literal.getPredicate() == newPred) {
+			updatedLiteral = literal;
+		} else {
+			updatedLiteral = new Literal(newPred, argChanged ? newArgs
+					: literal.getArguments());
+		}
+		
+		if (updatedLiteral.getType().isComplex()) {
+			tempReturn = wrap(updatedLiteral);
+		} else {
+			tempReturn = updatedLiteral;
+		}
 	}
 	
 	@Override
 	public void visit(LogicalConstant logicalConstant) {
 		if (logicalConstant.getType().isComplex()) {
-			tempReturn = wrap(logicalConstant);
+			wrap(logicalConstant).accept(this);
 		} else {
 			tempReturn = logicalConstant;
 		}
@@ -106,7 +132,7 @@ public class LambdaWrapped implements ILogicalExpressionVisitor {
 	@Override
 	public void visit(Variable variable) {
 		if (variable.getType().isComplex()) {
-			tempReturn = wrap(variable);
+			wrap(variable).accept(this);
 		} else {
 			tempReturn = variable;
 		}

@@ -19,7 +19,6 @@
 package edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,17 +37,19 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
  * Factored lexicon. Added lexical entries are factored and stored decomposed to
@@ -59,6 +60,9 @@ import edu.uw.cs.utils.composites.Pair;
  */
 public class FactoredLexicon implements ILexicon<LogicalExpression> {
 	public static final String							FACTORING_LEXICAL_ORIGIN	= "factoring";
+	
+	public static final ILogger							LOG							= LoggerFactory
+																							.create(FactoredLexicon.class);
 	
 	private static final long							serialVersionUID			= -9133601778066386561L;
 	
@@ -133,11 +137,6 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 										obj.second(), entry.getOrigin());
 							}
 						});
-	}
-	
-	public static IDecoder<FactoredLexicon> getDecoder(
-			DecoderHelper<LogicalExpression> decoderHelper) {
-		return new Decoder(decoderHelper);
 	}
 	
 	@Override
@@ -307,11 +306,33 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 						.next();
 				if (factoredLexicon.lexemes.containsKey(lexemeEntry.getKey())) {
 					// Case string seq. known, remove lexemes not present
+					LOG.debug(new Runnable() {
+						
+						@Override
+						public void run() {
+							final Set<Lexeme> retainSet = factoredLexicon.lexemes
+									.get(lexemeEntry.getKey());
+							for (final Lexeme lexeme : lexemeEntry.getValue()) {
+								if (!retainSet.contains(lexeme)) {
+									LOG.debug("Removing lexeme: %s", lexeme);
+								}
+							}
+						}
+					});
 					somethingRemoved |= lexemeEntry.getValue().retainAll(
 							factoredLexicon.lexemes.get(lexemeEntry.getKey()));
 				} else {
 					// Case this string sequence is not present, remove all its
 					// lexemes
+					LOG.debug(new Runnable() {
+						
+						@Override
+						public void run() {
+							for (final Lexeme lexeme : lexemeEntry.getValue()) {
+								LOG.debug("Removing lexeme: %s", lexeme);
+							}
+						}
+					});
 					lexemeIterator.remove();
 					somethingRemoved = true;
 				}
@@ -327,11 +348,35 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 						.getKey())) {
 					// Case type signature present, remove all templates not
 					// present
+					LOG.debug(new Runnable() {
+						
+						@Override
+						public void run() {
+							final Set<LexicalTemplate> retainSet = factoredLexicon.templates
+									.get(templateEntry.getKey());
+							for (final LexicalTemplate template : templateEntry
+									.getValue()) {
+								if (!retainSet.contains(template)) {
+									LOG.debug("Removing template: %s", template);
+								}
+							}
+						}
+					});
 					somethingRemoved |= templateEntry.getValue().retainAll(
 							factoredLexicon.templates.get(templateEntry
 									.getKey()));
 				} else {
 					// Case type signature not present, remove all templates
+					LOG.debug(new Runnable() {
+						
+						@Override
+						public void run() {
+							for (final LexicalTemplate template : templateEntry
+									.getValue()) {
+								LOG.debug("Removing template: %s", template);
+							}
+						}
+					});
 					templateIterator.remove();
 					somethingRemoved = true;
 				}
@@ -478,6 +523,30 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 				lexeme, template, entriesOrigin);
 	}
 	
+	public static class Creator implements
+			IResourceObjectCreator<FactoredLexicon> {
+		
+		@Override
+		public FactoredLexicon create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			return new FactoredLexicon();
+		}
+		
+		@Override
+		public String type() {
+			return "lexicon.factored";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), FactoredLexicon.class)
+					.setDescription(
+							"Lexicon that contains factored entries. Entries are factored as they are added. The lexicon contains all entries that can be generated by its templates and lexeme")
+					.build();
+		}
+		
+	}
+	
 	public static class FactoredLexicalEntry extends
 			LexicalEntry<LogicalExpression> {
 		
@@ -550,87 +619,4 @@ public class FactoredLexicon implements ILexicon<LogicalExpression> {
 		
 	}
 	
-	private static class Decoder extends
-			AbstractDecoderIntoFile<FactoredLexicon> {
-		
-		private static final int						VERSION	= 1;
-		
-		private final DecoderHelper<LogicalExpression>	decoderHelper;
-		
-		public Decoder(DecoderHelper<LogicalExpression> decoderHelper) {
-			super(FactoredLexicon.class);
-			this.decoderHelper = decoderHelper;
-		}
-		
-		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(FactoredLexicon object) {
-			// No special attributes
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected FactoredLexicon doDecode(Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			String line;
-			// First, read the Lexemes, one per line
-			final Set<Lexeme> lexemes = new HashSet<Lexeme>();
-			// Read the header of the map
-			readTextLine(reader);
-			while (!(line = readTextLine(reader)).equals("LEXEMES_END")) {
-				lexemes.add(Lexeme.parse(line,
-						decoderHelper.getCategoryServices(),
-						Lexicon.SAVED_LEXICON_ORIGIN));
-			}
-			// Second, read the lexical templates, one per line
-			final Set<LexicalTemplate> templates = new HashSet<LexicalTemplate>();
-			// Read the header of the map
-			readTextLine(reader);
-			while (!(line = readTextLine(reader)).equals("TEMPLATES_END")) {
-				templates.add(LexicalTemplate.parse(line,
-						decoderHelper.getCategoryServices(),
-						Lexicon.SAVED_LEXICON_ORIGIN));
-			}
-			return new FactoredLexicon(lexemes, templates);
-		}
-		
-		@Override
-		protected void doEncode(FactoredLexicon object, BufferedWriter writer)
-				throws IOException {
-			// First, write all of the lexemes
-			writer.write("LEXEMES_START\n");
-			for (final Set<Lexeme> lexemeSet : object.lexemes.values()) {
-				for (final Lexeme lexeme : lexemeSet) {
-					writer.write(lexeme.toString());
-					writer.write("\n");
-				}
-			}
-			writer.write("LEXEMES_END\n");
-			
-			// Next, write all of the templates
-			writer.write("TEMPLATES_START\n");
-			for (final Set<LexicalTemplate> templateSet : object.templates
-					.values()) {
-				for (final LexicalTemplate template : templateSet) {
-					writer.write(template.toString());
-					writer.write("\n");
-				}
-			}
-			writer.write("TEMPLATES_END\n");
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				FactoredLexicon object, File directory, File parentFile)
-				throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
-		}
-		
-	}
 }

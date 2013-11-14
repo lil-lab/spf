@@ -19,6 +19,10 @@
 package edu.uw.cs.lil.tiny.data.sentence;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**
@@ -26,7 +30,8 @@ import edu.uw.cs.utils.filter.IFilter;
  * 
  * @author Yoav Artzi
  */
-public class SentenceLengthFilter implements IFilter<IDataItem<Sentence>> {
+public class SentenceLengthFilter<DI extends IDataItem<Sentence>> implements
+		IFilter<DI> {
 	
 	private final int	lengthThreshold;
 	
@@ -35,8 +40,42 @@ public class SentenceLengthFilter implements IFilter<IDataItem<Sentence>> {
 	}
 	
 	@Override
-	public boolean isValid(IDataItem<Sentence> e) {
+	public boolean isValid(DI e) {
 		return e.getSample().getTokens().size() <= lengthThreshold;
+	}
+	
+	public static class Creator<DI extends IDataItem<Sentence>> implements
+			IResourceObjectCreator<SentenceLengthFilter<DI>> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("filter.sentence.length");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@Override
+		public SentenceLengthFilter<DI> create(Parameters params,
+				IResourceRepository repo) {
+			return new SentenceLengthFilter<DI>(Integer.valueOf(params
+					.get("length")));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type, SentenceLengthFilter.class)
+					.addParam("length", "int",
+							"Max number of tokens for valid sentences").build();
+		}
+		
 	}
 	
 }

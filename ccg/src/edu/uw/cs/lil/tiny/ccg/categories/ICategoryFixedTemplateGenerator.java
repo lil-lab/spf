@@ -24,9 +24,9 @@ import java.util.Set;
  * Template to generate categories without input.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  *            Type of semantics
  */
-public interface ICategoryFixedTemplateGenerator<Y> {
-	Set<Category<Y>> generateCategories();
+public interface ICategoryFixedTemplateGenerator<MR> {
+	Set<Category<MR>> generateCategories();
 }

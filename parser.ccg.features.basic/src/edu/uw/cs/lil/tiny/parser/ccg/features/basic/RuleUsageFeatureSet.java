@@ -18,20 +18,16 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
@@ -39,19 +35,25 @@ import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 
+/**
+ * Computes features over using type-shifting rules.
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Data item for inference.
+ * @param <MR>
+ *            Meaning representation.
+ */
 public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 		IParseFeatureSet<DI, MR> {
 	
 	private static final String	FEATURE_TAG			= "RULE";
+	
 	private static final long	serialVersionUID	= -2924052883973590335L;
 	private final double		scale;
 	
 	public RuleUsageFeatureSet(double scale) {
 		this.scale = scale;
-	}
-	
-	public static <DI extends IDataItem<?>, MR> IDecoder<RuleUsageFeatureSet<DI, MR>> getDecoder() {
-		return new Decoder<DI, MR>();
 	}
 	
 	@Override
@@ -92,48 +94,29 @@ public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 		return features;
 	}
 	
-	private static class Decoder<DI extends IDataItem<?>, MR> extends
-			AbstractDecoderIntoFile<RuleUsageFeatureSet<DI, MR>> {
-		private static final int	VERSION	= 1;
+	public static class Creator<DI extends IDataItem<?>, MR> implements
+			IResourceObjectCreator<RuleUsageFeatureSet<DI, MR>> {
 		
-		public Decoder() {
-			super(RuleUsageFeatureSet.class);
+		@Override
+		public RuleUsageFeatureSet<DI, MR> create(Parameters params,
+				IResourceRepository repo) {
+			return new RuleUsageFeatureSet<DI, MR>(
+					params.contains("scale") ? Double.valueOf(params
+							.get("scale")) : 1.0);
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public String type() {
+			return "feat.rules.count";
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(
-				RuleUsageFeatureSet<DI, MR> object) {
-			final HashMap<String, String> attributes = new HashMap<String, String>();
-			attributes.put("scale", Double.toString(object.scale));
-			return attributes;
-		}
-		
-		@Override
-		protected RuleUsageFeatureSet<DI, MR> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			return new RuleUsageFeatureSet<DI, MR>(Double.valueOf(attributes
-					.get("scale")));
-		}
-		
-		@Override
-		protected void doEncode(RuleUsageFeatureSet<DI, MR> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to do here
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				RuleUsageFeatureSet<DI, MR> object, File directory,
-				File parentFile) throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), RuleUsageFeatureSet.class)
+					.setDescription(
+							"Feature set that provides features that count the number of times type-shifting rules are used. Feature tag: RULE.")
+					.addParam("scale", "double",
+							"Scaling factor for scorer output").build();
 		}
 		
 	}

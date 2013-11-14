@@ -40,11 +40,16 @@ import edu.uw.cs.utils.collections.CollectionUtils;
  */
 public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 	
+	private final boolean		stripLambda;
 	/**
 	 * Variable to temporary store the return value of visits as we traverse the
 	 * expression.
 	 */
 	protected LogicalExpression	tempReturn	= null;
+	
+	protected AbstrcatSimplify(boolean stripLambdas) {
+		this.stripLambda = stripLambdas;
+	}
 	
 	/**
 	 * Try to fold the lambda operator. Handles the case where the lambda
@@ -107,7 +112,7 @@ public abstract class AbstrcatSimplify implements ILogicalExpressionVisitor {
 		final LogicalExpression newBody = tempReturn;
 		
 		// Try to fold the Lambda operator
-		if (newArg instanceof Variable) {
+		if (stripLambda && newArg instanceof Variable) {
 			final LogicalExpression lambdaStripped = stripRedundantLambda(
 					(Variable) newArg, newBody);
 			if (lambdaStripped != null) {

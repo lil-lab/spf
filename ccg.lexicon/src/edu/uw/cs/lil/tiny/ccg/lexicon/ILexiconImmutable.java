@@ -22,15 +22,15 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-public interface ILexiconImmutable<Y> extends Serializable {
+public interface ILexiconImmutable<MR> extends Serializable {
 	
-	public List<? extends LexicalEntry<Y>> getLexEntries(List<String> words);
+	public List<? extends LexicalEntry<MR>> getLexEntries(List<String> words);
 	
-	boolean contains(LexicalEntry<Y> lex);
+	boolean contains(LexicalEntry<MR> lex);
 	
-	ILexicon<Y> copy();
+	ILexicon<MR> copy();
 	
 	int size();
 	
-	Collection<LexicalEntry<Y>> toCollection();
+	Collection<LexicalEntry<MR>> toCollection();
 }

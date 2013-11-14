@@ -37,7 +37,7 @@ public class SituatedDataItemWrapper<DI extends ISituatedDataItem<Sentence, STAT
 	private final DI					situatedDataItem;
 	
 	public SituatedDataItemWrapper(DI situatedDataItem) {
-		this.sample = situatedDataItem.getSample().first();
+		this.sample = situatedDataItem.getSample();
 		this.situatedDataItem = situatedDataItem;
 	}
 	

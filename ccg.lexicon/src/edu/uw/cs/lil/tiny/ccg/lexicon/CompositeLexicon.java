@@ -18,25 +18,20 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.ccg.lexicon;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 
@@ -47,6 +42,8 @@ import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
  * can not be modified.
  * 
  * @author Luke Zettlemoyer
+ * @param <MR>
+ *            Meaning representation type.
  */
 public class CompositeLexicon<MR> implements ILexicon<MR> {
 	private static final long			serialVersionUID	= -2289410658817517272L;
@@ -57,11 +54,6 @@ public class CompositeLexicon<MR> implements ILexicon<MR> {
 			List<ILexicon<MR>> subLexicons) {
 		this.masterLexicon = masterLexicon;
 		this.subLexicons = subLexicons;
-	}
-	
-	public static <Y> IDecoder<CompositeLexicon<Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<Y>(decoderHelper);
 	}
 	
 	@Override
@@ -173,84 +165,46 @@ public class CompositeLexicon<MR> implements ILexicon<MR> {
 		return output.toString();
 	}
 	
-	private static class Decoder<Y> extends
-			AbstractDecoderIntoFile<CompositeLexicon<Y>> {
-		private static final int		VERSION	= 1;
-		private final DecoderHelper<Y>	decoderHelper;
+	public static class Creator<MR> implements
+			IResourceObjectCreator<CompositeLexicon<MR>> {
 		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
-			super(CompositeLexicon.class);
-			this.decoderHelper = decoderHelper;
-		}
-		
+		@SuppressWarnings("unchecked")
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				CompositeLexicon<Y> object) {
-			final Map<String, String> attributes = new HashMap<String, String>();
+		public CompositeLexicon<MR> create(Parameters parameters,
+				IResourceRepository resourceRepo) {
 			
-			// Skipping cost
-			attributes.put("numSubLexicons",
-					Integer.toString(object.subLexicons.size()));
+			final ILexicon<MR> master = (ILexicon<MR>) resourceRepo
+					.getResource(parameters.get("masterLexicon"));
 			
-			return attributes;
-		}
-		
-		@Override
-		protected CompositeLexicon<Y> doDecode(Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			// Get default scorer
-			final ILexicon<Y> masterLexicon = DecoderServices.decode(
-					dependentFiles.get("masterLexicon"), decoderHelper);
-			
-			// Get skipping cost
-			final int numSubLexicons = Integer.valueOf(attributes
-					.get("numSubLexicons"));
-			final List<ILexicon<Y>> subLexicons = new ArrayList<ILexicon<Y>>(
-					numSubLexicons);
-			for (int i = 0; i < numSubLexicons; i++) {
-				final ILexicon<Y> subLexicon = DecoderServices.decode(
-						dependentFiles.get("subLexicon" + i), decoderHelper);
-				subLexicons.add(subLexicon);
+			final List<String> otherLexicons = parameters
+					.getSplit("otherLexicons");
+			final List<ILexicon<MR>> subLexicons = new ArrayList<ILexicon<MR>>();
+			for (final String lexName : otherLexicons) {
+				subLexicons.add((ILexicon<MR>) resourceRepo
+						.getResource(lexName));
 			}
-			return new CompositeLexicon<Y>(masterLexicon, subLexicons);
+			
+			return new CompositeLexicon<MR>(master, subLexicons);
 		}
 		
 		@Override
-		protected void doEncode(CompositeLexicon<Y> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to do here
+		public String type() {
+			return "lexicon.composite";
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				CompositeLexicon<Y> object, File directory, File parentFile)
-				throws IOException {
-			final Map<String, File> files = new HashMap<String, File>();
-			
-			// Encode default scorer
-			final File masterLexiconFile = new File(directory,
-					parentFile.getName() + ".masterLexicon");
-			DecoderServices.encode(object.masterLexicon, masterLexiconFile,
-					decoderHelper);
-			files.put("masterLexicon", masterLexiconFile);
-			
-			int i = 0;
-			for (final ILexicon<Y> lexicon : object.subLexicons) {
-				final File subLexiconFile = new File(directory,
-						parentFile.getName() + ".subLexicon" + i);
-				DecoderServices.encode(lexicon, subLexiconFile, decoderHelper);
-				files.put("subLexicon" + i, subLexiconFile);
-				i++;
-			}
-			return files;
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), CompositeLexicon.class)
+					.setDescription(
+							"Lexicon that is made of a union of different lexicons")
+					.addParam(
+							"masterLexicon",
+							"id",
+							"The core lexicon. All entries added to the copmosite lexicon will be added to it")
+					.addParam("otherLexicons", "[id]",
+							"Non-master lexicons to use (e.g., 'lexicon1,lexicon2,lexicon3')")
+					.build();
 		}
-		
 	}
 	
 }

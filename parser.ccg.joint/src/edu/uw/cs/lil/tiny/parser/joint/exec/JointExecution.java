@@ -24,23 +24,23 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.utils.composites.Pair;
 
-public class JointExecution<Y, Z> implements IExecution<Pair<Y, Z>> {
+public class JointExecution<MR, ERESUL> implements IExecution<Pair<MR, ERESUL>> {
 	
-	private final IJointDataItemModel<Y, Z>	dataItemModel;
-	private final IJointParse<Y, Z>			jointParse;
+	private final IJointDataItemModel<MR, ERESUL>	dataItemModel;
+	private final IJointParse<MR, ERESUL>			jointParse;
 	
-	public JointExecution(IJointParse<Y, Z> jointParse,
-			IJointDataItemModel<Y, Z> dataItemModel) {
+	public JointExecution(IJointParse<MR, ERESUL> jointParse,
+			IJointDataItemModel<MR, ERESUL> dataItemModel) {
 		this.jointParse = jointParse;
 		this.dataItemModel = dataItemModel;
 	}
 	
-	private static <Y, Z> String lexToString(
-			Iterable<LexicalEntry<Y>> lexicalEntries,
-			IJointDataItemModel<Y, Z> model) {
+	private static <MR, ERESULT> String lexToString(
+			Iterable<LexicalEntry<MR>> lexicalEntries,
+			IJointDataItemModel<MR, ERESULT> model) {
 		final StringBuilder ret = new StringBuilder();
 		ret.append("[LexEntries and scores:\n");
-		for (final LexicalEntry<Y> entry : lexicalEntries) {
+		for (final LexicalEntry<MR> entry : lexicalEntries) {
 			ret.append("[").append(model.score(entry)).append("] ");
 			ret.append(entry);
 			ret.append(" [");
@@ -53,7 +53,7 @@ public class JointExecution<Y, Z> implements IExecution<Pair<Y, Z>> {
 	}
 	
 	@Override
-	public Pair<Y, Z> getResult() {
+	public Pair<MR, ERESUL> getResult() {
 		return jointParse.getResult();
 	}
 	

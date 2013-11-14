@@ -28,7 +28,8 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.situated.sentence.SituatedSentence;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
@@ -68,55 +69,54 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <DI>
  *            Data item used for learning.
  */
-public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SituatedSentence<STATE>, ?>>
-		implements
-		ILearner<SituatedSentence<STATE>, DI, JointModel<SituatedSentence<STATE>, MR, ESTEP>> {
-	public static final ILogger																			LOG	= LoggerFactory
-																													.create(AbstractSituatedLearner.class);
-	private final ICategoryServices<MR>																	categoryServices;
+public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>>
+		implements ILearner<SAMPLE, DI, JointModel<SAMPLE, MR, ESTEP>> {
+	public static final ILogger															LOG	= LoggerFactory
+																									.create(AbstractSituatedLearner.class);
+	private final ICategoryServices<MR>													categoryServices;
 	
 	/**
 	 * Number of training epochs.
 	 */
-	private final int																					epochs;
+	private final int																	epochs;
 	
 	/**
 	 * GENLEX procedure. If 'null' skip lexical induction.
 	 */
-	private final ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>>	genlex;
+	private final ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>>	genlex;
 	
 	/**
 	 * Parser beam size for lexical generation.
 	 */
-	private final int																					lexiconGenerationBeamSize;
+	private final int																	lexiconGenerationBeamSize;
 	
 	/**
 	 * Max sentence length to process. If longer, skip.
 	 */
-	private final int																					maxSentenceLength;
+	private final int																	maxSentenceLength;
 	
 	/**
 	 * Training data.
 	 */
-	private final IDataCollection<DI>																	trainingData;
+	private final IDataCollection<DI>													trainingData;
 	
 	/**
 	 * Mapping of training data samples to their gold labels.
 	 */
-	private final Map<DI, Pair<MR, ERESULT>>															trainingDataDebug;
+	private final Map<DI, Pair<MR, ERESULT>>											trainingDataDebug;
 	
 	/**
 	 * Joint parser for inference.
 	 */
-	protected final IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT>							parser;
+	protected final IJointParser<SAMPLE, MR, ESTEP, ERESULT>							parser;
 	/**
 	 * Parser output logger.
 	 */
-	protected final IJointOutputLogger<MR, ESTEP, ERESULT>												parserOutputLogger;
+	protected final IJointOutputLogger<MR, ESTEP, ERESULT>								parserOutputLogger;
 	/**
 	 * Learning statistics.
 	 */
-	protected final OnlineLearningStats																	stats;
+	protected final OnlineLearningStats													stats;
 	
 	protected AbstractSituatedLearner(
 			int numIterations,
@@ -124,10 +124,10 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI exte
 			Map<DI, Pair<MR, ERESULT>> trainingDataDebug,
 			int maxSentenceLength,
 			int lexiconGenerationBeamSize,
-			IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT> parser,
+			IJointParser<SAMPLE, MR, ESTEP, ERESULT> parser,
 			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>> genlex) {
+			ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>> genlex) {
 		this.epochs = numIterations;
 		this.trainingData = trainingData;
 		this.trainingDataDebug = trainingDataDebug;
@@ -141,7 +141,7 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI exte
 	}
 	
 	@Override
-	public void train(JointModel<SituatedSentence<STATE>, MR, ESTEP> model) {
+	public void train(JointModel<SAMPLE, MR, ESTEP> model) {
 		// Epochs
 		for (int epochNumber = 0; epochNumber < epochs; ++epochNumber) {
 			// Training epoch, iterate over all training samples
@@ -164,7 +164,7 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI exte
 				LOG.info("%s", dataItem);
 				
 				// Skip sample, if over the length limit
-				if (dataItem.getSample().getTokens().size() > maxSentenceLength) {
+				if (dataItem.getSample().getSample().getTokens().size() > maxSentenceLength) {
 					LOG.warn("Training sample too long, skipping");
 					continue;
 				}
@@ -203,8 +203,8 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI exte
 	
 	private void lexicalInduction(final DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<SituatedSentence<STATE>, MR, ESTEP> model,
-			int dataItemNumber, int epochNumber) {
+			JointModel<SAMPLE, MR, ESTEP> model, int dataItemNumber,
+			int epochNumber) {
 		// Generate lexical entries
 		final ILexicon<MR> generatedLexicon = genlex.generate(dataItem, model,
 				categoryServices);
@@ -357,8 +357,8 @@ public abstract class AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI exte
 	 */
 	protected abstract void parameterUpdate(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<SituatedSentence<STATE>, MR, ESTEP> model,
-			int itemCounter, int epochNumber);
+			JointModel<SAMPLE, MR, ESTEP> model, int itemCounter,
+			int epochNumber);
 	
 	abstract protected boolean validate(DI dataItem,
 			Pair<MR, ERESULT> hypothesis);

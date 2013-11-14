@@ -18,10 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.lambda;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,6 +25,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
@@ -39,8 +39,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.visitor.GetHeadString;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
@@ -56,7 +54,6 @@ import edu.uw.cs.utils.counter.Counter;
  */
 public class LogicalExpressionCoordinationFeatureSet<DI extends IDataItem<?>>
 		implements IParseFeatureSet<DI, LogicalExpression> {
-	
 	private static final String	FEATURE_TAG			= "LOGEXP";
 	
 	private static final double	SCALE				= 1.0;
@@ -64,6 +61,7 @@ public class LogicalExpressionCoordinationFeatureSet<DI extends IDataItem<?>>
 	private static final long	serialVersionUID	= -7190994850951239893L;
 	
 	private final boolean		cpapFeatures;
+	
 	private final boolean		cpp1Features;
 	private final boolean		reptFeatures;
 	
@@ -72,10 +70,6 @@ public class LogicalExpressionCoordinationFeatureSet<DI extends IDataItem<?>>
 		this.cpp1Features = cpp1Features;
 		this.reptFeatures = reptFeatures;
 		this.cpapFeatures = cpapFeatures;
-	}
-	
-	public static <DI extends IDataItem<?>> IDecoder<LogicalExpressionCoordinationFeatureSet<DI>> getDecoder() {
-		return new Decoder<DI>();
 	}
 	
 	@Override
@@ -129,57 +123,35 @@ public class LogicalExpressionCoordinationFeatureSet<DI extends IDataItem<?>>
 		return feats;
 	}
 	
-	private static class Decoder<DI extends IDataItem<?>>
-			extends
-			AbstractDecoderIntoFile<LogicalExpressionCoordinationFeatureSet<DI>> {
-		private static final int	VERSION	= 1;
-		
-		public Decoder() {
-			super(LogicalExpressionCoordinationFeatureSet.class);
-		}
+	public static class Creator<DI extends IDataItem<?>> implements
+			IResourceObjectCreator<LogicalExpressionCoordinationFeatureSet<DI>> {
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				LogicalExpressionCoordinationFeatureSet<DI> object) {
-			final HashMap<String, String> attributes = new HashMap<String, String>();
-			attributes.put("cpp1Features", object.cpp1Features ? "true"
-					: "false");
-			attributes.put("cpapFeatures", object.cpapFeatures ? "true"
-					: "false");
-			attributes.put("reptFeatures", object.reptFeatures ? "true"
-					: "false");
-			return attributes;
-		}
-		
-		@Override
-		protected LogicalExpressionCoordinationFeatureSet<DI> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
+		public LogicalExpressionCoordinationFeatureSet<DI> create(
+				Parameters params, IResourceRepository repo) {
 			return new LogicalExpressionCoordinationFeatureSet<DI>(
-					"true".equals(attributes.get("cpp1Features")),
-					"true".equals(attributes.get("reptFeatures")),
-					"true".equals(attributes.get("cpapFeatures")));
+					"true".equals(params.get("cpp1")), "true".equals(params
+							.get("rept")), "true".equals(params.get("cpap")));
 		}
 		
 		@Override
-		protected void doEncode(
-				LogicalExpressionCoordinationFeatureSet<DI> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to do here
+		public String type() {
+			return "feat.logexp.coordination";
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				LogicalExpressionCoordinationFeatureSet<DI> object,
-				File directory, File parentFile) throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					LogicalExpressionCoordinationFeatureSet.class)
+					.setDescription(
+							"Complete logical expression coordination features")
+					.addParam("cpp1", "boolean",
+							"Activate CPP1 features (options: true, false) (default: false)")
+					.addParam("rept", "boolean",
+							"Activate REPT features (options: true, false) (default: false)")
+					.addParam("cpap", "boolean",
+							"Activate CPAP features (options: true, false) (default: false)")
+					.build();
 		}
 		
 	}

@@ -33,18 +33,19 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class ExactMatchTestingStatistics<SAMPLE, LABEL> extends
 		AbstractTestingStatistics<SAMPLE, LABEL> {
-	private static final String		DEFAULT_METRIC_NAME	= "EXACT";
-	
 	public static final ILogger	LOG					= LoggerFactory
-																.create(ExactMatchTestingStatistics.class);
+															.create(ExactMatchTestingStatistics.class);
+	
+	private static final String	DEFAULT_METRIC_NAME	= "EXACT";
 	
 	public ExactMatchTestingStatistics() {
-		this(DEFAULT_METRIC_NAME);
+		this(null);
 	}
 	
 	public ExactMatchTestingStatistics(String prefix) {
 		this(prefix, DEFAULT_METRIC_NAME,
-				new SimpleStats<ILabeledDataItem<SAMPLE, LABEL>>());
+				new SimpleStats<ILabeledDataItem<SAMPLE, LABEL>>(
+						DEFAULT_METRIC_NAME));
 	}
 	
 	public ExactMatchTestingStatistics(String prefix, String metricName,

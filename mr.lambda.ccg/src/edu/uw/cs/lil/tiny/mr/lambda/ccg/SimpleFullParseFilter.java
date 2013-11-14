@@ -28,7 +28,7 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.filter.IFilter;
 
@@ -50,7 +50,7 @@ public class SimpleFullParseFilter implements
 	public boolean isValid(Category<LogicalExpression> category) {
 		return category.getSem() != null
 				&& fullSentenceSyntaxes.contains(category.getSyntax())
-				&& IsWellTyped.of(category.getSem());
+				&& IsTypeConsistent.of(category.getSem());
 	}
 	
 	public static class Creator implements

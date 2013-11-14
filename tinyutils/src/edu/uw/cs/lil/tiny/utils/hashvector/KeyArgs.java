@@ -20,6 +20,8 @@ package edu.uw.cs.lil.tiny.utils.hashvector;
 
 import java.io.Serializable;
 
+import edu.uw.cs.utils.assertion.Assert;
+
 public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	private static final long	serialVersionUID	= -4637982636899382888L;
 	private final String		cachedString;
@@ -31,7 +33,7 @@ public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	final int					hashCode;
 	
 	public KeyArgs(String arg1) {
-		this.arg1 = arg1;
+		this.arg1 = Assert.ifNull(arg1);
 		this.arg2 = null;
 		this.arg3 = null;
 		this.arg4 = null;
@@ -41,8 +43,8 @@ public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	}
 	
 	public KeyArgs(String arg1, String arg2) {
-		this.arg1 = arg1;
-		this.arg2 = arg2;
+		this.arg1 = Assert.ifNull(arg1);
+		this.arg2 = Assert.ifNull(arg2);
 		this.arg3 = null;
 		this.arg4 = null;
 		this.arg5 = null;
@@ -51,9 +53,9 @@ public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	}
 	
 	public KeyArgs(String arg1, String arg2, String arg3) {
-		this.arg1 = arg1;
-		this.arg2 = arg2;
-		this.arg3 = arg3;
+		this.arg1 = Assert.ifNull(arg1);
+		this.arg2 = Assert.ifNull(arg2);
+		this.arg3 = Assert.ifNull(arg3);
 		this.arg4 = null;
 		this.arg5 = null;
 		this.hashCode = calcHashCode();
@@ -61,10 +63,10 @@ public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	}
 	
 	public KeyArgs(String arg1, String arg2, String arg3, String arg4) {
-		this.arg1 = arg1;
-		this.arg2 = arg2;
-		this.arg3 = arg3;
-		this.arg4 = arg4;
+		this.arg1 = Assert.ifNull(arg1);
+		this.arg2 = Assert.ifNull(arg2);
+		this.arg3 = Assert.ifNull(arg3);
+		this.arg4 = Assert.ifNull(arg4);
 		this.arg5 = null;
 		this.hashCode = calcHashCode();
 		this.cachedString = createString();
@@ -72,11 +74,11 @@ public final class KeyArgs implements Comparable<KeyArgs>, Serializable {
 	
 	public KeyArgs(String arg1, String arg2, String arg3, String arg4,
 			String arg5) {
-		this.arg1 = arg1;
-		this.arg2 = arg2;
-		this.arg3 = arg3;
-		this.arg4 = arg4;
-		this.arg5 = arg5;
+		this.arg1 = Assert.ifNull(arg1);
+		this.arg2 = Assert.ifNull(arg2);
+		this.arg3 = Assert.ifNull(arg3);
+		this.arg4 = Assert.ifNull(arg4);
+		this.arg5 = Assert.ifNull(arg5);
 		this.hashCode = calcHashCode();
 		this.cachedString = createString();
 	}

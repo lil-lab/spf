@@ -29,25 +29,25 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.utils.collections.ListUtils;
 
-class C2Rule<Y> implements IBinaryParseRule<Y> {
+class C2Rule<MR> implements IBinaryParseRule<MR> {
 	
 	private static final String				RULE_NAME	= "c2";
 	
-	private final ICoordinationServices<Y>	services;
+	private final ICoordinationServices<MR>	services;
 	
-	public C2Rule(ICoordinationServices<Y> services) {
+	public C2Rule(ICoordinationServices<MR> services) {
 		this.services = services;
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		if (left.getSyntax().equals(Syntax.C)
 				&& SyntaxCoordinationServices.isCoordinationOfType(
 						right.getSyntax(), null)) {
-			final Y semantics = services.expandCoordination(right.getSem());
+			final MR semantics = services.expandCoordination(right.getSem());
 			if (semantics != null) {
-				return ListUtils.createSingletonList(new ParseRuleResult<Y>(
+				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
 						RULE_NAME, Category.create(
 								new ComplexSyntax(right.getSyntax(),
 										SyntaxCoordinationServices

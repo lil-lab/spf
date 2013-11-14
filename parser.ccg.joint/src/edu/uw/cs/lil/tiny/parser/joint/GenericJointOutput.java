@@ -128,12 +128,13 @@ public class GenericJointOutput<MR, ERESULT, PARSE extends IJointParse<MR, ERESU
 	@Override
 	public List<PARSE> getMaxParses(IFilter<Pair<MR, ERESULT>> filter) {
 		final List<PARSE> parses = new LinkedList<PARSE>();
-		final double score = -Double.MAX_VALUE;
+		double score = -Double.MAX_VALUE;
 		for (final PARSE p : jointParses) {
 			if (filter.isValid(p.getResult())) {
 				if (p.getScore() > score) {
 					parses.clear();
 					parses.add(p);
+					score = p.getScore();
 				} else if (p.getScore() == score) {
 					parses.add(p);
 				}

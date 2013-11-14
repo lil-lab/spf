@@ -4,8 +4,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
+	<classpathentry kind="src" path="/explat"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

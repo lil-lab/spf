@@ -287,6 +287,8 @@ public abstract class AbstractCKYParser<MR> extends
 					+ split + 1, end);
 			while (rightIter.hasNext()) {
 				final Cell<MR> right = rightIter.next();
+				LOG.debug("Processing: left=%d , right=%d", left.hashCode(),
+						right.hashCode());
 				final Iterator<CKYBinaryParsingRule<MR>> rules = binaryRules
 						.iterator();
 				while (rules.hasNext()) {
@@ -295,6 +297,8 @@ public abstract class AbstractCKYParser<MR> extends
 							right,
 							isCompleteSpan(left.getStart(), right.getEnd(),
 									numTokens))) {
+						LOG.debug("Applied %s --> %s", prr.getRuleName(),
+								prr.getResultCategory());
 						counter += 1;
 						// Filter cells, only keep cells that pass
 						// pruning over the semantics, if there's a pruning
@@ -315,6 +319,7 @@ public abstract class AbstractCKYParser<MR> extends
 							// Create the chart cell
 							final Cell<MR> newCell = cellFactory.create(
 									parseStep, start, end);
+							LOG.debug("Created new cell: %s", newCell);
 							
 							newCells.add(newCell);
 						}
@@ -324,7 +329,7 @@ public abstract class AbstractCKYParser<MR> extends
 		}
 		
 		LOG.debug(
-				"Finished processing split %s[%d], generated %d cells, returning %d cells",
+				"Finished processing split (%d, %d)[%d], generated %d cells, returning %d cells",
 				start, end, split, counter, newCells.size());
 		
 		return newCells;
@@ -358,6 +363,10 @@ public abstract class AbstractCKYParser<MR> extends
 					+ split + 1, end);
 			while (rightIter.hasNext()) {
 				final Cell<MR> right = rightIter.next();
+				LOG.debug("Processing: left=%d , right=%d", left.hashCode(),
+						right.hashCode());
+				LOG.debug("Left: %s", left);
+				LOG.debug("Right: %s", right);
 				final Iterator<CKYBinaryParsingRule<MR>> rules = binaryRules
 						.iterator();
 				while (rules.hasNext()) {
@@ -366,6 +375,8 @@ public abstract class AbstractCKYParser<MR> extends
 							right,
 							isCompleteSpan(left.getStart(), right.getEnd(),
 									numTokens))) {
+						LOG.debug("Applied %s --> %s", prr.getRuleName(),
+								prr.getResultCategory());
 						counter += 1;
 						// Prune, only keep categories that pass
 						// pruning over the semantics, if there's a pruning
@@ -386,7 +397,7 @@ public abstract class AbstractCKYParser<MR> extends
 							// Create the cell
 							final Cell<MR> newCell = cellFactory.create(
 									parseStep, start, end);
-							
+							LOG.debug("Created new cell: %s", newCell);
 							if (queue.contains(newCell)) {
 								// Case the cell signature is already
 								// contained in the queue. Remove the old
@@ -395,10 +406,15 @@ public abstract class AbstractCKYParser<MR> extends
 								// queue.
 								
 								final Cell<MR> oldCell = queue.get(newCell);
+								LOG.debug(
+										"Adding new cell to existing one in pre-chart queue: %s",
+										oldCell);
 								// Add the new cell to the old one
 								if (oldCell.addCell(newCell)) {
 									// Max-children changed, score might have
 									// changed, so need to remove and re-queue
+									LOG.debug("Cell viterbi score updated: %s",
+											oldCell);
 									
 									// Remove the old cell, to re-add it
 									queue.remove(oldCell);
@@ -408,12 +424,14 @@ public abstract class AbstractCKYParser<MR> extends
 									queue.add(oldCell);
 								}
 							} else {
-								// Case new cell signature
+								// Case new cell signature.
+								LOG.debug("Adding new cell to pre-chart queue.");
 								if (!queue.offer(newCell)) {
 									LOG.debug("Pruned (pre-chart pruning): %s",
 											newCell);
 								}
 							}
+							LOG.debug("Pre-chart queue size = %d", queue.size());
 						}
 					}
 				}
@@ -421,7 +439,7 @@ public abstract class AbstractCKYParser<MR> extends
 		}
 		
 		LOG.debug(
-				"Finished processing split %s[%d], generated %d cells, returning %d cells",
+				"Finished processing split (%d, %d)[%d], generated %d cells, returning %d cells",
 				start, end, split, counter, queue.size());
 		
 		return new ArrayList<Cell<MR>>(queue);

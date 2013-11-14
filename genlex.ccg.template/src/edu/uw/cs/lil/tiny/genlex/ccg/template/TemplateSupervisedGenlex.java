@@ -36,6 +36,10 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
@@ -58,9 +62,9 @@ public class TemplateSupervisedGenlex<DI extends SingleSentence>
 		ILexiconGenerator<DI, LogicalExpression, IModelImmutable<Sentence, LogicalExpression>> {
 	public static final ILogger					LOG			= LoggerFactory
 																	.create(TemplateSupervisedGenlex.class);
-	
 	private static final List<LogicalConstant>	EMPTY_LIST	= Collections
 																	.emptyList();
+	
 	private final int							maxTokens;
 	private final Set<LexicalTemplate>			templates;
 	private final Set<List<Type>>				typeSignatures;
@@ -198,6 +202,59 @@ public class TemplateSupervisedGenlex<DI extends SingleSentence>
 		
 		public TemplateSupervisedGenlex<DI> build() {
 			return new TemplateSupervisedGenlex<DI>(maxTokens, templates);
+		}
+		
+	}
+	
+	public static class Creator<DI extends SingleSentence> implements
+			IResourceObjectCreator<TemplateSupervisedGenlex<DI>> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("genlex.template.supervised");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public TemplateSupervisedGenlex<DI> create(Parameters params,
+				IResourceRepository repo) {
+			final TemplateSupervisedGenlex.Builder<DI> builder = new TemplateSupervisedGenlex.Builder<DI>(
+					Integer.valueOf(params.get("maxTokens")));
+			
+			if (params.contains("templatesModel")) {
+				builder.addTemplatesFromModel((IModelImmutable<?, LogicalExpression>) repo
+						.getResource(params.get("model")));
+			} else if (params.contains("lexicon")) {
+				builder.addTemplatesFromLexicon((ILexicon<LogicalExpression>) repo
+						.getResource(params.get("lexicon")));
+			} else {
+				throw new IllegalStateException("no templates source specified");
+			}
+			
+			return builder.build();
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					TemplateSupervisedGenlex.class)
+					.addParam("model", "Model",
+							"Model object to get templates from")
+					.addParam("lexicon", "ILexicon",
+							"Lexicon to get templates from")
+					.addParam("maxTokens", "int",
+							"Max number of tokens to consider for new lexical entries")
+					.build();
 		}
 		
 	}

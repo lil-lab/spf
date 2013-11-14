@@ -18,17 +18,15 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.lambda;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
@@ -38,8 +36,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.visitor.GetHeadString;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.PowerSet;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
@@ -51,14 +47,9 @@ import edu.uw.cs.utils.composites.Triplet;
 public class LogicalExpressionCooccurrenceFeatureSet<DI extends IDataItem<?>>
 		implements IParseFeatureSet<DI, LogicalExpression> {
 	private static final String	FEATURE_TAG			= "LOGCOOC";
-	
 	private static final double	SCALE				= 1.0;
 	
 	private static final long	serialVersionUID	= 7387260474009084901L;
-	
-	public static <DI extends IDataItem<?>> IDecoder<LogicalExpressionCooccurrenceFeatureSet<DI>> getDecoder() {
-		return new Decoder<DI>();
-	}
 	
 	@Override
 	public List<Triplet<KeyArgs, Double, String>> getFeatureWeights(
@@ -109,47 +100,27 @@ public class LogicalExpressionCooccurrenceFeatureSet<DI extends IDataItem<?>>
 		return feats;
 	}
 	
-	private static class Decoder<DI extends IDataItem<?>>
-			extends
-			AbstractDecoderIntoFile<LogicalExpressionCooccurrenceFeatureSet<DI>> {
-		private static final int	VERSION	= 1;
-		
-		public Decoder() {
-			super(LogicalExpressionCooccurrenceFeatureSet.class);
-		}
+	public static class Creator<DI extends IDataItem<?>> implements
+			IResourceObjectCreator<LogicalExpressionCooccurrenceFeatureSet<DI>> {
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				LogicalExpressionCooccurrenceFeatureSet<DI> object) {
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected LogicalExpressionCooccurrenceFeatureSet<DI> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
+		public LogicalExpressionCooccurrenceFeatureSet<DI> create(
+				Parameters parameters, IResourceRepository resourceRepo) {
 			return new LogicalExpressionCooccurrenceFeatureSet<DI>();
 		}
 		
 		@Override
-		protected void doEncode(
-				LogicalExpressionCooccurrenceFeatureSet<DI> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to do here
+		public String type() {
+			return "feat.logexp.cooc";
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				LogicalExpressionCooccurrenceFeatureSet<DI> object,
-				File directory, File parentFile) throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					LogicalExpressionCooccurrenceFeatureSet.class)
+					.setDescription(
+							"Co-occurrence features for constants in complete logical expressions")
+					.build();
 		}
 		
 	}

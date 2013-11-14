@@ -42,9 +42,12 @@ public interface IJointGraphParserOutput<MR, ERESULT> extends
 	 * Expected features using a joint filter.
 	 * 
 	 * @param filter
+	 * @param maxOnly
+	 *            Only consider parses that pass the filter and have maximal
+	 *            score.
 	 * @return
 	 */
-	IHashVector expectedFeatures(IFilter<ERESULT> filter);
+	IHashVector expectedFeatures(IFilter<ERESULT> filter, boolean maxOnly);
 	
 	@Override
 	List<? extends IJointGraphParse<MR, ERESULT>> getAllParses();
@@ -97,7 +100,9 @@ public interface IJointGraphParserOutput<MR, ERESULT> extends
 	 * Normalization constant using a filter.
 	 * 
 	 * @param filter
+	 * @param maxOnly
+	 *            Only include max-scoring parses that pass the provided filter.
 	 * @return
 	 */
-	double norm(IFilter<ERESULT> filter);
+	double norm(IFilter<ERESULT> filter, boolean maxOnly);
 }

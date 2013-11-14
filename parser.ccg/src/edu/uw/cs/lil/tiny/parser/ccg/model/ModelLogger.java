@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,6 +30,10 @@ import java.util.Map.Entry;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 
@@ -49,11 +54,13 @@ public class ModelLogger {
 	public <DI extends IDataItem<?>, MR> void log(
 			final IModelImmutable<DI, MR> model, PrintStream out) {
 		// Lexicon
-		out.println("Lexical entries:");
+		final Collection<LexicalEntry<MR>> lexicalCollection = model
+				.getLexicon().toCollection();
+		out.println(String.format("Lexical entries [%d]:",
+				lexicalCollection.size()));
 		if (sortLexicalEntries) {
 			final Map<List<String>, List<LexicalEntry<MR>>> tokensToLexicalEntries = new HashMap<List<String>, List<LexicalEntry<MR>>>();
-			for (final LexicalEntry<MR> entry : model.getLexicon()
-					.toCollection()) {
+			for (final LexicalEntry<MR> entry : lexicalCollection) {
 				if (!tokensToLexicalEntries.containsKey(entry.getTokens())) {
 					tokensToLexicalEntries.put(entry.getTokens(),
 							new LinkedList<LexicalEntry<MR>>());
@@ -79,8 +86,7 @@ public class ModelLogger {
 			}
 			
 		} else {
-			for (final LexicalEntry<MR> entry : model.getLexicon()
-					.toCollection()) {
+			for (final LexicalEntry<MR> entry : lexicalCollection) {
 				out.println(lexicalEntryToString(entry, model));
 			}
 		}
@@ -90,6 +96,31 @@ public class ModelLogger {
 		for (final Pair<KeyArgs, Double> feature : model.getTheta()) {
 			out.println(String.format("%s=%s", feature.first(),
 					feature.second()));
+		}
+		
+	}
+	
+	public static class Creator implements IResourceObjectCreator<ModelLogger> {
+		
+		@Override
+		public ModelLogger create(Parameters params, IResourceRepository repo) {
+			return new ModelLogger("true".equals(params.get("cluster")));
+		}
+		
+		@Override
+		public String type() {
+			return "logger.model";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), ModelLogger.class)
+					.setDescription("Logs models in a human-readable format")
+					.addParam(
+							"cluster",
+							"boolean",
+							"Cluster lexical entries according to their phrase. Options: true, false. Default: false.")
+					.build();
 		}
 		
 	}

@@ -26,6 +26,7 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
+import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.lambda.Term;
@@ -41,7 +42,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 public class ApplyAndSimplify extends AbstrcatSimplify {
 	/**
 	 * Indicates if the arguments was applied once already. We need to track if
-	 * the argument is used more than oncey in the consuming function.
+	 * the argument is used more than once in the consuming function.
 	 */
 	private boolean							appliedOnceAlready	= false;
 	
@@ -74,32 +75,28 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 	 * This constructor is private as a small part of the logic is in the static
 	 * {@link #of(LogicalExpression, LogicalExpression, boolean, boolean)}
 	 * method. Therefore, this visitor is not independent.
-	 * 
-	 * @param appliedToArg
-	 * @param rootVariable
-	 * @param doSimplify
-	 * @param doApplication
 	 */
 	private ApplyAndSimplify(LogicalExpression appliedToArg,
 			Variable rootVariable) {
+		super(false);
 		this.appliedToArg = appliedToArg;
 		this.rootVariable = rootVariable;
 		this.argVars = GetVariables.of(appliedToArg);
 	}
 	
-	public static LogicalExpression of(LogicalExpression exp,
+	public static LogicalExpression of(LogicalExpression func,
 			LogicalExpression arg) {
 		// Verify type matching. The functor must be have a complex type, and
 		// need to be in some kind of parent-child relationship with the
 		// argument, as we allow flexible typing syntax-wise.
-		if (!exp.getType().isComplex()
-				|| !exp.getType().getDomain()
-						.isExtendingOrExtendedBy(arg.getType())) {
+		if (!func.getType().isComplex()
+				|| !LogicLanguageServices.getTypeComparator().verifyArgType(
+						func.getType().getDomain(), arg.getType())) {
 			// Case typing mismatch
 			return null;
-		} else if (exp instanceof Lambda) {
+		} else if (func instanceof Lambda) {
 			// Case the functor is a Lambda expression
-			final Lambda lambda = (Lambda) exp;
+			final Lambda lambda = (Lambda) func;
 			final Variable variable = lambda.getArgument();
 			
 			final ApplyAndSimplify visitor = new ApplyAndSimplify(arg, variable);
@@ -107,15 +104,15 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 			visitor.visit(lambda.getBody());
 			
 			return visitor.tempReturn;
-		} else if (exp instanceof Literal) {
+		} else if (func instanceof Literal) {
 			// Case the functor is a literal, append the argument to
 			// the end of the arguments list
-			return Simplify.of(literalApplication((Literal) exp, arg));
-		} else if (exp instanceof Term) {
+			return Simplify.of(literalApplication((Literal) func, arg));
+		} else if (func instanceof Term) {
 			// Case the functor is a variable or logical constant,
 			// create the a literal with the functor as predicate and the
 			// argument as the only argument in the argument list
-			return Simplify.of(termApplication((Term) exp, arg));
+			return Simplify.of(termApplication((Term) func, arg));
 		} else {
 			// Should never happen
 			throw new LogicalExpressionRuntimeException(
@@ -159,9 +156,7 @@ public class ApplyAndSimplify extends AbstrcatSimplify {
 				appliedOnceAlready = true;
 				tempReturn = appliedToArg;
 			}
-			return;
-		}
-		if (argVars.contains(variable)) {
+		} else if (argVars.contains(variable)) {
 			if (!oldVariablesToNew.containsKey(variable)) {
 				oldVariablesToNew.put(variable,
 						new Variable(variable.getType()));

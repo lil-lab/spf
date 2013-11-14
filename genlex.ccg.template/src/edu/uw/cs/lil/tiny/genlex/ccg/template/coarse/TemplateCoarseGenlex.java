@@ -31,6 +31,7 @@ import java.util.Set;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
+import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
@@ -38,6 +39,10 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLe
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
@@ -48,26 +53,21 @@ import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.utils.collections.CollectionUtils;
+import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.counter.Counter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
- * Lexicon generator that uses a parser to do initial filtering of generated
- * lexical entries. The generation process is based on under-specified lexical
- * entries, which is basically a set of all templates initialized with
- * under-specified constants. Under-specified constants have the most basic
- * types only. The generation process starts with generating all lexemes for the
- * input sentence using under-specified constants. The set of under-specified
- * lexemes is combined into a factored lexicon with all templates. Then the
- * sentence is parsed using the current model with the under-specified temporary
- * lexicon. This parse is not accurate according to the model, since the model
- * is unfamiliar the any of the under-specified constants and can't generate
- * features over them. From this approximate parse, all GENLEX entries that
- * participate in complete parses are collected. Using their tokens and
- * templates, a new lexicon is generated using all possible constants (from the
- * ontology). This lexicon is returned.
+ * Lexicon generator that uses coarse ontology to prune the space of potential
+ * new lexical entries. To do so, the generator first parses the current
+ * sentence with the current model and a set of coarse lexical entries. The
+ * coarse entries are created by combining a set of pre-defined templates with a
+ * coarse ontology (see the ACL 2013 tutorial for details on coarse ontologies).
+ * Coarse entries used in the generated parses are then used to initialize
+ * fine-grained lexical entries using all the constants in the original
+ * ontologies. These entries are then returned by the generator.
  * 
  * @author Yoav Artzi
  * @param <DI>
@@ -96,6 +96,14 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 		this.parsingBeam = parsingBeam;
 		this.templates = Collections.unmodifiableSet(templates);
 		this.maxTokens = maxTokens;
+		LOG.info(
+				"Init %s :: maxTokens=%d, size(templates)=%d, parsingBeam=%d ...",
+				this.getClass().getSimpleName(), maxTokens, templates.size(),
+				parsingBeam);
+		LOG.info(
+				"Init %s :: ... size(abstractConstantsSeqs)=%d, size(potentialConstantSeqs)=%d",
+				this.getClass().getSimpleName(), abstractConstantSeqs.size(),
+				pontetialConstantSeqs.size());
 	}
 	
 	@Override
@@ -123,16 +131,15 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 				abstractLexemes, templates,
 				ILexiconGenerator.GENLEX_LEXICAL_ORIGIN);
 		
-		// TODO [yoav] [genlex] Add parsing with current model and only add if
-		// abstract parse has a higher score with a margin
-		
 		// Parse with abstract constants
 		final IParserOutput<LogicalExpression> parserOutput = parser.parse(
 				dataItem, model.createDataItemModel(dataItem), false,
 				abstractLexicon, parsingBeam);
 		
-		LOG.info("Abstract parse for lexicon generation completed, %.4fsec",
+		LOG.debug("Abstract parse for lexicon generation completed, %.4fsec",
 				parserOutput.getParsingTime() / 1000.0);
+		LOG.debug("Generated %d abstract parses", parserOutput.getAllParses()
+				.size());
 		
 		// Collect: (a) all lexical templates from GENLEX entries from all
 		// complete parses and (b) all spans of words used in GENLEX entries for
@@ -163,7 +170,20 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 			}
 		}
 		
-		LOG.info("Lexicon generation, %d template-token pairs", counter);
+		LOG.debug("Lexicon generation, %d template-token pairs:", counter);
+		LOG.debug(new Runnable() {
+			
+			@Override
+			public void run() {
+				for (final Set<Pair<LexicalTemplate, List<String>>> pairs : usedTemplatesAndTokens
+						.values()) {
+					for (final Pair<LexicalTemplate, List<String>> pair : pairs) {
+						LOG.debug("%s -> %s", pair.first(),
+								ListUtils.join(pair.second(), " "));
+					}
+				}
+			}
+		});
 		
 		// Create lexemes using the tokens that were used with GENLEX entries
 		// during the abstract parse
@@ -193,6 +213,18 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 			}
 		}
 		
+		LOG.debug("%d lexical entries generated", lexicon.size());
+		LOG.debug(new Runnable() {
+			
+			@Override
+			public void run() {
+				for (final LexicalEntry<LogicalExpression> entry : lexicon
+						.toCollection()) {
+					LOG.info(entry);
+				}
+			}
+		});
+		
 		return lexicon;
 	}
 	
@@ -216,9 +248,9 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 		
 		private static LogicalConstant createConstant(int num, Type type) {
 			return LogicalConstant
-					.create(LogicalConstant.makeName(
-							String.format("%s_%d", CONST_SEED_NAME, num), type),
-							type);
+					.createDynamic(
+							LogicalConstant.makeName(String.format("%s_%d",
+									CONST_SEED_NAME, num), type), type);
 		}
 		
 		public Builder<DI> addConstants(
@@ -238,6 +270,18 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 				Iterable<LexicalTemplate> templateCollection) {
 			for (final LexicalTemplate template : templateCollection) {
 				addTemplate(template);
+			}
+			return this;
+		}
+		
+		public Builder<DI> addTemplatesFromLexicon(
+				ILexicon<LogicalExpression> lexicon) {
+			final Collection<LexicalEntry<LogicalExpression>> lexicalEntries = lexicon
+					.toCollection();
+			for (final LexicalEntry<LogicalExpression> entry : lexicalEntries) {
+				final FactoredLexicalEntry factored = FactoredLexicon
+						.factor(entry);
+				addTemplate(factored.getTemplate());
 			}
 			return this;
 		}
@@ -344,5 +388,68 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 					.unmodifiableSet(new HashSet<Pair<List<Type>, List<LogicalConstant>>>(
 							potentialConstantSeqs));
 		}
+	}
+	
+	public static class Creator<DI extends Sentence> implements
+			IResourceObjectCreator<TemplateCoarseGenlex<DI>> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("genlex.template.coarse");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public TemplateCoarseGenlex<DI> create(Parameters params,
+				IResourceRepository repo) {
+			final Builder<DI> builder = new Builder<DI>(
+					params.getAsInteger("maxTokens"),
+					(IParser<Sentence, LogicalExpression>) repo
+							.getResource(params.get("parser")),
+					params.getAsInteger("beam"));
+			
+			builder.addConstants((Iterable<LogicalConstant>) repo
+					.getResource(params.get("ontology")));
+			
+			if (params.contains("templatesModel")) {
+				builder.addTemplatesFromModel((IModelImmutable<?, LogicalExpression>) repo
+						.getResource(params.get("model")));
+			} else if (params.contains("lexicon")) {
+				builder.addTemplatesFromLexicon((ILexicon<LogicalExpression>) repo
+						.getResource(params.get("lexicon")));
+			} else {
+				throw new IllegalStateException("no templates source specified");
+			}
+			
+			return builder.build();
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return ResourceUsage
+					.builder(type, TemplateCoarseGenlex.class)
+					.addParam("maxTokens", Integer.class,
+							"Max number of tokens to include in lexical entries.")
+					.addParam("parser", IParser.class,
+							"Parser to use for coarse parsing.")
+					.addParam("beam", Integer.class, "Beam for parsing.")
+					.addParam("ontology", Set.class,
+							"Collection of logical constants to initialize templates.")
+					.addParam("templatesModel", IModelImmutable.class,
+							"Model to extract templates from.")
+					.addParam("lexicon", ILexiconImmutable.class,
+							"Lexicon to extract templates from.").build();
+		}
+		
 	}
 }

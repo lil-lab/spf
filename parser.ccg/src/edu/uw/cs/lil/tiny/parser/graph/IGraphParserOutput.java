@@ -50,7 +50,7 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	 * 
 	 * @return
 	 */
-	IHashVector expectedFeatures(IFilter<MR> filter);
+	IHashVector expectedFeatures(IFilter<MR> filter, boolean maxOnly);
 	
 	/**
 	 * Computes expected feature values over all complete parses. Outside scores
@@ -82,5 +82,5 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	 * @param filter
 	 * @return
 	 */
-	double norm(IFilter<MR> filter);
+	double norm(IFilter<MR> filter, boolean maxOnly);
 }

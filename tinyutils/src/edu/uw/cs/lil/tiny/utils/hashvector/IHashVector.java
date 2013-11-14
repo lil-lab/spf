@@ -43,6 +43,15 @@ public interface IHashVector extends IHashVectorImmutable, Serializable {
 	void add(final double num);
 	
 	/**
+	 * Apply a function to modify each value in the sparse vector. The method is
+	 * guaranteed to preserve {@link IHashVector#ZERO_VALUE}s. Meaning, if a
+	 * value equals {@link IHashVector#ZERO_VALUE} it will remain the same.
+	 * 
+	 * @param function
+	 */
+	void applyFunction(Function function);
+	
+	/**
 	 * Remove all the values from the vector.
 	 */
 	void clear();
@@ -61,6 +70,8 @@ public interface IHashVector extends IHashVectorImmutable, Serializable {
 	
 	void multiplyBy(final double d);
 	
+	void set(KeyArgs key, double value);
+	
 	void set(String arg1, double value);
 	
 	void set(String arg1, String arg2, double value);
@@ -71,5 +82,24 @@ public interface IHashVector extends IHashVectorImmutable, Serializable {
 	
 	void set(String arg1, String arg2, String arg3, String arg4, String arg5,
 			double value);
+	
+	/**
+	 * Function from double to double. The function is guaranteed to preserve
+	 * {@link IHashVector#ZERO_VALUE}. Meaning, if a value equals
+	 * {@link IHashVector#ZERO_VALUE} it will remain the same.
+	 * 
+	 * @author Yoav Artzi
+	 */
+	public abstract static class Function {
+		public abstract double apply(double value);
+		
+		protected final double doApply(double value) {
+			if (value == ZERO_VALUE) {
+				return value;
+			} else {
+				return apply(value);
+			}
+		}
+	}
 	
 }

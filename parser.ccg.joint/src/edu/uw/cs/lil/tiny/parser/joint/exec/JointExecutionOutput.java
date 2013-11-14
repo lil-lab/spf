@@ -28,51 +28,52 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.filter.IFilter;
 
-public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
+public class JointExecutionOutput<MR, ERESULT> implements IExecOutput<Pair<MR, ERESULT>> {
 	
-	private List<IExecution<Pair<Y, Z>>>	allExecutions;
-	private List<IExecution<Pair<Y, Z>>>	bestExecutions;
-	private final IJointDataItemModel<Y, Z>	dataItemModel;
-	private final IJointOutput<Y, Z>		jointOutput;
+	private List<IExecution<Pair<MR, ERESULT>>>	allExecutions;
+	private List<IExecution<Pair<MR, ERESULT>>>	bestExecutions;
+	private final IJointDataItemModel<MR, ERESULT>	dataItemModel;
+	private final IJointOutput<MR, ERESULT>		jointOutput;
 	
-	public JointExecutionOutput(IJointOutput<Y, Z> jointOutput,
-			final IJointDataItemModel<Y, Z> dataItemModel, boolean pruneFails) {
+	public JointExecutionOutput(IJointOutput<MR, ERESULT> jointOutput,
+			final IJointDataItemModel<MR, ERESULT> dataItemModel, boolean pruneFails) {
 		this.jointOutput = jointOutput;
 		this.dataItemModel = dataItemModel;
 		this.allExecutions = Collections
 				.unmodifiableList(ListUtils.map(
 						jointOutput.getAllParses(!pruneFails),
-						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {
+						new ListUtils.Mapper<IJointParse<MR, ERESULT>, IExecution<Pair<MR, ERESULT>>>() {
 							
 							@Override
-							public IExecution<Pair<Y, Z>> process(
-									IJointParse<Y, Z> obj) {
-								return new JointExecution<Y, Z>(obj,
+							public IExecution<Pair<MR, ERESULT>> process(
+									IJointParse<MR, ERESULT> obj) {
+								return new JointExecution<MR, ERESULT>(obj,
 										dataItemModel);
 							}
 						}));
 		this.bestExecutions = Collections
 				.unmodifiableList(ListUtils.map(
 						jointOutput.getBestParses(!pruneFails),
-						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {
+						new ListUtils.Mapper<IJointParse<MR, ERESULT>, IExecution<Pair<MR, ERESULT>>>() {
 							
 							@Override
-							public IExecution<Pair<Y, Z>> process(
-									IJointParse<Y, Z> obj) {
-								return new JointExecution<Y, Z>(obj,
+							public IExecution<Pair<MR, ERESULT>> process(
+									IJointParse<MR, ERESULT> obj) {
+								return new JointExecution<MR, ERESULT>(obj,
 										dataItemModel);
 							}
 						}));
 	}
 	
 	@Override
-	public List<IExecution<Pair<Y, Z>>> getAllExecutions() {
+	public List<IExecution<Pair<MR, ERESULT>>> getAllExecutions() {
 		return allExecutions;
 	}
 	
 	@Override
-	public List<IExecution<Pair<Y, Z>>> getBestExecutions() {
+	public List<IExecution<Pair<MR, ERESULT>>> getBestExecutions() {
 		return bestExecutions;
 	}
 	
@@ -82,21 +83,32 @@ public class JointExecutionOutput<Y, Z> implements IExecOutput<Pair<Y, Z>> {
 	}
 	
 	@Override
-	public List<IExecution<Pair<Y, Z>>> getExecutions(Pair<Y, Z> label) {
-		final List<? extends IJointParse<Y, Z>> bases = jointOutput
-				.getParsesFor(label);
+	public List<IExecution<Pair<MR, ERESULT>>> getExecutions(IFilter<Pair<MR, ERESULT>> filter) {
+		final List<? extends IJointParse<MR, ERESULT>> bases = jointOutput
+				.getParses(filter);
 		return ListUtils
 				.map(bases,
-						new ListUtils.Mapper<IJointParse<Y, Z>, IExecution<Pair<Y, Z>>>() {
+						new ListUtils.Mapper<IJointParse<MR, ERESULT>, IExecution<Pair<MR, ERESULT>>>() {
 							
 							@Override
-							public IExecution<Pair<Y, Z>> process(
-									IJointParse<Y, Z> obj) {
-								return new JointExecution<Y, Z>(obj,
+							public IExecution<Pair<MR, ERESULT>> process(
+									IJointParse<MR, ERESULT> obj) {
+								return new JointExecution<MR, ERESULT>(obj,
 										dataItemModel);
 							}
 							
 						});
+	}
+	
+	@Override
+	public List<IExecution<Pair<MR, ERESULT>>> getExecutions(final Pair<MR, ERESULT> label) {
+		return getExecutions(new IFilter<Pair<MR, ERESULT>>() {
+			
+			@Override
+			public boolean isValid(Pair<MR, ERESULT> e) {
+				return e.equals(label);
+			}
+		});
 	}
 	
 }

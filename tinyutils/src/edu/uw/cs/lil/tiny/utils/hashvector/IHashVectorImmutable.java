@@ -41,6 +41,8 @@ public interface IHashVectorImmutable extends Iterable<Pair<KeyArgs, Double>> {
 	
 	boolean equals(Object obj);
 	
+	double get(KeyArgs key);
+	
 	double get(String arg1);
 	
 	double get(String arg1, String arg2);
@@ -112,6 +114,15 @@ public interface IHashVectorImmutable extends Iterable<Pair<KeyArgs, Double>> {
 	boolean isBad();
 	
 	double l1Norm();
+	
+	/**
+	 * Do pair-wise product. Each value in the current vector is multiplied by
+	 * the respective value in 'other'. The result vector is returned as a new
+	 * vector.
+	 * 
+	 * @return New hash vector.
+	 */
+	IHashVector pairWiseProduct(final IHashVectorImmutable other);
 	
 	String printValues(final IHashVectorImmutable other);
 	

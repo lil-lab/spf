@@ -24,6 +24,7 @@ import java.util.Map;
 
 import edu.uw.cs.lil.tiny.mr.IMeaningRepresentation;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.LogicalExpressionToString;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
@@ -37,61 +38,49 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public abstract class LogicalExpression implements
 		IMeaningRepresentation<ILogicalExpressionVisitor>, Serializable {
-	public static char				PARENTHESIS_CLOSE	= ')';
-	public static char				PARENTHESIS_OPEN	= '(';
 	public static final ILogger	LOG					= LoggerFactory
-																.create(LogicalExpression.class);
-	private static final long		serialVersionUID	= 751768060713295464L;
+															.create(LogicalExpression.class);
+	public static char			PARENTHESIS_CLOSE	= ')';
+	public static char			PARENTHESIS_OPEN	= '(';
+	private static final long	serialVersionUID	= 751768060713295464L;
 	
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
 	 * It mustn't be used when copying/comparing/storing/etc. the object.
 	 */
-	private int						hashCodeCache;
+	private int					hashCodeCache;
 	
 	/**
 	 * Mutable flag to indicate if the hash code cache is populated. This field
 	 * is for internal use only! It mustn't be used when
 	 * copying/comparing/storing/etc. the object.
 	 */
-	private boolean					hashCodeCalculated	= false;
+	private boolean				hashCodeCalculated	= false;
 	
+	/**
+	 * Parse a logical expression from a string.
+	 * 
+	 * @param string
+	 *            LISP formatted.
+	 */
 	public static LogicalExpression parse(String string) {
 		return parse(string, LogicLanguageServices.getTypeRepository(),
 				LogicLanguageServices.getTypeComparator());
 	}
 	
-	public static LogicalExpression parse(String string, boolean lockOntology) {
-		return parse(string, LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator(), lockOntology);
-	}
-	
 	protected static LogicalExpression doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator, boolean lockOntology) {
+			ITypeComparator typeComparator) {
 		if (string.startsWith(Lambda.PREFIX)) {
 			return Lambda.doParse(string, variables, typeRepository,
-					typeComparator, lockOntology);
+					typeComparator);
 		} else if (string.startsWith(Literal.PREFIX)) {
 			return Literal.doParse(string, variables, typeRepository,
-					typeComparator, lockOntology);
+					typeComparator);
 		} else {
 			return Term.doParse(string, variables, typeRepository,
-					typeComparator, lockOntology);
+					typeComparator);
 		}
-	}
-	
-	/**
-	 * Parse a logical expression from a string. Throw a
-	 * {@link RuntimeException} when trying to create a new logical constant.
-	 * 
-	 * @param string
-	 * @param typeRepository
-	 * @return
-	 */
-	protected static LogicalExpression parse(String string,
-			TypeRepository typeRepository, ITypeComparator typeComparator) {
-		return parse(string, typeRepository, typeComparator, true);
 	}
 	
 	/**
@@ -101,18 +90,14 @@ public abstract class LogicalExpression implements
 	 *            LISP formatted
 	 * @param typeRepository
 	 *            Typing system
-	 * @param lockOntology
-	 *            Don't allow creation of new constants. If 'true' a
-	 *            {@link RuntimeException} will be thrown when a new constant is
-	 *            encountered.
 	 * @return logical expression
 	 */
 	protected static LogicalExpression parse(String string,
-			TypeRepository typeRepository, ITypeComparator typeComparator,
-			boolean lockOntology) {
+			TypeRepository typeRepository, ITypeComparator typeComparator) {
 		try {
-			return doParse(string, new HashMap<String, Variable>(),
-					typeRepository, typeComparator, lockOntology);
+			return LambdaWrapped.of(doParse(string,
+					new HashMap<String, Variable>(), typeRepository,
+					typeComparator));
 		} catch (final RuntimeException e) {
 			LOG.error("Logical expression syntax error: %s", string);
 			throw e;
@@ -121,11 +106,19 @@ public abstract class LogicalExpression implements
 	
 	public abstract void accept(ILogicalExpressionVisitor visitor);
 	
+	/**
+	 * Logical expression equals() creates an empty mapping of variables and
+	 * then compares to the given object, while tracking variables. Before
+	 * allocating the variable map, tries to fail quickly by comparing the hash
+	 * codes, which are cached.
+	 */
 	@Override
 	public boolean equals(Object obj) {
-		return obj != null && obj instanceof LogicalExpression
+		// Try to use the hash code to quickly fail on most non-equal objects.
+		return obj instanceof LogicalExpression
 				&& obj.hashCode() == hashCode()
-				&& doEquals(obj, new HashMap<Variable, Variable>());
+				&& doEquals((LogicalExpression) obj,
+						new HashMap<Variable, Variable>());
 	}
 	
 	abstract public Type getType();
@@ -146,13 +139,30 @@ public abstract class LogicalExpression implements
 	
 	protected abstract int calcHashCode();
 	
-	protected abstract boolean doEquals(Object obj,
+	/**
+	 * Comparison with variable tracking.
+	 * 
+	 * @param exp
+	 *            Compared object.
+	 * @param variablesMapping
+	 *            Map of variables from source expression to target.
+	 */
+	protected abstract boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping);
 	
-	protected boolean equals(Object obj,
+	/**
+	 * Comparison with existing variable mapping and a hashcode
+	 * short-circuiting.
+	 * 
+	 * @param exp
+	 *            Compared object.
+	 * @param variablesMapping
+	 *            Existing variable mapping between this logical expression and
+	 *            the target.
+	 */
+	protected boolean equals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		return obj != null && obj instanceof LogicalExpression
-				&& obj.hashCode() == hashCode()
-				&& doEquals(obj, variablesMapping);
+		return exp != null && exp.hashCode() == hashCode()
+				&& doEquals(exp, variablesMapping);
 	}
 }

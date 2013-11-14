@@ -33,7 +33,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.Lambda;
 import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.AbstractApplication;
 
@@ -100,7 +100,7 @@ public class ForwardTopicalizedApplication extends
 		args.add(left.getSem());
 		final Literal application = new Literal(newVar, args);
 		final Lambda newSem = new Lambda(newVar, application);
-		if (!IsWellTyped.of(newSem)) {
+		if (!IsTypeConsistent.of(newSem)) {
 			return Collections.emptyList();
 		}
 		

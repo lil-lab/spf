@@ -1,10 +1,10 @@
 <project name="spf" default="dist" basedir=".">
 	<description>
-        UW SPF build file
+        SPF build file
     </description>
 	<!-- set global properties for this build -->
 	<property file="build.properties" />
-	<property name="version" value="1.4.1" />
+	<property name="version" value="1.5" />
 	<property name="build" location="build" />
 	<property name="build.src" location="build.src" />
 	<property name="dist" location="dist" />
@@ -24,7 +24,6 @@
 		<mkdir dir="${build.src}" />
 		<copy todir="${build.src}" >
 			<fileset dir="${src.tinyutils}" includes="**/*.java" />
-			<fileset dir="${src.storage}" includes="**/*.java" />
 			<fileset dir="${src.geoquery}" includes="**/*.java" />
 			<fileset dir="${src.ccg}" includes="**/*.java" />
 			<fileset dir="${src.ccg.lexicon}" includes="**/*.java" />
@@ -44,7 +43,6 @@
 			<fileset dir="${src.mr.lambda}" includes="**/*.java" />
 			<fileset dir="${src.mr.lambda.ccg}" includes="**/*.java" />
 			<fileset dir="${src.mr.lambda.exec.naive}" includes="**/*.java" />
-			<fileset dir="${src.mr.lambda.exec.tabular}" includes="**/*.java" />
 			<fileset dir="${src.parser.ccg}" includes="**/*.java" />
 			<fileset dir="${src.parser.ccg.cky}" includes="**/*.java" />
 			<fileset dir="${src.parser.ccg.factoredlex}" includes="**/*.java" />
@@ -69,6 +67,7 @@
 		<javac debug="true" srcdir="${build.src}" destdir="${build}" includeantruntime="false">
 			<classpath refid="classpath" />
 			<compilerarg value="-Xlint"/>
+			<compilerarg value="-Xlint:-serial"/>
 		</javac>
 	</target>
 

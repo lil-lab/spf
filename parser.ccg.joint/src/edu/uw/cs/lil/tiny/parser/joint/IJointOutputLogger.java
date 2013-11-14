@@ -20,7 +20,7 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 
-public interface IJointOutputLogger<LF, ESTEP, ERESULT> {
-	void log(IJointOutput<LF, ERESULT> output,
-			IJointDataItemModel<LF, ESTEP> dataItemModel);
+public interface IJointOutputLogger<MR, ESTEP, ERESULT> {
+	void log(IJointOutput<MR, ERESULT> output,
+			IJointDataItemModel<MR, ESTEP> dataItemModel);
 }

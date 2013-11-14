@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="src-test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg.features.basic"/>
@@ -10,7 +9,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry kind="src" path="/mr.lambda.ccg"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
 	<classpathentry kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="src" path="/ccg.lexicon.factored.lambda"/>
 	<classpathentry kind="output" path="bin"/>

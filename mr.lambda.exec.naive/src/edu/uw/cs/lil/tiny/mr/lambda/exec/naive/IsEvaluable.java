@@ -26,7 +26,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
 
 public class IsEvaluable implements ILogicalExpressionVisitor {
 	
@@ -39,7 +38,7 @@ public class IsEvaluable implements ILogicalExpressionVisitor {
 	
 	public static boolean of(LogicalExpression exp, IEvaluationServices services) {
 		final IsEvaluable visitor = new IsEvaluable(services);
-		visitor.visit(LambdaWrapped.of(exp));
+		visitor.visit(exp);
 		return visitor.result;
 	}
 	

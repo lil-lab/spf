@@ -20,13 +20,26 @@ package edu.uw.cs.lil.tiny.exec;
 
 import java.util.List;
 
-public interface IExecOutput<Z> {
-	List<IExecution<Z>> getAllExecutions();
+import edu.uw.cs.utils.filter.IFilter;
+
+/**
+ * {@link IExec} output, which includes a set of scored {@link IExecution}. Such
+ * execution provide access to the score and final result, but abstract the
+ * exact details of the execution (e.g. lexical entries).
+ * 
+ * @author Yoav Artzi
+ * @param <RESULT>
+ *            Final execution outcome.
+ */
+public interface IExecOutput<RESULT> {
+	List<IExecution<RESULT>> getAllExecutions();
 	
-	List<IExecution<Z>> getBestExecutions();
+	List<IExecution<RESULT>> getBestExecutions();
 	
 	long getExecTime();
 	
-	List<IExecution<Z>> getExecutions(Z label);
+	List<IExecution<RESULT>> getExecutions(IFilter<RESULT> filter);
+	
+	List<IExecution<RESULT>> getExecutions(RESULT label);
 	
 }

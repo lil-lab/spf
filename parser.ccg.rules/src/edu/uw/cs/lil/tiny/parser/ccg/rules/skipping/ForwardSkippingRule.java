@@ -36,16 +36,16 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
  * 
  * @author Yoav Artzi
  */
-public class ForwardSkippingRule<Y> extends AbstractSkippingRule<Y> {
+public class ForwardSkippingRule<MR> extends AbstractSkippingRule<MR> {
 	private static final String	RULE_NAME	= "fskip";
 	
-	public ForwardSkippingRule(ICategoryServices<Y> categoryServices) {
+	public ForwardSkippingRule(ICategoryServices<MR> categoryServices) {
 		super(RULE_NAME, categoryServices);
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		return attemptSkipping(left, right, false);
 	}
 	

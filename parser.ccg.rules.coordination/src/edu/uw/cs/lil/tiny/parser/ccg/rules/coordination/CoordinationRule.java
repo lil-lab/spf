@@ -24,22 +24,22 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 
-public class CoordinationRule<Y> extends BinaryRulesSet<Y> {
+public class CoordinationRule<MR> extends BinaryRulesSet<MR> {
 	
-	private CoordinationRule(List<IBinaryParseRule<Y>> rules) {
+	private CoordinationRule(List<IBinaryParseRule<MR>> rules) {
 		super(rules);
 	}
 	
-	public static <Y> CoordinationRule<Y> create(
-			ICoordinationServices<Y> services) {
-		final List<IBinaryParseRule<Y>> rules = new ArrayList<IBinaryParseRule<Y>>(
+	public static <MR> CoordinationRule<MR> create(
+			ICoordinationServices<MR> services) {
+		final List<IBinaryParseRule<MR>> rules = new ArrayList<IBinaryParseRule<MR>>(
 				3);
 		
-		rules.add(new C1Rule<Y>(services));
-		rules.add(new C2Rule<Y>(services));
-		rules.add(new CXRule<Y>(services));
+		rules.add(new C1Rule<MR>(services));
+		rules.add(new C2Rule<MR>(services));
+		rules.add(new CXRule<MR>(services));
 		
-		return new CoordinationRule<Y>(rules);
+		return new CoordinationRule<MR>(rules);
 	}
 	
 }

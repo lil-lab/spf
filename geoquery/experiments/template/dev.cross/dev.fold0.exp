@@ -1,24 +1,24 @@
-include=../../default.params
+include=../../params.inc
 outputDir=logs0
 globalLog=logs0/global.log
 
 # Resources
 # Parser
-include=../../include.parser.exp
+include=../../parser.inc
 # Model
-include=../include.model.exp
+include=../model.inc
 # Validation function
-include=../../include.validation.exp
+include=../../validation.inc
 # Lexical generator
-include=../include.genlex.exp
+include=../genlex.inc
 # Training and testing sets
-include=include.data.exp
+include=data.inc
 type=data.composite id=train sets=fold1,fold2,fold3,fold4,fold5,fold6,fold7,fold8,fold9
 type=data.composite id=test sets=fold0
 # Learner and tester
-include=../include.learn.exp
+include=../learn.inc
 # Initializars
-include=../include.init.exp
+include=../init.inc
 
 # Jobs
-include=../../include.jobs.exp
+include=../../jobs.inc

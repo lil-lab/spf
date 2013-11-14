@@ -41,7 +41,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ReplaceExpression;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.utils.collections.CollectionUtils;
@@ -212,7 +212,7 @@ public class LexicalTemplate implements Serializable {
 					constant);
 			i++;
 		}
-		if (!IsWellTyped.of(newSemantics)) {
+		if (!IsTypeConsistent.of(newSemantics)) {
 			return null;
 		}
 		
@@ -610,7 +610,7 @@ public class LexicalTemplate implements Serializable {
 				final Type generalType = LogicLanguageServices
 						.getTypeRepository().generalizeType(type);
 				
-				return LogicalConstant.create(LogicalConstant.makeName(
+				return LogicalConstant.createDynamic(LogicalConstant.makeName(
 						"#"
 								+ (counters.containsKey(generalType) ? counters
 										.get(generalType).value() : 0)

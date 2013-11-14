@@ -37,6 +37,7 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.FactoredLexicon.FactoredLexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.LexicalTemplate;
+import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
@@ -73,11 +74,11 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * all GENLEX entries that participate in complete parses that score higher that
  * the best pre-generation valid parse are collected. Using their tokens and
  * templates, a new lexicon is generated using all possible constants (from the
- * ontology). This lexicon is returned.
+ * ontology). This lexicon is returned. TODO Update
  * 
  * @author Yoav Artzi
  */
-public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends SAMPLE>
+public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends ILabeledDataItem<SAMPLE, ?>>
 		implements
 		ILexiconGenerator<DI, LogicalExpression, IJointModelImmutable<SAMPLE, LogicalExpression, ESTEP>> {
 	public static final ILogger												LOG	= LoggerFactory
@@ -125,13 +126,15 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 	public ILexicon<LogicalExpression> generate(DI dataItem,
 			IJointModelImmutable<SAMPLE, LogicalExpression, ESTEP> model,
 			ICategoryServices<LogicalExpression> categoryServices) {
-		final List<String> tokens = dataItem.getSample().first().getTokens();
+		final List<String> tokens = dataItem.getSample().getSample()
+				.getTokens();
 		final int numTokens = tokens.size();
 		
 		// Pre-generation joint parse to get the score of the best valid joint
 		// parse
 		final IJointOutput<LogicalExpression, ERESULT> preModelParseOutput = jointParser
-				.parse(dataItem, model.createJointDataItemModel(dataItem));
+				.parse(dataItem.getSample(),
+						model.createJointDataItemModel(dataItem.getSample()));
 		Double bestValidScore = null;
 		for (final IJointParse<LogicalExpression, ERESULT> parse : preModelParseOutput
 				.getAllParses()) {
@@ -167,9 +170,9 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		// Parse with abstract constants (non-joint inference, only regular
 		// parsing)
 		final IParserOutput<LogicalExpression> parserOutput = baseParser.parse(
-				dataItem.getSample().first(),
-				model.createDataItemModel(dataItem), false, abstractLexicon,
-				generationParsingBeam);
+				dataItem.getSample().getSample(),
+				model.createDataItemModel(dataItem.getSample()), false,
+				abstractLexicon, generationParsingBeam);
 		
 		LOG.debug("Abstract parsing for lexicon generation completed, %.4fsec",
 				parserOutput.getParsingTime() / 1000.0);
@@ -204,7 +207,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		}
 		
 		if (filteredParses.isEmpty()) {
-			LOG.info("No abstract parses for lexical generation");
+			LOG.info("No abstract parses above margin for lexical generation");
 			return new Lexicon<LogicalExpression>();
 		} else {
 			LOG.info("%d abstract parses for lexical generation",
@@ -217,10 +220,12 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		final Map<List<Type>, Set<Pair<LexicalTemplate, List<String>>>> usedTemplatesAndTokens = new HashMap<List<Type>, Set<Pair<LexicalTemplate, List<String>>>>();
 		int counter = 0;
 		for (final IParse<LogicalExpression> parse : filteredParses) {
+			LOG.debug("Abstract parse: [%f] %s", parse.getScore(), parse);
 			for (final LexicalEntry<LogicalExpression> entry : parse
 					.getMaxLexicalEntries()) {
 				if (entry.getOrigin().equals(
 						ILexiconGenerator.GENLEX_LEXICAL_ORIGIN)) {
+					LOG.debug("Generated entry: %s", entry);
 					final FactoredLexicalEntry factored = FactoredLexicon
 							.factor(entry);
 					if (!usedTemplatesAndTokens.containsKey(factored
@@ -231,8 +236,10 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 					}
 					final Set<Pair<LexicalTemplate, List<String>>> pairs = usedTemplatesAndTokens
 							.get(factored.getTemplate().getTypeSignature());
-					if (pairs.add(Pair.of(factored.getTemplate(),
-							entry.getTokens()))) {
+					final Pair<LexicalTemplate, List<String>> pair = Pair.of(
+							factored.getTemplate(), entry.getTokens());
+					if (pairs.add(pair)) {
+						LOG.debug("Added a new template-token pair: %s", pair);
 						++counter;
 					}
 				}
@@ -272,7 +279,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		return lexicon;
 	}
 	
-	public static class Builder<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends SAMPLE> {
+	public static class Builder<ESTEP, ERESULT, SAMPLE extends ISituatedDataItem<Sentence, ?>, DI extends ILabeledDataItem<SAMPLE, ?>> {
 		private static final String												CONST_SEED_NAME	= "absconst";
 		
 		protected final IParser<Sentence, LogicalExpression>					baseParser;
@@ -302,7 +309,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		}
 		
 		private static LogicalConstant createConstant(Type type) {
-			return LogicalConstant.create(
+			return LogicalConstant.createDynamic(
 					LogicalConstant.makeName(
 							String.format("%s", CONST_SEED_NAME), type), type);
 		}

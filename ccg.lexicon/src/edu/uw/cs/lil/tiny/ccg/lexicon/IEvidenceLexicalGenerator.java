@@ -20,19 +20,20 @@ package edu.uw.cs.lil.tiny.ccg.lexicon;
 
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 
 /**
  * Generate lexical items from evidence.
  * 
  * @author Yoav Artzi
- * @param <X>
+ * @param <DI>
  *            Type of sample
  * @param <E>
  *            Evidence object
- * @param <Y>
+ * @param <MR>
  *            Type of semantics
  */
-public interface IEvidenceLexicalGenerator<X, Y, E> {
+public interface IEvidenceLexicalGenerator<DI extends IDataItem<?>, MR, E> {
 	
 	/**
 	 * Given an object representing an evidence, will generate lexical items
@@ -42,5 +43,5 @@ public interface IEvidenceLexicalGenerator<X, Y, E> {
 	 * @param evidence
 	 * @return
 	 */
-	Set<LexicalEntry<Y>> generateLexicon(X sample, E evidence);
+	Set<LexicalEntry<MR>> generateLexicon(DI sample, E evidence);
 }

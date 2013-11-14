@@ -22,21 +22,21 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax.SimpleSyntax;
 import edu.uw.cs.utils.assertion.Assert;
 
-public class SimpleCategory<Y> extends Category<Y> {
+public class SimpleCategory<MR> extends Category<MR> {
 	
 	private static final long	serialVersionUID	= -5684681598851371506L;
 	/** The name of this atomic category */
 	private final SimpleSyntax	syntax;
 	
-	public SimpleCategory(SimpleSyntax syntax, Y semantics) {
+	public SimpleCategory(SimpleSyntax syntax, MR semantics) {
 		super(semantics);
 		Assert.ifNull(syntax);
 		this.syntax = syntax;
 	}
 	
 	@Override
-	public Category<Y> cloneWithNewSemantics(Y newSemantics) {
-		return new SimpleCategory<Y>(syntax, newSemantics);
+	public Category<MR> cloneWithNewSemantics(MR newSemantics) {
+		return new SimpleCategory<MR>(syntax, newSemantics);
 	}
 	
 	@Override
@@ -75,12 +75,12 @@ public class SimpleCategory<Y> extends Category<Y> {
 	}
 	
 	@Override
-	public boolean matches(Category<Y> ot) {
+	public boolean matches(Category<MR> ot) {
 		return equals(ot);
 	}
 	
 	@Override
-	public boolean matchesNoSem(Category<Y> o) {
+	public boolean matchesNoSem(Category<MR> o) {
 		return equalsNoSem(o);
 	}
 	

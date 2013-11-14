@@ -26,7 +26,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.Literal;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.typshifting.ITypeShiftingFunction;
@@ -57,7 +56,7 @@ public abstract class AbstractTypeShiftingFunctionForThreading implements
 			
 			// Make sure the expression is wrapped with lambda operators, since
 			// the variables are required
-			final Lambda lambda = (Lambda) LambdaWrapped.of(sem);
+			final Lambda lambda = (Lambda) sem;
 			
 			// Variable for the new outer lambda
 			final Variable outerVariable = new Variable(LogicLanguageServices

@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.cs.lil.tiny.parser.IParse;
-import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
@@ -37,7 +37,7 @@ public class PerceptronServices {
 	private PerceptronServices() {
 	}
 	
-	public static <LF, P extends IParse<LF>, MODEL extends Model<?, LF>> IHashVector constructUpdate(
+	public static <MR, P extends IParse<MR>, MODEL extends IModelImmutable<?, MR>> IHashVector constructUpdate(
 			List<P> violatingValidParses, List<P> violatingInvalidParses,
 			MODEL model) {
 		// Create the parameter update
@@ -66,7 +66,7 @@ public class PerceptronServices {
 		return update;
 	}
 	
-	public static <LF, P extends IParse<LF>, MODEL extends Model<?, LF>> Pair<List<P>, List<P>> marginViolatingSets(
+	public static <LF, P extends IParse<LF>, MODEL extends IModelImmutable<?, LF>> Pair<List<P>, List<P>> marginViolatingSets(
 			MODEL model, double margin, List<P> validParses,
 			List<P> invalidParses) {
 		// Construct margin violating sets

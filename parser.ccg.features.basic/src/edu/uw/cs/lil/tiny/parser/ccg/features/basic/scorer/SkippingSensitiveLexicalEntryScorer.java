@@ -18,44 +18,42 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
-public class SkippingSensitiveLexicalEntryScorer<Y> implements
-		ISerializableScorer<LexicalEntry<Y>> {
+/**
+ * Scorer able to empty lexical entries used for sloppy parsing (i.e., parsing
+ * with empty entries that allow skipping of words with certain cost).
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ *            Meaning representation type.
+ */
+public class SkippingSensitiveLexicalEntryScorer<MR> implements
+		ISerializableScorer<LexicalEntry<MR>> {
 	
 	private static final long				serialVersionUID	= 1517659515042456049L;
-	private final IScorer<LexicalEntry<Y>>	defaultScorer;
-	private final Category<Y>				emptyCategory;
+	
+	private final IScorer<LexicalEntry<MR>>	defaultScorer;
+	private final Category<MR>				emptyCategory;
 	private final double					skippingCost;
 	
-	public SkippingSensitiveLexicalEntryScorer(Category<Y> emptyCategory,
-			double skippingCost, IScorer<LexicalEntry<Y>> defaultScorer) {
+	public SkippingSensitiveLexicalEntryScorer(Category<MR> emptyCategory,
+			double skippingCost, IScorer<LexicalEntry<MR>> defaultScorer) {
 		this.emptyCategory = emptyCategory;
 		this.skippingCost = skippingCost;
 		this.defaultScorer = defaultScorer;
 	}
 	
-	public static <Y> IDecoder<SkippingSensitiveLexicalEntryScorer<Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<Y>(decoderHelper);
-	}
-	
 	@Override
-	public double score(LexicalEntry<Y> lex) {
+	public double score(LexicalEntry<MR> lex) {
 		if (emptyCategory.equals(lex.getCategory())) {
 			return skippingCost;
 		} else {
@@ -63,73 +61,41 @@ public class SkippingSensitiveLexicalEntryScorer<Y> implements
 		}
 	}
 	
-	private static class Decoder<Y> extends
-			AbstractDecoderIntoFile<SkippingSensitiveLexicalEntryScorer<Y>> {
+	public static class Creator<MR>
+			extends
+			AbstractScaledScorerCreator<LexicalEntry<MR>, SkippingSensitiveLexicalEntryScorer<MR>> {
 		
-		private static final int		VERSION	= 1;
-		
-		private final DecoderHelper<Y>	decoderHelper;
-		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
-			super(SkippingSensitiveLexicalEntryScorer.class);
-			this.decoderHelper = decoderHelper;
+		@SuppressWarnings("unchecked")
+		@Override
+		public SkippingSensitiveLexicalEntryScorer<MR> createScorer(
+				Parameters parameters, IResourceRepository resourceRepo) {
+			return new SkippingSensitiveLexicalEntryScorer<MR>(
+					((ICategoryServices<MR>) resourceRepo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE))
+							.getEmptyCategory(), Double.valueOf(parameters
+							.get("cost")),
+					(IScorer<LexicalEntry<MR>>) resourceRepo
+							.getResource(parameters.get("baseScorer")));
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public String type() {
+			return "scorer.lex.skipping";
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(
-				SkippingSensitiveLexicalEntryScorer<Y> object) {
-			final Map<String, String> attributes = new HashMap<String, String>();
-			
-			// Skipping cost
-			attributes
-					.put("skippingCost", Double.toString(object.skippingCost));
-			
-			return attributes;
-		}
-		
-		@Override
-		protected SkippingSensitiveLexicalEntryScorer<Y> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			// Get default scorer
-			final IScorer<LexicalEntry<Y>> defaultScorer = DecoderServices
-					.decode(dependentFiles.get("defaultScorer"), decoderHelper);
-			
-			// Get skipping cost
-			final double skippingCost = Double.valueOf(attributes
-					.get("skippingCost"));
-			
-			return new SkippingSensitiveLexicalEntryScorer<Y>(decoderHelper
-					.getCategoryServices().getEmptyCategory(), skippingCost,
-					defaultScorer);
-		}
-		
-		@Override
-		protected void doEncode(SkippingSensitiveLexicalEntryScorer<Y> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to do here
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				SkippingSensitiveLexicalEntryScorer<Y> object, File directory,
-				File parentFile) throws IOException {
-			final Map<String, File> files = new HashMap<String, File>();
-			
-			// Encode default scorer
-			final File defaultScorerFile = new File(directory,
-					parentFile.getName() + ".defaultScorer");
-			DecoderServices.encode(object.defaultScorer, defaultScorerFile,
-					decoderHelper);
-			files.put("defaultScorer", defaultScorerFile);
-			
-			return files;
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					SkippingSensitiveLexicalEntryScorer.class)
+					.setDescription(
+							"Lexical entry scorer with the ability to score EMPTY categories (skipped words)")
+					.addParam("scale", "double",
+							"Scaling factor for the scorer output")
+					.addParam("cost", "double",
+							"Cost of skipping a word (should usually be a negative number)")
+					.addParam("baseScorer", "id",
+							"Scorer to use for all non EMPTY categories (all words not skipped)")
+					.build();
 		}
 		
 	}

@@ -20,7 +20,7 @@ package edu.uw.cs.lil.tiny.parser.ccg.model.parse;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 
-public interface IParseFeatureSet<DI extends IDataItem<?>, Y> extends
-		IParseFeatureSetImmutable<DI, Y> {
+public interface IParseFeatureSet<DI extends IDataItem<?>, MR> extends
+		IParseFeatureSetImmutable<DI, MR> {
 	
 }

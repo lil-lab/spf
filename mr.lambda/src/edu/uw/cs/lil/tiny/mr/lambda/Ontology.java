@@ -18,94 +18,86 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import edu.uw.cs.lil.tiny.utils.LispReader;
-
 /**
- * A collection of constants forms and ontology. The set of constants is
- * immutable.
+ * A collection of constants forms and ontology. The ontology can be closed
+ * (i.e., immutable) or not (i.e., constants can be added).
  * 
  * @author Yoav Artzi
  */
 public class Ontology implements Iterable<LogicalConstant> {
-	private final Set<LogicalConstant>	constants;
 	
-	public Ontology(File file) throws IOException {
-		this(readConstantsFromFile(file));
+	private final Map<WrappedConstant, LogicalConstant>	constants;
+	private final Map<String, LogicalConstant>			constantsByName;
+	private final boolean								isClosed;
+	
+	public Ontology(Iterable<LogicalConstant> constants, boolean isClosed) {
+		this.isClosed = isClosed;
+		this.constants = new HashMap<WrappedConstant, LogicalConstant>();
+		this.constantsByName = new HashMap<String, LogicalConstant>();
+		for (final LogicalConstant constant : constants) {
+			this.constants.put(new WrappedConstant(constant), constant);
+			this.constantsByName.put(constant.getName(), constant);
+		}
 	}
 	
-	public Ontology(List<File> files) throws IOException {
-		this(readConstantsFromFiles(files));
-	}
-	
-	public Ontology(Set<LogicalConstant> constants) {
-		this.constants = Collections.unmodifiableSet(constants);
-	}
-	
-	private static Set<LogicalConstant> readConstantsFromFile(File file)
-			throws IOException {
-		// First, strip the comments and prepare a clean LISP string to
-		// parse
-		final BufferedReader reader = new BufferedReader(new FileReader(file));
-		final StringBuilder strippedFile = new StringBuilder();
-		try {
-			String line = null;
-			while ((line = reader.readLine()) != null) {
-				line = line.trim();
-				line = line.split("\\s*//")[0];
-				if (!line.equals("")) {
-					strippedFile.append(line).append(" ");
+	/**
+	 * Adds a new constant to the ontology if not already present. The equal
+	 * constant present in the ontology after the operation is returned.
+	 * 
+	 * @param constant
+	 * @return
+	 */
+	public LogicalConstant add(LogicalConstant constant, boolean force) {
+		synchronized (constants) {
+			if (!contains(constant)) {
+				if (force || !isClosed) {
+					constants.put(new WrappedConstant(constant), constant);
+					constantsByName.put(constant.getName(), constant);
+				} else {
+					throw new LogicalExpressionRuntimeException(String.format(
+							"Closed ontology. Failed to add: %s", constant));
 				}
 			}
-		} finally {
-			reader.close();
+			return get(constant);
 		}
-		
-		// Read the constants
-		final Set<LogicalConstant> constants = new HashSet<LogicalConstant>();
-		final LispReader lispReader = new LispReader(new StringReader(
-				strippedFile.toString()));
-		while (lispReader.hasNext()) {
-			final LogicalExpression exp = LogicalExpression.parse(
-					lispReader.next(), false);
-			if (exp instanceof LogicalConstant) {
-				constants.add((LogicalConstant) exp);
-			} else {
-				throw new RuntimeException(
-						"Ontology file including a non constant: " + exp);
-			}
-		}
-		
-		return constants;
 	}
 	
-	private static Set<LogicalConstant> readConstantsFromFiles(List<File> files)
-			throws IOException {
-		final Set<LogicalConstant> constants = new HashSet<LogicalConstant>();
-		for (final File file : files) {
-			constants.addAll(readConstantsFromFile(file));
-		}
-		return constants;
+	/**
+	 * Checks if a constant is included in the ontology.
+	 */
+	public boolean contains(LogicalConstant constant) {
+		return constants.containsKey(new WrappedConstant(constant));
+	}
+	
+	/**
+	 * Checks if a constant with the given name is included in the ontology.
+	 */
+	public boolean contains(String name) {
+		return constantsByName.containsKey(name);
+	}
+	
+	public LogicalConstant get(LogicalConstant constant) {
+		return constants.get(new WrappedConstant(constant));
+	}
+	
+	public LogicalConstant get(String name) {
+		return constantsByName.get(name);
 	}
 	
 	public Set<LogicalConstant> getAllConstants() {
-		return constants;
+		return new HashSet<LogicalConstant>(constants.values());
 	}
 	
 	public Set<LogicalConstant> getAllPredicates() {
 		final Set<LogicalConstant> predicates = new HashSet<LogicalConstant>();
 		
-		for (final LogicalConstant constant : constants) {
+		for (final LogicalConstant constant : constants.values()) {
 			if (constant.getType().isComplex()) {
 				predicates.add(constant);
 			}
@@ -114,8 +106,48 @@ public class Ontology implements Iterable<LogicalConstant> {
 		return predicates;
 	}
 	
+	public LogicalConstant getOrAdd(LogicalConstant constant, boolean force) {
+		if (contains(constant)) {
+			return get(constant);
+		} else {
+			return add(constant, force);
+		}
+	}
+	
+	/**
+	 * @return 'true' iff it's not possible to add constatns to this ontology.
+	 */
+	public boolean isClosed() {
+		return isClosed;
+	}
+	
 	@Override
 	public Iterator<LogicalConstant> iterator() {
-		return constants.iterator();
+		return constants.values().iterator();
+	}
+	
+	/**
+	 * Wrapper used to force using content comparison (over instance comparison)
+	 * when indexing constants in the ontology.
+	 * 
+	 * @author Yoav Artzi
+	 */
+	private static class WrappedConstant {
+		private final LogicalConstant	constant;
+		
+		public WrappedConstant(LogicalConstant constant) {
+			this.constant = constant;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return obj instanceof WrappedConstant
+					&& constant.doEquals(((WrappedConstant) obj).constant);
+		}
+		
+		@Override
+		public int hashCode() {
+			return constant.hashCode();
+		}
 	}
 }

@@ -22,11 +22,11 @@ import java.util.Collection;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 
-public interface IUnaryParseRule<Y> {
+public interface IUnaryParseRule<MR> {
 	
 	/*
 	 * Takes a single category and applies the unary rule to it.
 	 */
-	Collection<ParseRuleResult<Y>> apply(Category<Y> category);
+	Collection<ParseRuleResult<MR>> apply(Category<MR> category);
 	
 }

@@ -32,14 +32,14 @@ import edu.uw.cs.utils.collections.ListUtils;
  * 
  * @author Yoav Artzi
  */
-public abstract class AbstractSkippingRule<Y> implements IBinaryParseRule<Y> {
+public abstract class AbstractSkippingRule<MR> implements IBinaryParseRule<MR> {
 	
-	private final Category<Y>	emptyCategory;
+	private final Category<MR>	emptyCategory;
 	
 	private final String		ruleName;
 	
 	public AbstractSkippingRule(String ruleName,
-			ICategoryServices<Y> categoryServices) {
+			ICategoryServices<MR> categoryServices) {
 		this.ruleName = ruleName;
 		this.emptyCategory = categoryServices.getEmptyCategory();
 	}
@@ -90,8 +90,8 @@ public abstract class AbstractSkippingRule<Y> implements IBinaryParseRule<Y> {
 		return false;
 	}
 	
-	protected List<ParseRuleResult<Y>> attemptSkipping(Category<Y> left,
-			Category<Y> right, boolean backward) {
+	protected List<ParseRuleResult<MR>> attemptSkipping(Category<MR> left,
+			Category<MR> right, boolean backward) {
 		final boolean rightCategoryIsEmpty = right.equals(emptyCategory);
 		final boolean leftCategoryIsEmpty = left.equals(emptyCategory);
 		
@@ -99,11 +99,11 @@ public abstract class AbstractSkippingRule<Y> implements IBinaryParseRule<Y> {
 		if (leftCategoryIsEmpty ^ rightCategoryIsEmpty) {
 			if (leftCategoryIsEmpty && backward) {
 				// Case left is empty
-				return ListUtils.createSingletonList(new ParseRuleResult<Y>(
+				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
 						ruleName, right));
 			} else if (rightCategoryIsEmpty && !backward) {
 				// Case right is empty
-				return ListUtils.createSingletonList(new ParseRuleResult<Y>(
+				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
 						ruleName, left));
 			}
 		}

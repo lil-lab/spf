@@ -31,6 +31,7 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 public class CKYParseStep<MR> extends AbstractCKYParseStep<MR> {
 	
 	private final IHashVector	localFeatures;
+	
 	private final double		localScore;
 	
 	public CKYParseStep(Category<MR> root, Cell<MR> child,
@@ -55,5 +56,11 @@ public class CKYParseStep<MR> extends AbstractCKYParseStep<MR> {
 	@Override
 	public double getLocalScore() {
 		return localScore;
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString() + " :: localFeatures=" + localFeatures
+				+ ":: localScore=" + localScore;
 	}
 }

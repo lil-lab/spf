@@ -18,84 +18,65 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
- * Returns a constant value for every lexical item.
+ * Scores an object using a pre-defined constant value.
  * 
  * @author Luke Zettlemoyer
- * @param <E>
+ * @param <T>
+ *            Type of object to be scored.
  */
-public class UniformScorer<Y> implements ISerializableScorer<Y> {
+public class UniformScorer<T> implements ISerializableScorer<T> {
 	
 	private static final long	serialVersionUID	= 5896129775849488211L;
+	
 	private final double		score;
 	
 	public UniformScorer(double value) {
 		score = value;
 	}
 	
-	public static <Y> IDecoder<UniformScorer<Y>> getDecoder() {
-		return new Decoder<Y>();
-	}
-	
 	@Override
-	public double score(Y lex) {
+	public double score(T lex) {
 		return score;
 	}
 	
-	private static class Decoder<Y> extends
-			AbstractDecoderIntoFile<UniformScorer<Y>> {
+	public static class Creator<T> implements
+			IResourceObjectCreator<UniformScorer<T>> {
 		
-		private static final int	VERSION	= 1;
+		private String	type;
 		
-		protected Decoder() {
-			super(UniformScorer.class);
+		public Creator() {
+			this("scorer.uniform");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public UniformScorer<T> create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			return new UniformScorer<T>(parameters.getAsDouble("weight"));
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(
-				UniformScorer<Y> object) {
-			final Map<String, String> attrbiutes = new HashMap<String, String>();
-			attrbiutes.put("score", Double.toString(object.score));
-			return attrbiutes;
+		public String type() {
+			return type;
 		}
 		
 		@Override
-		protected UniformScorer<Y> doDecode(Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			final double score = Double.valueOf(attributes.get("score"));
-			
-			return new UniformScorer<Y>(score);
-		}
-		
-		@Override
-		protected void doEncode(UniformScorer<Y> object, BufferedWriter writer)
-				throws IOException {
-			// Nothing to write
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				UniformScorer<Y> object, File directory, File parentFile)
-				throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), UniformScorer.class)
+					.setDescription("Uniform scoring function")
+					.addParam("weight", "double",
+							"Weight value. This weight will be given to any object the scorer recieves.")
+					.build();
 		}
 		
 	}

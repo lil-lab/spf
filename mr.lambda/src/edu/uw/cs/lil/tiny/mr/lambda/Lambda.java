@@ -28,6 +28,7 @@ import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
 import edu.uw.cs.lil.tiny.utils.LispReader;
+import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -43,11 +44,11 @@ public class Lambda extends LogicalExpression {
 	 */
 	public static final String		HEAD_STRING			= "lambda";
 	
+	public static final ILogger		LOG					= LoggerFactory
+																.create(Lambda.class);
+	
 	public static final String		PREFIX				= LogicalExpression.PARENTHESIS_OPEN
 																+ HEAD_STRING;
-	
-	public static final ILogger	LOG					= LoggerFactory
-																.create(Lambda.class);
 	private static final long		serialVersionUID	= -9074603389979811699L;
 	private final Variable			argument;
 	private final LogicalExpression	body;
@@ -60,10 +61,10 @@ public class Lambda extends LogicalExpression {
 	
 	private Lambda(Variable argument, LogicalExpression body,
 			TypeRepository typeRepository) {
-		this.argument = argument;
-		this.body = body;
-		this.type = typeRepository.getTypeCreateIfNeeded(body.getType(),
-				argument.getType());
+		this.argument = Assert.ifNull(argument);
+		this.body = Assert.ifNull(body);
+		this.type = Assert.ifNull(typeRepository.getTypeCreateIfNeeded(
+				body.getType(), argument.getType()));
 		if (type == null || !type.isComplex()) {
 			throw new LogicalExpressionRuntimeException(String.format(
 					"Invalid lambda type: arg=%s, body=%s, inferred type=%s",
@@ -78,7 +79,7 @@ public class Lambda extends LogicalExpression {
 	 */
 	protected static Lambda doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator, boolean lockOntology) {
+			ITypeComparator typeComparator) {
 		try {
 			final LispReader lispReader = new LispReader(new StringReader(
 					string));
@@ -94,7 +95,7 @@ public class Lambda extends LogicalExpression {
 			// The second argument is the name of the variable introduces
 			final LogicalExpression varExpression = LogicalExpression.doParse(
 					lispReader.next(), variables, typeRepository,
-					typeComparator, lockOntology);
+					typeComparator);
 			
 			if (!(varExpression instanceof Variable)) {
 				throw new LogicalExpressionRuntimeException(
@@ -115,7 +116,7 @@ public class Lambda extends LogicalExpression {
 			// The next argument is the body expression
 			final LogicalExpression lambdaBody = LogicalExpression.doParse(
 					lispReader.next(), variables, typeRepository,
-					typeComparator, lockOntology);
+					typeComparator);
 			
 			// Verify that we don't have any more elements
 			if (lispReader.hasNext()) {
@@ -167,14 +168,6 @@ public class Lambda extends LogicalExpression {
 		return result;
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
-		// The parent object will create the variable mapping and use it for
-		// equal. We can shortcut this process by quickly checking we have a
-		// Lambda object.
-		return obj instanceof Lambda && super.equals(obj);
-	}
-	
 	public Variable getArgument() {
 		return argument;
 	}
@@ -193,15 +186,15 @@ public class Lambda extends LogicalExpression {
 	}
 	
 	@Override
-	protected boolean doEquals(Object obj,
+	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		if (this == obj) {
+		if (this == exp) {
 			return true;
 		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != exp.getClass()) {
 			return false;
 		}
-		final Lambda other = (Lambda) obj;
+		final Lambda other = (Lambda) exp;
 		if (type == null) {
 			if (other.type != null) {
 				return false;

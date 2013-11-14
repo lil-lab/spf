@@ -22,6 +22,7 @@ import java.util.Map;
 
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
+import edu.uw.cs.utils.assertion.Assert;
 
 /**
  * Logical expression term.
@@ -34,17 +35,16 @@ public abstract class Term extends LogicalExpression {
 	private final Type			type;
 	
 	public Term(Type type) {
-		this.type = type;
+		this.type = Assert.ifNull(type);
 	}
 	
 	protected static Term doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator, boolean lockOntology) {
+			ITypeComparator typeComparator) {
 		if (string.startsWith(Variable.PREFIX)) {
 			return Variable.doParse(string, variables, typeRepository);
 		} else {
-			return LogicalConstant
-					.doParse(string, typeRepository, lockOntology);
+			return LogicalConstant.doParse(string, typeRepository);
 		}
 	}
 	
@@ -56,10 +56,15 @@ public abstract class Term extends LogicalExpression {
 		return result;
 	}
 	
+	/**
+	 * For terms, there's no need for variable mapping, so override
+	 * {@link LogicalExpression#equals(Object)} to avoid creating the map.
+	 */
 	@Override
 	public boolean equals(Object obj) {
-		// No need for variable mapping at this level
-		return equals(obj, null);
+		// Short-circuit with 'instanceof' and hash code check.
+		return obj instanceof Term && obj.hashCode() == hashCode()
+				&& doEquals((LogicalExpression) obj);
 	}
 	
 	@Override
@@ -67,19 +72,17 @@ public abstract class Term extends LogicalExpression {
 		return type;
 	}
 	
-	@Override
-	protected boolean doEquals(Object obj,
-			Map<Variable, Variable> variablesMapping) {
-		if (this == obj) {
+	protected boolean doEquals(LogicalExpression exp) {
+		if (this == exp) {
 			return true;
 		}
-		if (obj == null) {
+		if (exp == null) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != exp.getClass()) {
 			return false;
 		}
-		final Term other = (Term) obj;
+		final Term other = (Term) exp;
 		if (type == null) {
 			if (other.type != null) {
 				return false;

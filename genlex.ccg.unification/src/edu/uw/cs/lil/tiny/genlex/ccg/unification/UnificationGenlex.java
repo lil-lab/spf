@@ -35,6 +35,11 @@ import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.ILossDataItem;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.IUnificationSplitter;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.SplittingServices.SplittingPair;
@@ -66,10 +71,11 @@ public class UnificationGenlex<DI extends SingleSentence>
 	
 	public static final ILogger							LOG							= LoggerFactory
 																							.create(UnificationGenlex.class);
+	
 	public static final String							SPLITTING_LEXICAL_ORIGIN	= "splitting";
 	private final boolean								conservative;
-	
 	private final AbstractCKYParser<LogicalExpression>	parser;
+	
 	private final IUnificationSplitter					splitter;
 	
 	public UnificationGenlex(AbstractCKYParser<LogicalExpression> parser,
@@ -180,7 +186,7 @@ public class UnificationGenlex<DI extends SingleSentence>
 			IModelImmutable<Sentence, LogicalExpression> model) {
 		
 		// Cell category and tokens
-		final Category<LogicalExpression> rootCategory = cell.getCategroy();
+		final Category<LogicalExpression> rootCategory = cell.getCategory();
 		final List<String> rootTokens = dataItem.getSample().getTokens()
 				.subList(cell.getStart(), cell.getEnd() + 1);
 		
@@ -344,6 +350,48 @@ public class UnificationGenlex<DI extends SingleSentence>
 		}
 	}
 	
+	public static class Creator<DI extends SingleSentence> implements
+			IResourceObjectCreator<UnificationGenlex<DI>> {
+		
+		private final String	type;
+		
+		public Creator() {
+			this("genlex.unification");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public UnificationGenlex<DI> create(Parameters params,
+				IResourceRepository repo) {
+			return new UnificationGenlex<DI>(
+					(AbstractCKYParser<LogicalExpression>) repo
+							.getResource(ParameterizedExperiment.PARSER_RESOURCE),
+					(IUnificationSplitter) repo.getResource(params
+							.get("splitter")), "true".equals(params
+							.get("conservative")));
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type, UnificationGenlex.class)
+					.addParam("splitter", "IUnificationSplitter",
+							"Category splitter")
+					.addParam("convervative", "boolean",
+							"If 'true' only use splits if there's a single best split.")
+					.build();
+		}
+		
+	}
+	
 	private static class Split {
 		private final Cell<LogicalExpression>	left;
 		private final Cell<LogicalExpression>	original;
@@ -367,7 +415,7 @@ public class UnificationGenlex<DI extends SingleSentence>
 			return new StringBuilder().append("[").append(cell.getStart())
 					.append(", ").append(cell.getEnd()).append("] ")
 					.append(cell.hasLexicalMaxStep() ? " (LEX) " : "")
-					.append(cell.getCategroy()).toString();
+					.append(cell.getCategory()).toString();
 		}
 		
 		@Override

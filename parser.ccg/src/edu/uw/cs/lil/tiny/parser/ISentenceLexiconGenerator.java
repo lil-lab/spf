@@ -26,7 +26,7 @@ import edu.uw.cs.lil.tiny.data.sentence.Sentence;
  * 
  * @author Yoav Artzi
  */
-public interface ISentenceLexiconGenerator<Y> extends
-		IEvidenceLexicalGenerator<Sentence, Y, Sentence> {
+public interface ISentenceLexiconGenerator<MR> extends
+		IEvidenceLexicalGenerator<Sentence, MR, Sentence> {
 	
 }

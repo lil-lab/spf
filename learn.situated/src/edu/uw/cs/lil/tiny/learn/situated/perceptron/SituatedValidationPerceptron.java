@@ -27,11 +27,18 @@ import java.util.Map;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
-import edu.uw.cs.lil.tiny.data.situated.sentence.SituatedSentence;
+import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.data.utils.IValidator;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.PerceptronServices;
 import edu.uw.cs.lil.tiny.learn.situated.AbstractSituatedLearner;
+import edu.uw.cs.lil.tiny.learn.situated.stocgrad.SituatedValidationStocGrad;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
@@ -65,12 +72,21 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @param <DI>
  *            Training data item.
  */
-public class SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SituatedSentence<STATE>, ?>>
-		extends AbstractSituatedLearner<STATE, MR, ESTEP, ERESULT, DI> {
+public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>>
+		extends AbstractSituatedLearner<SAMPLE, MR, ESTEP, ERESULT, DI> {
 	public static final ILogger						LOG	= LoggerFactory
 																.create(SituatedValidationPerceptron.class);
 	private final boolean							hardUpdates;
 	private final double							margin;
+	
+	/**
+	 * The perceptron validator can validate both the output logical form and
+	 * the execution result, in contrast to the validator in
+	 * {@link SituatedValidationStocGrad}. A validator that decided only based
+	 * on the execution result basically will lead the learner to marginalize
+	 * over the logical form to a certain extent (note: the perceptron looks at
+	 * the viterbi output and has no sense of probabilities or normalization).
+	 */
 	private final IValidator<DI, Pair<MR, ERESULT>>	validator;
 	
 	private SituatedValidationPerceptron(
@@ -80,12 +96,12 @@ public class SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI extends 
 			Map<DI, Pair<MR, ERESULT>> trainingDataDebug,
 			int maxSentenceLength,
 			int lexiconGenerationBeamSize,
-			IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT> parser,
+			IJointParser<SAMPLE, MR, ESTEP, ERESULT> parser,
 			boolean hardUpdates,
 			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger,
 			IValidator<DI, Pair<MR, ERESULT>> validator,
 			ICategoryServices<MR> categoryServices,
-			ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>> genlex) {
+			ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>> genlex) {
 		super(numIterations, trainingData, trainingDataDebug,
 				maxSentenceLength, lexiconGenerationBeamSize, parser,
 				parserOutputLogger, categoryServices, genlex);
@@ -138,8 +154,8 @@ public class SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI extends 
 	@Override
 	protected void parameterUpdate(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> dataItemModel,
-			JointModel<SituatedSentence<STATE>, MR, ESTEP> model,
-			int itemCounter, int epochNumber) {
+			JointModel<SAMPLE, MR, ESTEP> model, int itemCounter,
+			int epochNumber) {
 		
 		// Parse with current model
 		final IJointOutput<MR, ERESULT> parserOutput = parser.parse(
@@ -240,127 +256,226 @@ public class SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI extends 
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public static class Builder<STATE, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SituatedSentence<STATE>, ?>> {
+	public static class Builder<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>> {
 		
 		/**
 		 * Required for lexical induction.
 		 */
-		private ICategoryServices<MR>																categoryServices			= null;
+		private ICategoryServices<MR>												categoryServices			= null;
 		
 		/**
 		 * GENLEX procedure. If 'null' skip lexical induction.
 		 */
-		private ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>>	genlex						= null;
+		private ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>>	genlex						= null;
 		
 		/**
 		 * Use hard updates. Meaning: consider only highest-scored valid parses
 		 * for parameter updates, instead of all valid parses.
 		 */
-		private boolean																				hardUpdates					= false;
+		private boolean																hardUpdates					= false;
 		
 		/**
 		 * Beam size to use when doing loss sensitive pruning with generated
 		 * lexicon.
 		 */
-		private int																					lexiconGenerationBeamSize	= 20;
+		private int																	lexiconGenerationBeamSize	= 20;
 		
 		/** Margin to scale the relative loss function */
-		private double																				margin						= 1.0;
+		private double																margin						= 1.0;
 		
 		/**
 		 * Max sentence length. Sentence longer than this value will be skipped
 		 * during training
 		 */
-		private int																					maxSentenceLength			= Integer.MAX_VALUE;
+		private int																	maxSentenceLength			= Integer.MAX_VALUE;
 		/** Number of training iterations */
-		private int																					numIterations				= 4;
+		private int																	numIterations				= 4;
 		
-		private final IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT>						parser;
+		private final IJointParser<SAMPLE, MR, ESTEP, ERESULT>						parser;
 		
-		private IJointOutputLogger<MR, ESTEP, ERESULT>												parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
-																																	
-																																	public void log(
-																																			IJointOutput<MR, ERESULT> output,
-																																			IJointDataItemModel<MR, ESTEP> dataItemModel) {
-																																		// Stub
-																																		
-																																	}
-																																};
+		private IJointOutputLogger<MR, ESTEP, ERESULT>								parserOutputLogger			= new IJointOutputLogger<MR, ESTEP, ERESULT>() {
+																													
+																													public void log(
+																															IJointOutput<MR, ERESULT> output,
+																															IJointDataItemModel<MR, ESTEP> dataItemModel) {
+																														// Stub
+																														
+																													}
+																												};
 		
 		/** Training data */
-		private final IDataCollection<DI>															trainingData;
+		private final IDataCollection<DI>											trainingData;
 		
 		/**
 		 * Mapping a subset of training samples into their gold label for debug.
 		 */
-		private Map<DI, Pair<MR, ERESULT>>															trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
+		private Map<DI, Pair<MR, ERESULT>>											trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
 		
-		private final IValidator<DI, Pair<MR, ERESULT>>												validator;
+		private final IValidator<DI, Pair<MR, ERESULT>>								validator;
 		
-		public Builder(
-				IDataCollection<DI> trainingData,
-				IJointParser<SituatedSentence<STATE>, MR, ESTEP, ERESULT> parser,
+		public Builder(IDataCollection<DI> trainingData,
+				IJointParser<SAMPLE, MR, ESTEP, ERESULT> parser,
 				IValidator<DI, Pair<MR, ERESULT>> validator) {
 			this.trainingData = trainingData;
 			this.parser = parser;
 			this.validator = validator;
 		}
 		
-		public SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI> build() {
-			return new SituatedValidationPerceptron<STATE, MR, ESTEP, ERESULT, DI>(
+		public SituatedValidationPerceptron<SAMPLE, MR, ESTEP, ERESULT, DI> build() {
+			return new SituatedValidationPerceptron<SAMPLE, MR, ESTEP, ERESULT, DI>(
 					numIterations, margin, trainingData, trainingDataDebug,
 					maxSentenceLength, lexiconGenerationBeamSize, parser,
 					hardUpdates, parserOutputLogger, validator,
 					categoryServices, genlex);
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setGenlex(
-				ILexiconGenerator<DI, MR, IJointModelImmutable<SituatedSentence<STATE>, MR, ESTEP>> genlex,
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setGenlex(
+				ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>> genlex,
 				ICategoryServices<MR> categoryServices) {
 			this.genlex = genlex;
 			this.categoryServices = categoryServices;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setHardUpdates(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setHardUpdates(
 				boolean hardUpdates) {
 			this.hardUpdates = hardUpdates;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setLexiconGenerationBeamSize(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setLexiconGenerationBeamSize(
 				int lexiconGenerationBeamSize) {
 			this.lexiconGenerationBeamSize = lexiconGenerationBeamSize;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setMargin(double margin) {
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setMargin(double margin) {
 			this.margin = margin;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setMaxSentenceLength(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setMaxSentenceLength(
 				int maxSentenceLength) {
 			this.maxSentenceLength = maxSentenceLength;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setNumTrainingIterations(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setNumTrainingIterations(
 				int numTrainingIterations) {
 			this.numIterations = numTrainingIterations;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setParserOutputLogger(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setParserOutputLogger(
 				IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger) {
 			this.parserOutputLogger = parserOutputLogger;
 			return this;
 		}
 		
-		public Builder<STATE, MR, ESTEP, ERESULT, DI> setTrainingDataDebug(
+		public Builder<SAMPLE, MR, ESTEP, ERESULT, DI> setTrainingDataDebug(
 				Map<DI, Pair<MR, ERESULT>> trainingDataDebug) {
 			this.trainingDataDebug = trainingDataDebug;
 			return this;
 		}
+	}
+	
+	public static class Creator<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>>
+			implements
+			IResourceObjectCreator<SituatedValidationPerceptron<SAMPLE, MR, ESTEP, ERESULT, DI>> {
+		
+		private final String	name;
+		
+		public Creator() {
+			this("learner.weakp.valid.situated");
+		}
+		
+		public Creator(String name) {
+			this.name = name;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public SituatedValidationPerceptron<SAMPLE, MR, ESTEP, ERESULT, DI> create(
+				Parameters params, IResourceRepository repo) {
+			
+			final IDataCollection<DI> trainingData = repo.getResource(params
+					.get("data"));
+			
+			final Builder<SAMPLE, MR, ESTEP, ERESULT, DI> builder = new SituatedValidationPerceptron.Builder<SAMPLE, MR, ESTEP, ERESULT, DI>(
+					trainingData,
+					(IJointParser<SAMPLE, MR, ESTEP, ERESULT>) repo
+							.getResource(ParameterizedExperiment.PARSER_RESOURCE),
+					(IValidator<DI, Pair<MR, ERESULT>>) repo.getResource(params
+							.get("validator")));
+			
+			if ("true".equals(params.get("hard"))) {
+				builder.setHardUpdates(true);
+			}
+			
+			if (params.contains("parseLogger")) {
+				builder.setParserOutputLogger((IJointOutputLogger<MR, ESTEP, ERESULT>) repo
+						.getResource(params.get("parseLogger")));
+			}
+			
+			if (params.contains("genlex")) {
+				builder.setGenlex(
+						(ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>>) repo
+								.getResource(params.get("genlex")),
+						(ICategoryServices<MR>) repo
+								.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));
+			}
+			
+			if (params.contains("genlexbeam")) {
+				builder.setLexiconGenerationBeamSize(Integer.valueOf(params
+						.get("genlexbeam")));
+			}
+			
+			if (params.contains("margin")) {
+				builder.setMargin(Double.valueOf(params.get("margin")));
+			}
+			
+			if (params.contains("maxSentenceLength")) {
+				builder.setMaxSentenceLength(Integer.valueOf(params
+						.get("maxSentenceLength")));
+			}
+			
+			if (params.contains("iter")) {
+				builder.setNumTrainingIterations(Integer.valueOf(params
+						.get("iter")));
+			}
+			
+			return builder.build();
+		}
+		
+		@Override
+		public String type() {
+			return name;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					SituatedValidationPerceptron.class)
+					.setDescription(
+							"Validation senstive perceptron for situated learning of models with situated inference (cite: Artzi and Zettlemoyer 2013)")
+					.addParam("data", "id", "Training data")
+					.addParam(
+							"hard",
+							"boolean",
+							"Use hard updates (i.e., only use max scoring valid parses/evaluation as positive samples). Options: true, false. Default: false")
+					.addParam("parseLogger", "id",
+							"Parse logger for debug detailed logging of parses")
+					.addParam("genlex", "ILexiconGenerator", "GENLEX procedure")
+					.addParam("genlexbeam", "int",
+							"Beam to use for GENLEX inference (parsing).")
+					.addParam("margin", "double",
+							"Margin to use for updates. Updates will be done when this margin is violated.")
+					.addParam("maxSentenceLength", "int",
+							"Max sentence length to process")
+					.addParam("iter", "int", "Number of training iterations")
+					.addParam("validator", "IValidator", "Validation function")
+					.build();
+		}
+		
 	}
 }

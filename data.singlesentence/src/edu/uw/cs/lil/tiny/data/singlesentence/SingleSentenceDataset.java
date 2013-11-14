@@ -30,11 +30,16 @@ import java.util.List;
 import edu.uw.cs.lil.tiny.data.DatasetException;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
+import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 
 /**
  * Dataset of single sentences labeled with logical forms.
@@ -48,8 +53,7 @@ public class SingleSentenceDataset implements IDataCollection<SingleSentence> {
 		this.data = Collections.unmodifiableList(data);
 	}
 	
-	public static SingleSentenceDataset read(File f, IStringFilter textFilter,
-			boolean lockConstants) {
+	public static SingleSentenceDataset read(File f, IStringFilter textFilter) {
 		try {
 			// Open the file
 			final BufferedReader in = new BufferedReader(new FileReader(f));
@@ -76,15 +80,14 @@ public class SingleSentenceDataset implements IDataCollection<SingleSentence> {
 						// supposed to get it and create the data item
 						final LogicalExpression exp;
 						try {
-							exp = Simplify.of(LogicalExpression.parse(line,
-									lockConstants));
+							exp = Simplify.of(LogicalExpression.parse(line));
 						} catch (final LogicalExpressionRuntimeException e) {
 							// wrap with a dataset exception and throw
 							in.close();
 							throw new DatasetException(e, readLineCounter,
 									f.getName());
 						}
-						if (!IsWellTyped.of(exp)) {
+						if (!IsTypeConsistent.of(exp)) {
 							// Throw exception
 							throw new DatasetException(
 									"Expression not well-typed: " + exp,
@@ -113,5 +116,35 @@ public class SingleSentenceDataset implements IDataCollection<SingleSentence> {
 	@Override
 	public int size() {
 		return data.size();
+	}
+	
+	public static class Creator implements
+			IResourceObjectCreator<SingleSentenceDataset> {
+		
+		@Override
+		public SingleSentenceDataset create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			return SingleSentenceDataset.read(parameters.getAsFile("file"),
+					new StubStringFilter());
+		}
+		
+		@Override
+		public String type() {
+			return "data.single";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					SingleSentenceDataset.class)
+					.setDescription(
+							"Dataset for pairs of sentences and logical forms")
+					.addParam(
+							"file",
+							"file",
+							"File with pairs of sentences and logical forms. The file will include a line with sentence, a line with a LF, empty line, a line with a sentence, and so on")
+					.build();
+		}
+		
 	}
 }

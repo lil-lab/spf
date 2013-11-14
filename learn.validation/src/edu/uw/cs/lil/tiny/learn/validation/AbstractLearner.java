@@ -196,10 +196,15 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					final List<? extends IParse<MR>> bestModelParses = parserOutput
 							.getBestParses();
 					
-					LOG.info("Created %d model parses for training sample",
-							modelParses.size());
 					LOG.info("Model parsing time: %.4fsec",
 							parserOutput.getParsingTime() / 1000.0);
+					LOG.info("Created %d model parses for training sample:",
+							modelParses.size());
+					for (final IParse<MR> parse : modelParses) {
+						logParse(dataItem, parse,
+								validate(dataItem, parse.getSemantics()), true,
+								dataItemModel);
+					}
 					
 					// Record if the best is the gold standard, if such debug
 					// information is available

@@ -20,11 +20,16 @@ package edu.uw.cs.lil.tiny.test.exec;
 
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.exec.IExec;
 import edu.uw.cs.lil.tiny.exec.IExecOutput;
 import edu.uw.cs.lil.tiny.exec.IExecution;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.test.stats.ITestingStatistics;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.filter.IFilter;
@@ -32,39 +37,39 @@ import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
- * Generic execution tester.
+ * Generic execution tester for {@link IExec}.
  * 
  * @author Yoav Artzi
  * @see IExec
- * @param <X>
- * @param <Z>
+ * @param <DI>
+ * @param <RESULT>
  */
-public class ExecTester<X, Z> {
-	public static final ILogger					LOG	= LoggerFactory
-																.create(ExecTester.class
-																		.getName());
+public class ExecTester<DI extends IDataItem<?>, RESULT> {
+	public static final ILogger							LOG	= LoggerFactory
+																	.create(ExecTester.class
+																			.getName());
 	
-	private final IFilter<ILabeledDataItem<X, Z>>	skipExecutionFilter;
+	private final IFilter<ILabeledDataItem<DI, RESULT>>	skipExecutionFilter;
 	
-	private ExecTester(IFilter<ILabeledDataItem<X, Z>> skipParsingFilter) {
+	private ExecTester(IFilter<ILabeledDataItem<DI, RESULT>> skipParsingFilter) {
 		this.skipExecutionFilter = skipParsingFilter;
 		LOG.info("Init ExecTester");
 	}
 	
-	public void test(IExec<X, Z> exec,
-			IDataCollection<? extends ILabeledDataItem<X, Z>> dataset,
-			ITestingStatistics<X, Z> stats) {
+	public void test(IExec<DI, RESULT> exec,
+			IDataCollection<? extends ILabeledDataItem<DI, RESULT>> dataset,
+			ITestingStatistics<DI, RESULT> stats) {
 		int itemCounter = 0;
-		for (final ILabeledDataItem<X, Z> item : dataset) {
+		for (final ILabeledDataItem<DI, RESULT> item : dataset) {
 			++itemCounter;
 			test(itemCounter, item, exec, stats);
 		}
 	}
 	
-	private void processSingleBestParse(ILabeledDataItem<X, Z> dataItem,
-			final IExecOutput<Z> execOutput, IExecution<Z> execution,
-			boolean sloppy, ITestingStatistics<X, Z> stats) {
-		final Z label = execution.getResult();
+	private void processSingleBestParse(ILabeledDataItem<DI, RESULT> dataItem,
+			final IExecOutput<RESULT> execOutput, IExecution<RESULT> execution,
+			boolean sloppy, ITestingStatistics<DI, RESULT> stats) {
+		final RESULT label = execution.getResult();
 		
 		// Update statistics
 		if (sloppy) {
@@ -81,26 +86,28 @@ public class ExecTester<X, Z> {
 			LOG.info("WRONG: %s", execution.toString(true));
 			
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IExecution<Z>> correctExecs = execOutput
+			final List<IExecution<RESULT>> correctExecs = execOutput
 					.getExecutions(dataItem.getLabel());
 			LOG.info("Had correct result: %s", !correctExecs.isEmpty());
-			for (final IExecution<Z> correctExec : correctExecs) {
+			for (final IExecution<RESULT> correctExec : correctExecs) {
 				LOG.info(correctExec.toString(true));
 			}
 			
 		}
 	}
 	
-	private void test(int itemCounter, ILabeledDataItem<X, Z> dataItem,
-			IExec<X, Z> exec, ITestingStatistics<X, Z> stats) {
+	private void test(int itemCounter, ILabeledDataItem<DI, RESULT> dataItem,
+			IExec<DI, RESULT> exec, ITestingStatistics<DI, RESULT> stats) {
 		LOG.info("%d : ==================", itemCounter);
 		LOG.info("%s", dataItem);
 		
 		// Try a simple model parse
-		final IExecOutput<Z> execOutput = exec.execute(dataItem);
+		final IExecOutput<RESULT> execOutput = exec.execute(dataItem
+				.getSample());
 		LOG.info("Test execution time %.2f", execOutput.getExecTime() / 1000.0);
 		
-		final List<IExecution<Z>> bestExecs = execOutput.getBestExecutions();
+		final List<IExecution<RESULT>> bestExecs = execOutput
+				.getBestExecutions();
 		if (bestExecs.size() == 1) {
 			// Case we have a single execution
 			processSingleBestParse(dataItem, execOutput, bestExecs.get(0),
@@ -110,9 +117,10 @@ public class ExecTester<X, Z> {
 			
 			// Update statistics
 			stats.recordParses(dataItem, dataItem.getLabel(), ListUtils.map(
-					bestExecs, new ListUtils.Mapper<IExecution<Z>, Z>() {
+					bestExecs,
+					new ListUtils.Mapper<IExecution<RESULT>, RESULT>() {
 						@Override
-						public Z process(IExecution<Z> obj) {
+						public RESULT process(IExecution<RESULT> obj) {
 							return obj.getResult();
 						}
 					}));
@@ -122,14 +130,14 @@ public class ExecTester<X, Z> {
 			// from returning a result.
 			LOG.info("too many results");
 			LOG.info("%d results:", bestExecs.size());
-			for (final IExecution<Z> execution : bestExecs) {
+			for (final IExecution<RESULT> execution : bestExecs) {
 				LOG.info(execution.toString(true));
 			}
 			// Check if we had the correct parse and it just wasn't the best
-			final List<IExecution<Z>> correctExecs = execOutput
+			final List<IExecution<RESULT>> correctExecs = execOutput
 					.getExecutions(dataItem.getLabel());
 			LOG.info("Had correct result: %s", !correctExecs.isEmpty());
-			for (final IExecution<Z> correctExec : correctExecs) {
+			for (final IExecution<RESULT> correctExec : correctExecs) {
 				LOG.info(correctExec.toString(true));
 			}
 		} else {
@@ -142,11 +150,11 @@ public class ExecTester<X, Z> {
 			// Potentially re-execute -- sloppy execution
 			LOG.info("no parses");
 			if (skipExecutionFilter.isValid(dataItem)) {
-				final IExecOutput<Z> sloppyExecOutput = exec.execute(dataItem,
-						true);
+				final IExecOutput<RESULT> sloppyExecOutput = exec.execute(
+						dataItem.getSample(), true);
 				LOG.info("SLOPPY execution time %f",
 						sloppyExecOutput.getExecTime() / 1000.0);
-				final List<IExecution<Z>> bestSloppyExecutions = sloppyExecOutput
+				final List<IExecution<RESULT>> bestSloppyExecutions = sloppyExecOutput
 						.getBestExecutions();
 				
 				if (bestSloppyExecutions.size() == 1) {
@@ -162,23 +170,23 @@ public class ExecTester<X, Z> {
 					// too many results
 					stats.recordParsesWithSkipping(dataItem, dataItem
 							.getLabel(), ListUtils.map(bestSloppyExecutions,
-							new ListUtils.Mapper<IExecution<Z>, Z>() {
+							new ListUtils.Mapper<IExecution<RESULT>, RESULT>() {
 								@Override
-								public Z process(IExecution<Z> obj) {
+								public RESULT process(IExecution<RESULT> obj) {
 									return obj.getResult();
 								}
 							}));
 					
 					LOG.info("WRONG: %d results", bestSloppyExecutions.size());
-					for (final IExecution<Z> execution : bestSloppyExecutions) {
+					for (final IExecution<RESULT> execution : bestSloppyExecutions) {
 						LOG.info(execution.toString(true));
 					}
 					// Check if we had the correct execution and it just wasn't
 					// the best
-					final List<IExecution<Z>> correctExecs = sloppyExecOutput
+					final List<IExecution<RESULT>> correctExecs = sloppyExecOutput
 							.getExecutions(dataItem.getLabel());
 					LOG.info("Had correct result: %s", !correctExecs.isEmpty());
-					for (final IExecution<Z> correctExec : correctExecs) {
+					for (final IExecution<RESULT> correctExec : correctExecs) {
 						LOG.info(correctExec.toString(true));
 					}
 				}
@@ -189,27 +197,71 @@ public class ExecTester<X, Z> {
 		}
 	}
 	
-	public static class Builder<X, Z> {
+	public static class Builder<DI extends IDataItem<?>, RESULT> {
 		
 		/** Filters which data items are valid for parsing with word skipping */
-		private IFilter<ILabeledDataItem<X, Z>>	skipParsingFilter	= new IFilter<ILabeledDataItem<X, Z>>() {
-																		
-																		@Override
-																		public boolean isValid(
-																				ILabeledDataItem<X, Z> e) {
-																			return true;
-																		}
-																	};
+		private IFilter<ILabeledDataItem<DI, RESULT>>	skipParsingFilter	= new IFilter<ILabeledDataItem<DI, RESULT>>() {
+																				
+																				@Override
+																				public boolean isValid(
+																						ILabeledDataItem<DI, RESULT> e) {
+																					return true;
+																				}
+																			};
 		
-		public ExecTester<X, Z> build() {
-			return new ExecTester<X, Z>(skipParsingFilter);
+		public ExecTester<DI, RESULT> build() {
+			return new ExecTester<DI, RESULT>(skipParsingFilter);
 		}
 		
-		public Builder<X, Z> setSkipParsingFilter(
-				IFilter<ILabeledDataItem<X, Z>> skipParsingFilter) {
+		public Builder<DI, RESULT> setSkipParsingFilter(
+				IFilter<ILabeledDataItem<DI, RESULT>> skipParsingFilter) {
 			this.skipParsingFilter = skipParsingFilter;
 			return this;
 		}
+	}
+	
+	public static class Creator<DI extends IDataItem<?>, RESULT> implements
+			IResourceObjectCreator<ExecTester<DI, RESULT>> {
+		private static final String	DEFAULT_NAME	= "tester.exec";
+		private final String		resourceName;
+		
+		public Creator() {
+			this(DEFAULT_NAME);
+		}
+		
+		public Creator(String resourceName) {
+			this.resourceName = resourceName;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public ExecTester<DI, RESULT> create(Parameters params,
+				IResourceRepository repo) {
+			final Builder<DI, RESULT> builder = new ExecTester.Builder<DI, RESULT>();
+			
+			if (params.contains("sloppyFilter")) {
+				builder.setSkipParsingFilter((IFilter<ILabeledDataItem<DI, RESULT>>) repo
+						.getResource(params.get("sloppyFilter")));
+			}
+			
+			return builder.build();
+		}
+		
+		@Override
+		public String type() {
+			return resourceName;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), ExecTester.class)
+					.addParam(
+							"sloppyFilter",
+							"id",
+							"IFilter used to decide what data items to skip when doing sloppy inference (e.g., skipping words)")
+					.build();
+		}
+		
 	}
 	
 }

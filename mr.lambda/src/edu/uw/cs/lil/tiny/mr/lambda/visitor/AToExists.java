@@ -44,25 +44,25 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class AToExists implements ILogicalExpressionVisitor {
-	private static final Stack<Pair<Variable, ? extends LogicalExpression>>							EMPTY_STACK	= new Stack<Pair<Variable, ? extends LogicalExpression>>();
-	
-	public static final ILogger																	LOG			= LoggerFactory
+	public static final ILogger																		LOG			= LoggerFactory
 																														.create(AToExists.class);
+	
+	private static final Stack<Pair<Variable, ? extends LogicalExpression>>							EMPTY_STACK	= new Stack<Pair<Variable, ? extends LogicalExpression>>();
 	private final LogicalExpression																	aPredicate;
 	private final LogicalExpression																	existsPredicate;
 	private Pair<? extends LogicalExpression, Stack<Pair<Variable, ? extends LogicalExpression>>>	result		= null;
 	
 	private AToExists(LogicalExpression existsPredicate,
-			LogicalExpression aPredicate) {
+			LogicalConstant aPredicate) {
 		this.existsPredicate = existsPredicate;
 		this.aPredicate = aPredicate;
 	}
 	
 	public static LogicalExpression of(LogicalExpression exp,
-			LogicalExpression existsPredicate, LogicalExpression aPredicate,
+			LogicalExpression existsPredicate, LogicalConstant aPredicate,
 			Map<Type, LogicalConstant> equalsPredicates) {
 		final AToExists visitor = new AToExists(existsPredicate, aPredicate);
-		visitor.visit(LambdaWrapped.of(exp));
+		visitor.visit(exp);
 		
 		// If the stack still contains variables, try to wrap the result and
 		// return it
@@ -265,13 +265,6 @@ public class AToExists implements ILogicalExpressionVisitor {
 	private Lambda makeEntityToTruthLambda(LogicalExpression exp) {
 		if (exp instanceof Lambda && isEntityToTruthType(exp.getType())) {
 			return (Lambda) exp;
-		} else if (isEntityToTruthType(exp.getType())) {
-			final Lambda lambda = (Lambda) LambdaWrapped.of(exp);
-			if (isEntityToTruthType(lambda.getType())) {
-				return lambda;
-			} else {
-				return null;
-			}
 		} else {
 			return null;
 		}

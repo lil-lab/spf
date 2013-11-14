@@ -24,8 +24,8 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
  * Logger for parser output.s
  * 
  * @author Yoav Artzi
- * @param <LF>
+ * @param <MR>
  */
-public interface IOutputLogger<LF> {
-	void log(IParserOutput<LF> output, IDataItemModel<LF> dataItemModel);
+public interface IOutputLogger<MR> {
+	void log(IParserOutput<MR> output, IDataItemModel<MR> dataItemModel);
 }

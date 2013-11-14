@@ -19,21 +19,29 @@
 package edu.uw.cs.lil.tiny.explat.resources;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
-public class ResourceCreatorRepository {
+public class ResourceCreatorRepository implements
+		Iterable<Entry<String, IResourceObjectCreator<?>>> {
 	
-	private final Map<String, IResourceObjectCreator<?>>	resourcesCreators	= new HashMap<String, IResourceObjectCreator<?>>();
+	private final Map<String, IResourceObjectCreator<?>>	creators	= new HashMap<String, IResourceObjectCreator<?>>();
 	
 	public ResourceCreatorRepository() {
 	}
 	
 	public final IResourceObjectCreator<?> getCreator(String type) {
-		return resourcesCreators.get(type);
+		return creators.get(type);
+	}
+	
+	@Override
+	public Iterator<Entry<String, IResourceObjectCreator<?>>> iterator() {
+		return creators.entrySet().iterator();
 	}
 	
 	public final void registerResourceCreator(IResourceObjectCreator<?> creator) {
-		resourcesCreators.put(creator.type(), creator);
+		creators.put(creator.type(), creator);
 	}
 	
 }

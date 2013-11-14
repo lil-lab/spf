@@ -19,7 +19,6 @@
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.scorers;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -32,14 +31,16 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.AbstractScaledScorerCreator;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
- * Returns a score for a Lexeme<Y> that is an average over the pairwise scores
+ * Returns a score for a Lexeme<MR> that is an average over the pairwise scores
  * for each word in the phrase and constant in the logical expression. The score
  * for each (word, constant) pair is load from a file. For now, these score are
  * typically computed via IBM Alignment model 1, with the Giza++ toolkit.
@@ -50,6 +51,7 @@ import edu.uw.cs.utils.collections.ISerializableScorer;
 public class LexemeCooccurrenceScorer implements ISerializableScorer<Lexeme> {
 	
 	private static final long			serialVersionUID	= 3293458533645197970L;
+	
 	protected final Map<String, Double>	pMIS;
 	
 	public LexemeCooccurrenceScorer(File f) throws IOException {
@@ -58,10 +60,6 @@ public class LexemeCooccurrenceScorer implements ISerializableScorer<Lexeme> {
 	
 	public LexemeCooccurrenceScorer(Map<String, Double> scores) {
 		this.pMIS = scores;
-	}
-	
-	public static IDecoder<LexemeCooccurrenceScorer> getDecoder() {
-		return new Decoder();
 	}
 	
 	protected static Map<String, Double> readStats(BufferedReader reader)
@@ -133,50 +131,36 @@ public class LexemeCooccurrenceScorer implements ISerializableScorer<Lexeme> {
 		return totalScore / (tokens.size() * (numConstants + 1));
 	}
 	
-	private static class Decoder extends
-			AbstractDecoderIntoFile<LexemeCooccurrenceScorer> {
-		private static final int	VERSION	= 1;
-		
-		public Decoder() {
-			super(LexemeCooccurrenceScorer.class);
-		}
+	public static class Creator extends
+			AbstractScaledScorerCreator<Lexeme, LexemeCooccurrenceScorer> {
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				LexemeCooccurrenceScorer object) {
-			// No special attributes
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected LexemeCooccurrenceScorer doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			return new LexemeCooccurrenceScorer(readStats(reader));
-		}
-		
-		@Override
-		protected void doEncode(LexemeCooccurrenceScorer object,
-				BufferedWriter writer) throws IOException {
-			// Write one pair per line, with the score
-			for (final Map.Entry<String, Double> entry : object.pMIS.entrySet()) {
-				writer.write(entry.getKey() + "  ::  " + entry.getValue());
-				writer.write("\n");
+		public LexemeCooccurrenceScorer createScorer(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			final File file = parameters.getAsFile("file");
+			try {
+				return new LexemeCooccurrenceScorer(file);
+			} catch (final IOException e) {
+				throw new IllegalStateException(
+						"Failed to load lexical cooccurrence scorer from: "
+								+ file);
 			}
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				LexemeCooccurrenceScorer object, File directory, File parentFile)
-				throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public String type() {
+			return "scorer.lexeme.cooc";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					LexemeCooccurrenceScorer.class)
+					.setDescription(
+							"Scorer to score a lexical entry based on its lexeme and a cooccurrence table of constants and tokens")
+					.addParam("scale", "double", "Scaling factor")
+					.addParam("file", "file",
+							"File to initialize cooccurrence table").build();
 		}
 		
 	}

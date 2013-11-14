@@ -28,7 +28,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ApplyAndSimplify;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsValid;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsWellTyped;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.utils.log.ILogger;
@@ -36,7 +36,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 
 public class LogicalExpressionCategoryServices extends
 		AbstractCategoryServices<LogicalExpression> {
-	public static final ILogger				LOG					= LoggerFactory
+	public static final ILogger					LOG					= LoggerFactory
 																			.create(LogicalExpressionCategoryServices.class);
 	
 	private final boolean						doTypeChecking;
@@ -51,23 +51,19 @@ public class LogicalExpressionCategoryServices extends
 																			Syntax.S,
 																			null);
 	
-	private final boolean						lockOntology;
-	
 	private final boolean						validateLogExps;
 	
 	public LogicalExpressionCategoryServices() {
-		this(false, false, false);
+		this(false, false);
+	}
+	
+	public LogicalExpressionCategoryServices(boolean doTypeChecking) {
+		this(doTypeChecking, false);
 	}
 	
 	public LogicalExpressionCategoryServices(boolean doTypeChecking,
-			boolean lockOntology) {
-		this(doTypeChecking, lockOntology, false);
-	}
-	
-	public LogicalExpressionCategoryServices(boolean doTypeChecking,
-			boolean lockOntology, boolean validateLogExps) {
+			boolean validateLogExps) {
 		this.doTypeChecking = doTypeChecking;
-		this.lockOntology = lockOntology;
 		this.validateLogExps = validateLogExps;
 	}
 	
@@ -82,7 +78,7 @@ public class LogicalExpressionCategoryServices extends
 		// Verify application result is well typed, only if verification is
 		// turned on
 		if (applicationResult != null && doTypeChecking
-				&& !IsWellTyped.of(applicationResult)) {
+				&& !IsTypeConsistent.of(applicationResult)) {
 			result = null;
 		} else {
 			result = applicationResult;
@@ -119,7 +115,9 @@ public class LogicalExpressionCategoryServices extends
 		final ComplexType fType = (ComplexType) f.getType();
 		final ComplexType gType = (ComplexType) g.getType();
 		
-		if (!gType.getRange().isExtendingOrExtendedBy(fType.getDomain())) {
+		// Validate the types of the composed expressions.
+		if (!LogicLanguageServices.getTypeComparator().verifyArgType(
+				fType.getDomain(), gType.getRange())) {
 			return null;
 		}
 		
@@ -135,7 +133,7 @@ public class LogicalExpressionCategoryServices extends
 			if (newbody != null) {
 				final LogicalExpression newComposedExp = new Lambda(x, newbody);
 				// Do type checking, if verification is turned on
-				if (doTypeChecking && !IsWellTyped.of(newComposedExp)) {
+				if (doTypeChecking && !IsTypeConsistent.of(newComposedExp)) {
 					return null;
 				} else {
 					// If gBodyWithNewVar is a variable (such as will happen
@@ -213,9 +211,8 @@ public class LogicalExpressionCategoryServices extends
 	
 	@Override
 	public LogicalExpression parseSemantics(String string, boolean checkType) {
-		final LogicalExpression exp = LogicalExpression.parse(string,
-				lockOntology);
-		if (checkType && !IsWellTyped.of(exp)) {
+		final LogicalExpression exp = LogicalExpression.parse(string);
+		if (checkType && !IsTypeConsistent.of(exp)) {
 			throw new IllegalStateException("Semantics not well typed: "
 					+ string);
 		}

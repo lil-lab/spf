@@ -36,16 +36,16 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
  * 
  * @author Yoav Artzi
  */
-public class BackwardSkippingRule<Y> extends AbstractSkippingRule<Y> {
+public class BackwardSkippingRule<MR> extends AbstractSkippingRule<MR> {
 	private static final String	RULE_NAME	= "bskip";
 	
-	public BackwardSkippingRule(ICategoryServices<Y> categoryServices) {
+	public BackwardSkippingRule(ICategoryServices<MR> categoryServices) {
 		super(RULE_NAME, categoryServices);
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		return attemptSkipping(left, right, true);
 	}
 	

@@ -20,9 +20,20 @@ package edu.uw.cs.lil.tiny.exec;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 
-public interface IExec<X, Z> {
+/**
+ * Executor for creating {@link IExecOutput}. Such execution provide access to
+ * the score and final result, but abstract the exact details of the execution
+ * (e.g. lexical entries).
+ * 
+ * @author Yoav Artzi
+ * @param <DI>
+ *            Data item for inference.
+ * @param <RESULT>
+ *            Final execution outcome.
+ */
+public interface IExec<DI extends IDataItem<?>, RESULT> {
 	
-	IExecOutput<Z> execute(IDataItem<X> dataItem);
+	IExecOutput<RESULT> execute(DI dataItem);
 	
 	/**
 	 * @param dataItem
@@ -32,6 +43,6 @@ public interface IExec<X, Z> {
 	 *            the input sentence)
 	 * @return
 	 */
-	IExecOutput<Z> execute(IDataItem<X> dataItem, boolean sloppy);
+	IExecOutput<RESULT> execute(DI dataItem, boolean sloppy);
 	
 }

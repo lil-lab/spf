@@ -29,19 +29,19 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.utils.collections.ListUtils;
 
-class CXRule<Y> implements IBinaryParseRule<Y> {
+class CXRule<MR> implements IBinaryParseRule<MR> {
 	
 	private static final String				RULE_NAME	= "cx";
 	
-	private final ICoordinationServices<Y>	services;
+	private final ICoordinationServices<MR>	services;
 	
-	public CXRule(ICoordinationServices<Y> services) {
+	public CXRule(ICoordinationServices<MR> services) {
 		this.services = services;
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		if (left.getSyntax() instanceof ComplexSyntax
 				&& ((ComplexSyntax) left.getSyntax()).getSlash().equals(
 						Slash.FORWARD) && right.getSem() != null
@@ -50,11 +50,11 @@ class CXRule<Y> implements IBinaryParseRule<Y> {
 					.getRight();
 			if (SyntaxCoordinationServices.isCoordinationOfType(
 					right.getSyntax(), argType)) {
-				final Y applied = services.applyCoordination(left.getSem(),
+				final MR applied = services.applyCoordination(left.getSem(),
 						right.getSem());
 				if (applied != null) {
 					return ListUtils
-							.createSingletonList(new ParseRuleResult<Y>(
+							.createSingletonList(new ParseRuleResult<MR>(
 									RULE_NAME, Category.create(
 											((ComplexSyntax) left.getSyntax())
 													.getLeft(), applied)));

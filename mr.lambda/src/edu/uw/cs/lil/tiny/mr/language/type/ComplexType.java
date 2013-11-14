@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.mr.language.type;
 
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType.Option;
+import edu.uw.cs.utils.assertion.Assert;
 
 public class ComplexType extends Type {
 	public static final char	COMPLEX_TYPE_CLOSE_PAREN		= '>';
@@ -34,8 +35,8 @@ public class ComplexType extends Type {
 	
 	ComplexType(String label, Type domain, Type range) {
 		super(label);
-		this.domain = domain;
-		this.range = range;
+		this.domain = Assert.ifNull(domain);
+		this.range = Assert.ifNull(range);
 	}
 	
 	public static String composeString(Type range, Type domain, Option option) {

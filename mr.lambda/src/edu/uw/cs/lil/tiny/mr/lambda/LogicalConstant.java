@@ -20,12 +20,10 @@ package edu.uw.cs.lil.tiny.mr.lambda;
 
 import java.io.ObjectStreamException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -38,39 +36,41 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class LogicalConstant extends Term {
-	static private final Map<String, LogicalConstant>	INSTANCE_REPOSITORY	= new ConcurrentHashMap<String, LogicalConstant>();
+	public static final ILogger	LOG					= LoggerFactory
+															.create(LogicalConstant.class);
 	
-	public static final ILogger						LOG					= LoggerFactory
-																					.create(LogicalConstant.class);
+	private static final String	DYNAMIC_MARKER		= "@";
 	
-	private static final long							serialVersionUID	= 4418490882304760062L;
+	private static final long	serialVersionUID	= 4418490882304760062L;
 	
-	private final String								name;
+	private final String		name;
 	
-	private LogicalConstant(String name, Type type) {
+	protected LogicalConstant(String name, Type type) {
 		super(type);
 		this.name = name;
 	}
 	
-	static public LogicalConstant create(String name, Type type) {
+	public static LogicalConstant create(String name, Type type) {
 		return create(name, type, false);
 	}
 	
-	static public LogicalConstant create(String name, Type type,
-			boolean lockOntology) {
-		final LogicalConstant instance = INSTANCE_REPOSITORY.get(name);
-		if (instance == null) {
-			if (lockOntology) {
-				throw new LogicalExpressionRuntimeException(
-						String.format(
-								"Ontology is locked, can't create logical constant %s with type %s",
-								name, type));
-			}
-			final LogicalConstant newConstant = new LogicalConstant(name, type);
-			return addToRepository(name, newConstant);
-		} else {
-			return instance;
+	public static LogicalConstant create(String name, Type type, boolean dynamic) {
+		// Strip the dynamic marker if present.
+		if (name.startsWith(DYNAMIC_MARKER)) {
+			name = name.substring(DYNAMIC_MARKER.length());
+			dynamic = true;
 		}
+		
+		if (LogicLanguageServices.getOntology() == null) {
+			return new LogicalConstant(name, type);
+		} else {
+			return LogicLanguageServices.getOntology().getOrAdd(
+					new LogicalConstant(name, type), dynamic);
+		}
+	}
+	
+	public static LogicalConstant createDynamic(String name, Type type) {
+		return create(name, type, true);
 	}
 	
 	/**
@@ -85,34 +85,12 @@ public class LogicalConstant extends Term {
 		return name + Term.TYPE_SEPARATOR + type;
 	}
 	
-	/**
-	 * Given a constant, will split its name
-	 * 
-	 * @param constant
-	 * @param typeRepository
-	 *            Type repository to get the type information from
-	 * @return Pair of (name, type)
-	 */
-	public static Pair<String, Type> splitName(LogicalConstant constant) {
-		final String[] split = constant.name.split(Term.TYPE_SEPARATOR);
-		return Pair.of(split[0], constant.getType());
-	}
-	
-	static private LogicalConstant addToRepository(String name,
-			LogicalConstant constant) {
-		// Try to get from repository inside lock to handle race conditions
-		synchronized (INSTANCE_REPOSITORY) {
-			if (INSTANCE_REPOSITORY.containsKey(name)) {
-				return INSTANCE_REPOSITORY.get(name);
-			} else {
-				INSTANCE_REPOSITORY.put(name, constant);
-				return constant;
-			}
-		}
+	public static LogicalConstant parse(String string) {
+		return parse(string, LogicLanguageServices.getTypeRepository());
 	}
 	
 	protected static LogicalConstant doParse(String string,
-			TypeRepository typeRepository, boolean lockOntology) {
+			TypeRepository typeRepository) {
 		try {
 			final String[] split = string.split(Term.TYPE_SEPARATOR);
 			if (split.length != 2) {
@@ -135,11 +113,21 @@ public class LogicalConstant extends Term {
 				throw new LogicalExpressionRuntimeException(String.format(
 						"Unknown type for: %s", string));
 			}
-			return create(string, type, lockOntology);
+			return create(string, type);
 		} catch (final RuntimeException e) {
 			LOG.error("Logical constant syntax error: %s", string);
 			throw e;
 		}
+	}
+	
+	protected static LogicalConstant parse(String string,
+			TypeRepository typeRepository) {
+		return doParse(string, typeRepository);
+	}
+	
+	protected static LogicalExpression parse(String string,
+			TypeRepository typeRepository, ITypeComparator typeComparator) {
+		return parse(string, typeRepository);
 	}
 	
 	@Override
@@ -155,36 +143,80 @@ public class LogicalConstant extends Term {
 		return result;
 	}
 	
+	/**
+	 * Override {@link Term#equals(Object)} and
+	 * {@link LogicalExpression#equals(Object)} to do simple instance comparison
+	 * or more heavy comparison, depending on the presence of an ontology.
+	 */
 	@Override
 	public boolean equals(Object obj) {
-		// Do instance comparison, since constants are unique across the system.
-		return this == obj;
+		if (LogicLanguageServices.getOntology() == null) {
+			return obj instanceof LogicalConstant
+					&& doEquals((LogicalConstant) obj);
+		} else {
+			// Do instance comparison, since constants are unique across the
+			// system.
+			return this == obj;
+		}
+	}
+	
+	/**
+	 * Given a constant with the name boo:e, will return 'boo'. Meaning, returns
+	 * the base name without the typing suffix or the decoration prefix.
+	 */
+	public String getBaseName() {
+		return name.split(Term.TYPE_SEPARATOR)[0];
 	}
 	
 	public String getName() {
 		return name;
 	}
 	
+	/**
+	 * Checks equality based on the content of the logical constant (name and
+	 * type).
+	 * 
+	 * @param exp
+	 *            Logical constant to compare.
+	 */
+	protected boolean doEquals(LogicalConstant exp) {
+		if (this == exp) {
+			return true;
+		}
+		if (!super.doEquals(exp)) {
+			return false;
+		}
+		if (name == null) {
+			if (exp.name != null) {
+				return false;
+			}
+		} else if (!name.equals(exp.name)) {
+			return false;
+		}
+		return true;
+	}
+	
 	@Override
-	protected boolean equals(Object obj,
+	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		// Constants are singletons and re-used
-		return this == obj;
+		// Do instance comparison, since constants are unique across the system.
+		return this == exp;
+	}
+	
+	@Override
+	protected boolean equals(LogicalExpression exp,
+			Map<Variable, Variable> variablesMapping) {
+		// Constants are singletons and re-used, so do instance comparison.
+		return this == exp;
 	}
 	
 	/**
 	 * Resolves read serialized objects to constants from the repository.
 	 * 
-	 * @return
 	 * @throws ObjectStreamException
 	 */
 	protected Object readResolve() throws ObjectStreamException {
-		final LogicalConstant existing = INSTANCE_REPOSITORY.get(name);
-		if (existing == null) {
-			return addToRepository(name, this);
-		} else {
-			return existing;
-		}
+		return create(getName(), getType());
 	}
 	
 }

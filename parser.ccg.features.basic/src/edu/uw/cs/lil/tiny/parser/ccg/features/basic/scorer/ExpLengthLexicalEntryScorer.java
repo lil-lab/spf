@@ -18,16 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
@@ -35,12 +30,14 @@ import edu.uw.cs.utils.collections.ISerializableScorer;
  * n^exp, where n is the number of tokens in the lexical entry.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
+ *            Meaning representation type.
  */
-public class ExpLengthLexicalEntryScorer<Y> implements
-		ISerializableScorer<LexicalEntry<Y>> {
+public class ExpLengthLexicalEntryScorer<MR> implements
+		ISerializableScorer<LexicalEntry<MR>> {
 	
 	private static final long	serialVersionUID	= 3086307252253251483L;
+	
 	private final double		coef;
 	private final double		exponent;
 	
@@ -49,61 +46,35 @@ public class ExpLengthLexicalEntryScorer<Y> implements
 		this.exponent = exponent;
 	}
 	
-	public static <Y> IDecoder<ExpLengthLexicalEntryScorer<Y>> getDecoder() {
-		return new Decoder<Y>();
-	}
-	
 	@Override
-	public double score(LexicalEntry<Y> lex) {
+	public double score(LexicalEntry<MR> lex) {
 		return coef * Math.pow(lex.getTokens().size(), exponent);
 	}
 	
-	private static class Decoder<Y> extends
-			AbstractDecoderIntoFile<ExpLengthLexicalEntryScorer<Y>> {
+	public static class Creator<MR> implements
+			IResourceObjectCreator<ExpLengthLexicalEntryScorer<MR>> {
 		
-		private static final int	VERSION	= 1;
-		
-		protected Decoder() {
-			super(ExpLengthLexicalEntryScorer.class);
+		@Override
+		public ExpLengthLexicalEntryScorer<MR> create(Parameters params,
+				IResourceRepository repo) {
+			return new ExpLengthLexicalEntryScorer<MR>(Double.valueOf(params
+					.get("coef")), Double.valueOf(params.get("exp")));
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public String type() {
+			return "scorer.lenexp";
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(
-				ExpLengthLexicalEntryScorer<Y> object) {
-			final Map<String, String> attrbiutes = new HashMap<String, String>();
-			attrbiutes.put("coef", Double.toString(object.coef));
-			attrbiutes.put("exponent", Double.toString(object.exponent));
-			return attrbiutes;
-		}
-		
-		@Override
-		protected ExpLengthLexicalEntryScorer<Y> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			final double baseScore = Double.valueOf(attributes.get("coef"));
-			final double exponent = Double.valueOf(attributes.get("exponent"));
-			
-			return new ExpLengthLexicalEntryScorer<Y>(baseScore, exponent);
-		}
-		
-		@Override
-		protected void doEncode(ExpLengthLexicalEntryScorer<Y> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to write
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				ExpLengthLexicalEntryScorer<Y> object, File directory,
-				File parentFile) throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					ExpLengthLexicalEntryScorer.class)
+					.setDescription(
+							"Lexical entry scorer that computes the function coef * n^exp, where n is the number of tokens in the lexical entry")
+					.addParam("coef", "double", "Scoring function coefficient")
+					.addParam("exp", "double", "Scoring function exponent")
+					.build();
 		}
 		
 	}

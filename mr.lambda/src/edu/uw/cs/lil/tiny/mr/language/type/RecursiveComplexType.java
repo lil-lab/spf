@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.mr.language.type;
 
 import jregex.Matcher;
 import jregex.Pattern;
+import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
@@ -39,7 +40,7 @@ public class RecursiveComplexType extends ComplexType {
 			boolean orderSensitive, int minArgs) {
 		super(label, domain, range);
 		this.orderSensitive = orderSensitive;
-		this.minArgs = minArgs;
+		this.minArgs = Assert.ifTrue(minArgs, minArgs <= 0);
 	}
 	
 	RecursiveComplexType(String label, Type domain, Type range, Option option) {

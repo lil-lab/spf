@@ -18,13 +18,16 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.collection;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
+
 /**
  * An iterable with a certain number of data items.
  * 
  * @author Yoav Artzi
- * @param <T>
+ * @param <DI>
+ *            Data item type.
  */
-public interface IDataCollection<T> extends Iterable<T> {
+public interface IDataCollection<DI extends IDataItem<?>> extends Iterable<DI> {
 	
 	/**
 	 * Size of the collection.

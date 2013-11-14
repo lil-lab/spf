@@ -24,13 +24,13 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
  * Validates a label using the data item.
  * 
  * @author Yoav Artzi
- * @param <X>
+ * @param <DI>
  *            Type of data item
- * @param <Z>
+ * @param <LABEL>
  *            Type of label
  */
-public interface IValidator<X extends IDataItem<?>, Z> {
+public interface IValidator<DI extends IDataItem<?>, LABEL> {
 	
-	boolean isValid(X dataItem, Z label);
+	boolean isValid(DI dataItem, LABEL label);
 	
 }

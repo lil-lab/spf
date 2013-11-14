@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
 import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
 import edu.uw.cs.lil.tiny.utils.concurrency.TinyExecutorService;
 import edu.uw.cs.utils.log.ILogger;
@@ -46,7 +47,7 @@ import edu.uw.cs.utils.log.thread.LoggingThreadFactory;
  */
 public abstract class DistributedExperiment extends LoggedExperiment implements
 		IJobListener, ITinyExecutor {
-	public static final ILogger		LOG						= LoggerFactory
+	public static final ILogger			LOG						= LoggerFactory
 																		.create(DistributedExperiment.class);
 	private final Set<String>			completedIds			= new HashSet<String>();
 	final private Object				completionSignalObject	= new Object();
@@ -64,13 +65,9 @@ public abstract class DistributedExperiment extends LoggedExperiment implements
 	
 	private final long					startingTime			= System.currentTimeMillis();
 	
-	public DistributedExperiment(File initFile) throws IOException {
-		this(initFile, Collections.<String, String> emptyMap());
-	}
-	
-	public DistributedExperiment(File initFile, Map<String, String> envParams)
-			throws IOException {
-		super(initFile, envParams);
+	public DistributedExperiment(File initFile, Map<String, String> envParams,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		super(initFile, envParams, creatorRepo);
 		
 		// //////////////////////////////////////////
 		// Set the serial flag
@@ -87,6 +84,11 @@ public abstract class DistributedExperiment extends LoggedExperiment implements
 				globalParams.contains("threadMonitorPolling") ? Long
 						.valueOf(globalParams.get("threadMonitorPolling"))
 						: ITinyExecutor.DEFAULT_MONITOR_SLEEP);
+	}
+	
+	public DistributedExperiment(File initFile,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		this(initFile, Collections.<String, String> emptyMap(), creatorRepo);
 	}
 	
 	@Override

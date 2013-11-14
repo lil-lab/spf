@@ -12,7 +12,6 @@
 	<classpathentry kind="src" path="/data"/>
 	<classpathentry kind="src" path="/parser.ccg.features.basic"/>
 	<classpathentry kind="src" path="/parser.ccg.features.lambda"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon.factored.lambda"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg.template"/>
@@ -23,5 +22,6 @@
 	<classpathentry kind="src" path="/learn.validation"/>
 	<classpathentry kind="src" path="/parser.ccg.rules.lambda"/>
 	<classpathentry kind="src" path="/genlex.ccg.unification"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/genlex.ccg"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

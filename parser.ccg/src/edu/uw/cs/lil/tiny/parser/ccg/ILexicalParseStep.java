@@ -22,11 +22,11 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 
 /**
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public interface ILexicalParseStep<Y> extends IParseStep<Y> {
+public interface ILexicalParseStep<MR> extends IParseStep<MR> {
 	public static final String	LEXICAL_DERIVATION_STEP_RULENAME	= "lex";
 	
-	LexicalEntry<Y> getLexicalEntry();
+	LexicalEntry<MR> getLexicalEntry();
 	
 }

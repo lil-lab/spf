@@ -26,18 +26,29 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.utils.counter.Counter;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 		IStatistics<DI> {
 	
+	public static final ILogger		LOG					= LoggerFactory
+																.create(StatsWithDuplicates.class);
+	
 	private final Map<DI, Counter>	corrects			= new HashMap<DI, Counter>();
 	private final Map<DI, Counter>	failures			= new HashMap<DI, Counter>();
 	private final Map<DI, Counter>	incorrects			= new HashMap<DI, Counter>();
+	private final String			label;
 	private final Set<DI>			seendDataItems		= new HashSet<DI>();
 	private final Map<DI, Counter>	sloppyCorrects		= new HashMap<DI, Counter>();
 	private final Map<DI, Counter>	sloppyFailures		= new HashMap<DI, Counter>();
 	private final Map<DI, Counter>	sloppyIncorrects	= new HashMap<DI, Counter>();
+	
 	private final Map<DI, Counter>	totals				= new HashMap<DI, Counter>();
+	
+	public StatsWithDuplicates(String label) {
+		this.label = label;
+	}
 	
 	@Override
 	public double f1() {
@@ -81,6 +92,11 @@ public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 					/ (double) entry.getValue().value();
 		}
 		return ret;
+	}
+	
+	@Override
+	public String getLabel() {
+		return label;
 	}
 	
 	@Override
@@ -139,6 +155,7 @@ public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 	
 	@Override
 	public void recordCorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record correct.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, totals);
 		inc(dataItem, corrects);
@@ -146,6 +163,7 @@ public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 	
 	@Override
 	public void recordFailure(DI dataItem) {
+		LOG.info("[%s stats]  Record failure.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, totals);
 		inc(dataItem, failures);
@@ -153,6 +171,7 @@ public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 	
 	@Override
 	public void recordIncorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record incorrect.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, totals);
 		inc(dataItem, incorrects);
@@ -160,18 +179,21 @@ public class StatsWithDuplicates<DI extends IDataItem<?>> implements
 	
 	@Override
 	public void recordSloppyCorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy correct.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, sloppyCorrects);
 	}
 	
 	@Override
 	public void recordSloppyFailure(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy failure.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, sloppyFailures);
 	}
 	
 	@Override
 	public void recordSloppyIncorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy incorrect.", getLabel());
 		seendDataItems.add(dataItem);
 		inc(dataItem, sloppyIncorrects);
 	}

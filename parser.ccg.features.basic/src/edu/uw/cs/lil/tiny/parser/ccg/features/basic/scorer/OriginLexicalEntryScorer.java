@@ -18,18 +18,14 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
@@ -38,12 +34,14 @@ import edu.uw.cs.utils.collections.ISerializableScorer;
  * 
  * @author Yoav Artzi
  * @param <MR>
+ *            Meaning representation type.
  */
 public class OriginLexicalEntryScorer<MR> implements
 		ISerializableScorer<LexicalEntry<MR>> {
 	
-	private static final long							serialVersionUID	= 1019435407737659964L;
-	private final IScorer<LexicalEntry<MR>>				defaultScorer;
+	private static final long								serialVersionUID	= 1019435407737659964L;
+	
+	private final IScorer<LexicalEntry<MR>>					defaultScorer;
 	private final Map<String, IScorer<LexicalEntry<MR>>>	originScorers;
 	
 	public OriginLexicalEntryScorer(
@@ -51,11 +49,6 @@ public class OriginLexicalEntryScorer<MR> implements
 			IScorer<LexicalEntry<MR>> defaultScorer) {
 		this.originScorers = originScorers;
 		this.defaultScorer = defaultScorer;
-	}
-	
-	public static <Y> IDecoder<OriginLexicalEntryScorer<Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<Y>(decoderHelper);
 	}
 	
 	@Override
@@ -67,83 +60,49 @@ public class OriginLexicalEntryScorer<MR> implements
 		}
 	}
 	
-	private static class Decoder<Y> extends
-			AbstractDecoderIntoFile<OriginLexicalEntryScorer<Y>> {
-		
-		private static final int		VERSION	= 1;
-		private final DecoderHelper<Y>	decoderHelper;
-		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
-			super(OriginLexicalEntryScorer.class);
-			this.decoderHelper = decoderHelper;
-		}
+	public static class Creator<MR> implements
+			IResourceObjectCreator<OriginLexicalEntryScorer<MR>> {
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(
-				OriginLexicalEntryScorer<Y> object) {
-			// No attributes, everything is stored in external files
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected OriginLexicalEntryScorer<Y> doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
+		public OriginLexicalEntryScorer<MR> create(Parameters params,
+				final IResourceRepository repo) {
+			final IScorer<LexicalEntry<MR>> defaultScorer = repo
+					.getResource(params.get("default"));
 			
-			// Get default scorer
-			final IScorer<LexicalEntry<Y>> defaultScorer = DecoderServices
-					.decode(dependentFiles.get("defaultScorer"), decoderHelper);
+			final Map<String, IScorer<LexicalEntry<MR>>> originScorers = new HashMap<String, IScorer<LexicalEntry<MR>>>();
 			
-			// Get the origin scorers
-			final Map<String, IScorer<LexicalEntry<Y>>> originScorers = new HashMap<String, IScorer<LexicalEntry<Y>>>();
-			for (final Map.Entry<String, File> fileEntry : dependentFiles
-					.entrySet()) {
-				if (!fileEntry.getKey().equals("defaultScorer")) {
-					final IScorer<LexicalEntry<Y>> scorer = DecoderServices
-							.decode(fileEntry.getValue(), decoderHelper);
-					originScorers.put(fileEntry.getKey(), scorer);
+			if (params.contains("scorers")) {
+				for (final String entry : params.getSplit("scorers")) {
+					final String[] split = entry.split(":", 2);
+					final String origin = split[0];
+					final IScorer<LexicalEntry<MR>> scorer = repo
+							.getResource(split[1]);
+					originScorers.put(origin, scorer);
 				}
 			}
 			
-			return new OriginLexicalEntryScorer<Y>(originScorers, defaultScorer);
+			return new OriginLexicalEntryScorer<MR>(originScorers,
+					defaultScorer);
 		}
 		
 		@Override
-		protected void doEncode(OriginLexicalEntryScorer<Y> object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to encode, everything is store in files
+		public String type() {
+			return "scorer.lex.origin";
 		}
 		
 		@Override
-		protected Map<String, File> encodeDependentFiles(
-				OriginLexicalEntryScorer<Y> object, File directory,
-				File parentFile) throws IOException {
-			final Map<String, File> files = new HashMap<String, File>();
-			
-			// Encode default scorer
-			final File defaultScorerFile = new File(directory,
-					parentFile.getName() + ".defaultScorer");
-			DecoderServices.encode(object.defaultScorer, defaultScorerFile,
-					decoderHelper);
-			files.put("defaultScorer", defaultScorerFile);
-			
-			// Encode origin scorers
-			for (final Map.Entry<String, IScorer<LexicalEntry<Y>>> entry : object.originScorers
-					.entrySet()) {
-				final File scorerFile = new File(directory,
-						parentFile.getName() + "." + entry.getKey().toString());
-				DecoderServices.encode(entry.getValue(), scorerFile,
-						decoderHelper);
-				files.put(entry.getKey().toString(), scorerFile);
-			}
-			
-			return files;
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					OriginLexicalEntryScorer.class)
+					.setDescription(
+							"Lexical entry scorer that assigns different constants to lexical entries based on their origin")
+					.addParam("default", "id",
+							"Default scorer to use for origins not specified in the scorer")
+					.addParam(
+							"scores",
+							"list",
+							"List of origin-score pairs. For each origin controlled by this scorer, a weight should be specified (e.g., 'FIXED_DOMAIN:1.0,LEARNED:3.0')")
+					.build();
 		}
 		
 	}

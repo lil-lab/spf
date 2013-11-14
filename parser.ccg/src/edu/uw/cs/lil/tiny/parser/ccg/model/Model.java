@@ -18,52 +18,57 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.ILexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSetImmutable;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoDir;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.DecoderServices;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
-import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
-import edu.uw.cs.utils.composites.Triplet;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
  * A complete parsing model, including features, parameters and a lexicon.
  * 
  * @author Yoav Artzi
  * @param <DI>
+ *            Data item used for inference.
  * @param <MR>
  *            Type of semantics (output).
  */
 public class Model<DI extends IDataItem<?>, MR> implements
 		IModelImmutable<DI, MR> {
+	public static final ILogger									LOG					= LoggerFactory
+																							.create(Model.class);
+	
 	private static final long									serialVersionUID	= -2202596624826388636L;
 	
 	private final List<IIndependentLexicalFeatureSet<DI, MR>>	lexicalFeatures;
@@ -91,19 +96,36 @@ public class Model<DI extends IDataItem<?>, MR> implements
 		this.theta = theta;
 	}
 	
-	public static <DI extends IDataItem<?>, MR> IDecoder<Model<DI, MR>> getDecoder(
-			DecoderHelper<MR> decoderHelper) {
-		return new Decoder<DI, MR>(decoderHelper);
+	/**
+	 * Read model object from a file.
+	 * 
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	public static <DI extends IDataItem<?>, MR> Model<DI, MR> read(File file)
+			throws ClassNotFoundException, IOException {
+		final ObjectInput input = new ObjectInputStream(
+				new BufferedInputStream(new FileInputStream(file)));
+		@SuppressWarnings("unchecked")
+		final Model<DI, MR> model = (Model<DI, MR>) input.readObject();
+		input.close();
+		return model;
 	}
 	
-	public void addFixedLexicalEntries(Collection<LexicalEntry<MR>> entries) {
-		for (final LexicalEntry<MR> entry : entries) {
-			addFixedLexicalEntry(entry);
-		}
-	}
-	
-	public void addFixedLexicalEntries(ILexicon<MR> entries) {
-		addFixedLexicalEntries(entries.toCollection());
+	/**
+	 * Store model object in a file.
+	 * 
+	 * @throws IOException
+	 */
+	public static <DI extends IDataItem<?>, MR> void write(Model<DI, MR> model,
+			File file) throws IOException {
+		final OutputStream os = new FileOutputStream(file);
+		final OutputStream buffer = new BufferedOutputStream(os);
+		final ObjectOutput output = new ObjectOutputStream(buffer);
+		output.writeObject(model);
+		output.close();
+		buffer.close();
+		os.close();
 	}
 	
 	/**
@@ -249,26 +271,6 @@ public class Model<DI extends IDataItem<?>, MR> implements
 		return ret.toString();
 	}
 	
-	private boolean addFixedLexicalEntry(LexicalEntry<MR> entry) {
-		final Set<LexicalEntry<MR>> addedEntries = lexicon.add(entry);
-		
-		// Only the original entry is considered fixed
-		for (final ILexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
-			lfs.addFixedEntry(entry, theta);
-		}
-		
-		// The rest are updated as regular entries
-		for (final LexicalEntry<MR> addedEntry : addedEntries) {
-			if (!addedEntries.equals(entry)) {
-				for (final ILexicalFeatureSet<DI, MR> lfs : lexicalFeatures) {
-					lfs.addEntry(addedEntry, theta);
-				}
-			}
-		}
-		
-		return !addedEntries.isEmpty();
-	}
-	
 	private String lexiconToString(ILexicon<MR> lex) {
 		final StringBuffer result = new StringBuffer();
 		final Iterator<LexicalEntry<MR>> i = lex.toCollection().iterator();
@@ -311,226 +313,77 @@ public class Model<DI extends IDataItem<?>, MR> implements
 		}
 	}
 	
-	private static class Decoder<DI extends IDataItem<?>, MR> extends
-			AbstractDecoderIntoDir<Model<DI, MR>> {
-		private static final String		LEXICAL_FEATURE_SET_FILE_EXTENSION	= ".lex.feat";
-		private static final String		LEXICON_FILE_NAME					= "lexicon";
+	public static class Creator<DI extends IDataItem<?>, MR> implements
+			IResourceObjectCreator<Model<DI, MR>> {
 		
-		private static final String		PARSE_FEATURE_SET_FILE_EXTENSION	= ".parse.feat";
-		
-		private static final int		VERSION								= 1;
-		
-		private static final String		WEIGHTS_FILE_NAME_EXTENSION			= ".weights";
-		
-		private final DecoderHelper<MR>	decoderHelper;
-		
-		public Decoder(DecoderHelper<MR> decoderHelper) {
-			super(Model.class);
-			this.decoderHelper = decoderHelper;
-		}
-		
-		private static IHashVector readWeightVector(File file)
-				throws IOException {
-			final IHashVector weights = HashVectorFactory.create();
-			final BufferedReader reader = new BufferedReader(new FileReader(
-					file));
-			try {
-				String line;
-				while ((line = readTextLine(reader)) != null) {
-					final String[] split = line.split("\t");
-					final String[] keySplit = split[0].split("#");
-					switch (keySplit.length) {
-						case 1:
-							weights.set(keySplit[0], Double.valueOf(split[1]));
-							break;
-						case 2:
-							weights.set(keySplit[0], keySplit[1],
-									Double.valueOf(split[1]));
-							break;
-						case 3:
-							weights.set(keySplit[0], keySplit[1], keySplit[2],
-									Double.valueOf(split[1]));
-							break;
-						case 4:
-							weights.set(keySplit[0], keySplit[1], keySplit[2],
-									keySplit[3], Double.valueOf(split[1]));
-							break;
-						case 5:
-							weights.set(keySplit[0], keySplit[1], keySplit[2],
-									keySplit[3], keySplit[4],
-									Double.valueOf(split[1]));
-							break;
-						default:
-							throw new IllegalStateException(
-									"Invalid number of KeyArgs arguments: "
-											+ split[0]);
-					}
+		@SuppressWarnings("unchecked")
+		@Override
+		public Model<DI, MR> create(Parameters params, IResourceRepository repo) {
+			
+			// Case loading from file.
+			if (params.contains("file")) {
+				try {
+					LOG.info("Loading model from: %s", params.getAsFile("file")
+							.getAbsolutePath());
+					return Model.read(params.getAsFile("file"));
+				} catch (final ClassNotFoundException e) {
+					throw new RuntimeException(e);
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
 				}
-			} finally {
-				reader.close();
-			}
-			return weights;
-		}
-		
-		@Override
-		public int getVersion() {
-			return VERSION;
-		}
-		
-		/**
-		 * Write the weights of a specific feature set to a file. Allows the
-		 * feature set to create comments.
-		 * 
-		 * @param file
-		 * @param weightVector
-		 * @param featureSet
-		 * @throws IOException
-		 */
-		private void writeWeightVector(File file, IHashVector weightVector,
-				IFeatureSet featureSet) throws IOException {
-			final List<Triplet<KeyArgs, Double, String>> featureWeights = featureSet
-					.getFeatureWeights(weightVector);
-			final BufferedWriter writer = new BufferedWriter(new FileWriter(
-					file));
-			for (final Triplet<KeyArgs, Double, String> weightTriplet : featureWeights) {
-				writer.write(String.format("%s\t%.20f", weightTriplet.first(),
-						weightTriplet.second()));
-				if (weightTriplet.third() != null) {
-					writer.write(String.format(" // %s", weightTriplet.third()));
-				}
-				writer.write("\n");
-			}
-			
-			writer.close();
-		}
-		
-		@Override
-		protected Map<String, String> createAttributesMap(Model<DI, MR> object) {
-			// No attributes, return an empty map
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected Model<DI, MR> decodeFromDir(Map<String, String> attributes,
-				File dir) throws IOException {
-			
-			// Create lexical features from *.lex.feat files
-			final String[] lexicalFeatureSetFiles = dir
-					.list(new FilenameFilter() {
-						
-						@Override
-						public boolean accept(File filedir, String name) {
-							return name
-									.endsWith(LEXICAL_FEATURE_SET_FILE_EXTENSION);
-						}
-					});
-			final List<IIndependentLexicalFeatureSet<DI, MR>> lexicalFeatures = new ArrayList<IIndependentLexicalFeatureSet<DI, MR>>(
-					lexicalFeatureSetFiles.length);
-			for (final String filename : lexicalFeatureSetFiles) {
-				@SuppressWarnings("unchecked")
-				final IIndependentLexicalFeatureSet<DI, MR> featureSet = (IIndependentLexicalFeatureSet<DI, MR>) (DecoderServices
-						.decode(getClassName(filename,
-								LEXICAL_FEATURE_SET_FILE_EXTENSION), new File(
-								dir, filename), decoderHelper));
-				lexicalFeatures.add(featureSet);
-			}
-			
-			// Create parse features from *.parse.feat files
-			final String[] parseFeatureSetFiles = dir
-					.list(new FilenameFilter() {
-						
-						@Override
-						public boolean accept(File filedir, String name) {
-							return name
-									.endsWith(PARSE_FEATURE_SET_FILE_EXTENSION);
-						}
-					});
-			final List<IParseFeatureSet<DI, MR>> parseFeatures = new ArrayList<IParseFeatureSet<DI, MR>>(
-					parseFeatureSetFiles.length);
-			for (final String filename : parseFeatureSetFiles) {
-				@SuppressWarnings("unchecked")
-				final IParseFeatureSet<DI, MR> featureSet = (IParseFeatureSet<DI, MR>) DecoderServices
-						.decode(getClassName(filename,
-								PARSE_FEATURE_SET_FILE_EXTENSION), new File(
-								dir, filename), decoderHelper);
-				parseFeatures.add(featureSet);
-			}
-			
-			// Create the lexicon from model.lex file
-			final ILexicon<MR> lexicon = DecoderServices.decode(new File(dir,
-					LEXICON_FILE_NAME), decoderHelper);
-			
-			// Read feature weights from all *.weights files (e.g.
-			// *.lex.feat.weights, *.parse.feat.weights)
-			final IHashVector theta = HashVectorFactory.create();
-			final String[] featureWeightsFiles = dir.list(new FilenameFilter() {
+			} else {
+				// Case creating a new model.
 				
-				@Override
-				public boolean accept(File filedir, String name) {
-					return name.endsWith(".lex.feat.weights")
-							|| name.endsWith(".parse.feat.weights");
+				final Builder<DI, MR> builder = new Model.Builder<DI, MR>();
+				
+				// Lexicon
+				builder.setLexicon((ILexicon<MR>) repo.getResource(params
+						.get("lexicon")));
+				
+				// Lexical feature sets
+				for (final String setId : params.getSplit("lexicalFeatures")) {
+					builder.addLexicalFeatureSet((IIndependentLexicalFeatureSet<DI, MR>) repo
+							.getResource(setId));
 				}
-			});
-			for (final String filename : featureWeightsFiles) {
-				// Read each weight vector and update it into theta
-				readWeightVector(new File(dir, filename)).addTimesInto(1.0,
-						theta);
+				
+				// Parse feature sets
+				for (final String setId : params.getSplit("parseFeatures")) {
+					builder.addParseFeatureSet((IParseFeatureSet<DI, MR>) repo
+							.getResource(setId));
+				}
+				
+				final Model<DI, MR> model = builder.build();
+				
+				return model;
 			}
-			
-			return new Model<DI, MR>(lexicalFeatures, parseFeatures, lexicon,
-					theta);
 		}
 		
 		@Override
-		protected void writeFiles(Model<DI, MR> object, File dir)
-				throws IOException {
-			// For each parse feature set, write the feature set file. This file
-			// is
-			// used to create the feature set and doesn't contain the weights
-			for (final IParseFeatureSet<DI, MR> featureSet : object.parseFeatures) {
-				DecoderServices.encode(featureSet, new File(dir, featureSet
-						.getClass().getName()
-						+ PARSE_FEATURE_SET_FILE_EXTENSION), decoderHelper);
+		public String type() {
+			return "model";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), Model.class)
+					.setDescription(
+							"Parsing model, including lexicon, features and a weight vector")
+					.addParam("lexicon", "id", "Lexicon to use with this model")
+					.addParam("lexicalFeatures", "[id]",
+							"Lexical feature sets to use (e.g., 'lfs1,lfs2,lfs3')")
+					.addParam("parseFeatures", "[id]",
+							"Parse feature sets to use (e.g., 'pfs1,pfs2,pfs3')")
+					.build();
+		}
+		
+		protected ILexicon<MR> createLexicon(String lexiconType) {
+			if ("conventional".equals(lexiconType)) {
+				return new Lexicon<MR>();
+			} else {
+				throw new IllegalArgumentException("Invalid lexicon type: "
+						+ lexiconType);
 			}
-			
-			// For each lexical feature set, write the feature set file. This
-			// file
-			// is used to create the feature set and doesn't contain the weights
-			for (final IIndependentLexicalFeatureSet<DI, MR> featureSet : object.lexicalFeatures) {
-				DecoderServices.encode(featureSet, new File(dir, featureSet
-						.getClass().getName()
-						+ LEXICAL_FEATURE_SET_FILE_EXTENSION), decoderHelper);
-			}
-			
-			// For each parse feature set, get all the members of
-			// theta that are assigned to it, and dump them to a
-			// *.parse.feat.weights
-			// file
-			for (final IParseFeatureSet<DI, MR> featureSet : object.parseFeatures) {
-				writeWeightVector(new File(dir, featureSet.getClass().getName()
-						+ PARSE_FEATURE_SET_FILE_EXTENSION
-						+ WEIGHTS_FILE_NAME_EXTENSION), object.theta,
-						featureSet);
-			}
-			
-			// For each lexical feature set, get all the members
-			// of theta that are assigned to it, and dump them to a
-			// *.lex.feat.weights
-			// file. For each lexical entry, add print the entry itself as a
-			// comment
-			// at the end of the line.
-			for (final IFeatureSet featureSet : object.lexicalFeatures) {
-				writeWeightVector(new File(dir, featureSet.getClass().getName()
-						+ LEXICAL_FEATURE_SET_FILE_EXTENSION
-						+ WEIGHTS_FILE_NAME_EXTENSION), object.theta,
-						featureSet);
-			}
-			
-			// Dump the lexicon to a file
-			DecoderServices.encode(object.lexicon, new File(dir,
-					LEXICON_FILE_NAME), decoderHelper);
 		}
 		
 	}
-	
 }

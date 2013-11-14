@@ -1,0 +1,35 @@
+# v1.5
+- Better support for closed and open ontologies
+	- Add option to allow using an ontology or not
+	- Ontologies may now be closed or open
+	- Explicit way to dynamically define new constants outside of .ont files
+- Consolidate unit tests in a separate project
+- Remove some unused code
+- Removing stripping of redundant lambda operators
+	- Simplifying to the canonical form doesn't strip redundant lambda operator. 
+	- All implicit lambda operators are always present in the logical form. 
+	- Converting a logical form to a string strips lambda operators for readability. 
+	- Missing lambda operator in input logical expressions are added.
+- Safety assertion in various constructors
+- Improved support for joint inference and situated language
+- GeoQuery example experiment without the experiment platform -- possibly a better way to get to know the code for some.
+- Remove old storage mechanism and add support for saving models using serialization, including helper methods in the Model class.
+- Removed concept of fixed lexical entry.
+	- No distinction between fixed lexical entries and normal ones.
+	- Initialization of seed entries is done using model initializers.
+- Migrate all creators to inside the class they are creating (as internal classes).
+- Fix bug with initializing the lexicon.
+- Remove unused typing features.
+- Better and more consistent typing validation and type consistency checks across the framework. 
+- Remove support for unary parse rules. Unary operations are now supported only through overloading binary rules. See RuleSetBuilder.
+- Hash vector improvements
+	- Pairwise hash vector product.
+	- Add method to apply a function all values in the hash vector.
+- Attach Arxiv publication PDF and BIB files to source code.
+
+# v1.4.1
+- Cleaned up using of generics throughout the system. Generic classes should now compatible
+- Better logging system - all logs are now public and can be controlled from outside SPF without editing SPF's code
+- Javadocs for many generic classes
+- Better abstraction in ExPlat's experiment hierarchy
+- Better representations of situated data items

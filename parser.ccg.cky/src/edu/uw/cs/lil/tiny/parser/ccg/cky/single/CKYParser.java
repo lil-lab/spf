@@ -18,7 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.single;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,11 +30,9 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.SimpleWordSkippingLexicalGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -47,17 +44,10 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Tom Kwiatkowski
  */
 public class CKYParser<MR> extends AbstractCKYParser<MR> {
-	public static final ILogger				LOG	= LoggerFactory
-															.create(CKYParser.class);
-	
-	/**
-	 * Unary CCG parsing rules.
-	 */
-	private final List<CKYUnaryParsingRule<MR>>	unaryRules;
+	public static final ILogger	LOG	= LoggerFactory.create(CKYParser.class);
 	
 	private CKYParser(int maxNumberOfCellsInSpan,
 			List<CKYBinaryParsingRule<MR>> binaryParseRules,
-			List<CKYUnaryParsingRule<MR>> unaryParseRules,
 			List<ISentenceLexiconGenerator<MR>> sentenceLexiconGenerators,
 			ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator,
 			ICategoryServices<MR> categoryServices, boolean pruneLexicalCells,
@@ -65,7 +55,6 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 		super(maxNumberOfCellsInSpan, binaryParseRules,
 				sentenceLexiconGenerators, wordSkippingLexicalGenerator,
 				categoryServices, pruneLexicalCells, completeParseFilter);
-		this.unaryRules = unaryParseRules;
 	}
 	
 	/**
@@ -76,47 +65,11 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 	 * @param chart
 	 *            Chart to add the cells to
 	 */
-	private static <Y> void addAllToChart(List<Cell<Y>> newCells,
-			Chart<Y> chart, IDataItemModel<Y> model) {
-		for (final Cell<Y> newCell : newCells) {
+	private static <MR> void addAllToChart(List<Cell<MR>> newCells,
+			Chart<MR> chart, IDataItemModel<MR> model) {
+		for (final Cell<MR> newCell : newCells) {
 			chart.add(newCell, model);
 		}
-	}
-	
-	private List<Cell<MR>> unaryParse(int start, int end,
-			Chart<MR> currentChart, AbstractCellFactory<MR> cellFactory,
-			IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
-		final Iterator<Cell<MR>> cells = currentChart.getSpanIterator(start,
-				end);
-		final List<Cell<MR>> newCells = new LinkedList<Cell<MR>>();
-		while (cells.hasNext()) {
-			final Cell<MR> c = cells.next();
-			final Iterator<CKYUnaryParsingRule<MR>> rules = unaryRules
-					.iterator();
-			while (rules.hasNext()) {
-				for (final ParseRuleResult<MR> prr : rules.next().apply(c)) {
-					// Prune
-					if (prune(pruningFilter, prr.getResultCategory())) {
-						LOG.debug("Pruned (hard pruning): [%d,%d] %s", start,
-								end, prr);
-					} else {
-						// Create the parse step
-						final CKYParseStep<MR> parseStep = new CKYParseStep<MR>(
-								prr.getResultCategory(), c, isFullParse(start,
-										end, prr.getResultCategory(),
-										currentChart.getSentenceLength()),
-								prr.getRuleName(), model);
-						
-						// Create the chart cell
-						final Cell<MR> newCell = cellFactory.create(parseStep,
-								start, end);
-						
-						newCells.add(newCell);
-					}
-				}
-			}
-		}
-		return newCells;
 	}
 	
 	@Override
@@ -137,9 +90,9 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 						new IFilter<Cell<MR>>() {
 							@Override
 							public boolean isValid(Cell<MR> e) {
-								return e.getCategroy().getSyntax()
+								return e.getCategory().getSyntax()
 										.equals(Syntax.EMPTY)
-										|| e.getCategroy().getSem() != null;
+										|| e.getCategory().getSem() != null;
 							}
 						});
 				
@@ -147,13 +100,6 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 					chart.add(newCell, model);
 				}
 			}
-		}
-		
-		// Use unary parse rules
-		for (int i = 0; i < numTokens; ++i) {
-			addAllToChart(
-					unaryParse(i, i, chart, cellFactory, pruningFilter, model),
-					chart, model);
 		}
 		
 		// now do the CKY parsing:
@@ -165,9 +111,6 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 									cellFactory, numTokens, pruningFilter,
 									model), chart, model);
 				}
-				addAllToChart(
-						unaryParse(begin, begin + len, chart, cellFactory,
-								pruningFilter, model), chart, model);
 			}
 		}
 		
@@ -179,67 +122,60 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public static class Builder<Y> {
+	public static class Builder<MR> {
 		
-		private final List<CKYBinaryParsingRule<Y>>			binaryParseRules			= new LinkedList<CKYBinaryParsingRule<Y>>();
+		private final List<CKYBinaryParsingRule<MR>>		binaryParseRules			= new LinkedList<CKYBinaryParsingRule<MR>>();
 		
-		private final ICategoryServices<Y>					categoryServices;
+		private final ICategoryServices<MR>					categoryServices;
 		
-		private final IFilter<Category<Y>>					completeParseFilter;
+		private final IFilter<Category<MR>>					completeParseFilter;
 		
 		/** The maximum number of cells allowed in each span */
 		private int											maxNumberOfCellsInSpan		= 50;
 		
 		private boolean										pruneLexicalCells			= false;
 		
-		private final List<ISentenceLexiconGenerator<Y>>	sentenceLexicalGenerators	= new LinkedList<ISentenceLexiconGenerator<Y>>();
+		private final List<ISentenceLexiconGenerator<MR>>	sentenceLexicalGenerators	= new LinkedList<ISentenceLexiconGenerator<MR>>();
 		
-		private final List<CKYUnaryParsingRule<Y>>			unaryParseRules				= new LinkedList<CKYUnaryParsingRule<Y>>();
-		private ISentenceLexiconGenerator<Y>				wordSkippingLexicalGenerator;
+		private ISentenceLexiconGenerator<MR>				wordSkippingLexicalGenerator;
 		
-		public Builder(ICategoryServices<Y> categoryServices,
-				IFilter<Category<Y>> completeParseFilter) {
+		public Builder(ICategoryServices<MR> categoryServices,
+				IFilter<Category<MR>> completeParseFilter) {
 			this.categoryServices = categoryServices;
 			this.completeParseFilter = completeParseFilter;
-			wordSkippingLexicalGenerator = new SimpleWordSkippingLexicalGenerator<Y>(
+			wordSkippingLexicalGenerator = new SimpleWordSkippingLexicalGenerator<MR>(
 					categoryServices);
 		}
 		
-		public Builder<Y> addBinaryParseRule(CKYBinaryParsingRule<Y> rule) {
+		public Builder<MR> addBinaryParseRule(CKYBinaryParsingRule<MR> rule) {
 			binaryParseRules.add(rule);
 			return this;
 		}
 		
-		public Builder<Y> addSentenceLexicalGenerator(
-				ISentenceLexiconGenerator<Y> generator) {
+		public Builder<MR> addSentenceLexicalGenerator(
+				ISentenceLexiconGenerator<MR> generator) {
 			sentenceLexicalGenerators.add(generator);
 			return this;
 		}
 		
-		public Builder<Y> addUnaryParseRule(CKYUnaryParsingRule<Y> rule) {
-			unaryParseRules.add(rule);
-			return this;
+		public CKYParser<MR> build() {
+			return new CKYParser<MR>(maxNumberOfCellsInSpan, binaryParseRules,
+					sentenceLexicalGenerators, wordSkippingLexicalGenerator,
+					categoryServices, pruneLexicalCells, completeParseFilter);
 		}
 		
-		public CKYParser<Y> build() {
-			return new CKYParser<Y>(maxNumberOfCellsInSpan, binaryParseRules,
-					unaryParseRules, sentenceLexicalGenerators,
-					wordSkippingLexicalGenerator, categoryServices,
-					pruneLexicalCells, completeParseFilter);
-		}
-		
-		public Builder<Y> setMaxNumberOfCellsInSpan(int maxNumberOfCellsInSpan) {
+		public Builder<MR> setMaxNumberOfCellsInSpan(int maxNumberOfCellsInSpan) {
 			this.maxNumberOfCellsInSpan = maxNumberOfCellsInSpan;
 			return this;
 		}
 		
-		public Builder<Y> setPruneLexicalCells(boolean pruneLexicalCells) {
+		public Builder<MR> setPruneLexicalCells(boolean pruneLexicalCells) {
 			this.pruneLexicalCells = pruneLexicalCells;
 			return this;
 		}
 		
-		public Builder<Y> setWordSkippingLexicalGenerator(
-				ISentenceLexiconGenerator<Y> wordSkippingLexicalGenerator) {
+		public Builder<MR> setWordSkippingLexicalGenerator(
+				ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator) {
 			this.wordSkippingLexicalGenerator = wordSkippingLexicalGenerator;
 			return this;
 		}

@@ -4,6 +4,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="/data"/>
 	<classpathentry kind="src" path="/tinyutils"/>
-	<classpathentry kind="src" path="/javautils"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

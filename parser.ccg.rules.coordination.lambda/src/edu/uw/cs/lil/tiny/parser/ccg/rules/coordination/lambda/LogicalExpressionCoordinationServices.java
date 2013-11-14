@@ -33,7 +33,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ApplyAndSimplify;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ReplaceVariablesIfPresent;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
@@ -59,10 +58,8 @@ public class LogicalExpressionCoordinationServices implements
 		this.baseConjunctionConstant = baseConjunctionConstant;
 		this.baseDisjunctionConstant = baseDisjunctionConstant;
 		this.categoryServices = categoryServices;
-		this.baseConjunctionName = LogicalConstant.splitName(
-				baseConjunctionConstant).first();
-		this.baseDisjunctionName = LogicalConstant.splitName(
-				baseDisjunctionConstant).first();
+		this.baseConjunctionName = baseConjunctionConstant.getBaseName();
+		this.baseDisjunctionName = baseDisjunctionConstant.getBaseName();
 	}
 	
 	@Override
@@ -83,11 +80,7 @@ public class LogicalExpressionCoordinationServices implements
 		// fits the coordination
 		final Lambda functionLambda;
 		if (function1 instanceof Lambda) {
-			functionLambda = (Lambda) LambdaWrapped.of(function1);
-		} else if (function1 instanceof LogicalConstant
-				&& function1.getType().isComplex()) {
-			// Case a complex constant, wrap with Lambda operator
-			functionLambda = (Lambda) LambdaWrapped.of(function1);
+			functionLambda = (Lambda) function1;
 		} else {
 			return null;
 		}
@@ -334,8 +327,8 @@ public class LogicalExpressionCoordinationServices implements
 			type = LogicLanguageServices.getTypeRepository()
 					.getTypeCreateIfNeeded(type, argType);
 		}
-		return LogicalConstant.create(LogicalConstant.makeName(LogicalConstant
-				.splitName(constant).first(), type), type);
+		return LogicalConstant.createDynamic(
+				LogicalConstant.makeName(constant.getBaseName(), type), type);
 	}
 	
 	private boolean isBaseCoordinator(LogicalExpression predicate) {
@@ -344,8 +337,7 @@ public class LogicalExpressionCoordinationServices implements
 	}
 	
 	private boolean isConjunctionCoordinator(LogicalConstant predicate) {
-		return LogicalConstant.splitName(predicate).first()
-				.equals(baseConjunctionName);
+		return predicate.getBaseName().equals(baseConjunctionName);
 	}
 	
 	private boolean isCoordinator(LogicalExpression predicate, int numArgs) {
@@ -366,8 +358,7 @@ public class LogicalExpressionCoordinationServices implements
 	}
 	
 	private boolean isDisjunctionCoordinator(LogicalConstant predicate) {
-		return LogicalConstant.splitName(predicate).first()
-				.equals(baseDisjunctionName);
+		return predicate.getBaseName().equals(baseDisjunctionName);
 	}
 	
 }

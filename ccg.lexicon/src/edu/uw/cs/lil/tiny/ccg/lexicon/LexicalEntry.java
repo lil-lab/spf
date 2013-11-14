@@ -33,14 +33,17 @@ import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 
 /**
- * A Lexical Entry associates a sequence of tokens with a category, and thereby
- * a semantics.
+ * A Lexical Entry associates a sequence of tokens with a category, which
+ * includes both syntax and semantics.
+ * 
+ * @param <MR>
+ *            Meaning representation type.
  **/
-public class LexicalEntry<Y> implements Serializable {
+public class LexicalEntry<MR> implements Serializable {
 	
 	private static final long			serialVersionUID	= 7338579915538130443L;
 	
-	private final Category<Y>			category;
+	private final Category<MR>			category;
 	
 	private final int					hashCodeCache;
 	/**
@@ -49,7 +52,7 @@ public class LexicalEntry<Y> implements Serializable {
 	 * it's not part of the essential meaning of the lexical entry, it's not
 	 * part of {@link #equals(Object)} and {@link #hashCode()}.
 	 */
-	private final Set<LexicalEntry<Y>>	linkedEntries		= new HashSet<LexicalEntry<Y>>();
+	private final Set<LexicalEntry<MR>>	linkedEntries		= new HashSet<LexicalEntry<MR>>();
 	
 	/**
 	 * Origin label -- indicates the origin of the lexical entry, often used for
@@ -60,15 +63,16 @@ public class LexicalEntry<Y> implements Serializable {
 	
 	private final List<String>			tokens;
 	
-	public LexicalEntry(List<String> tokens, Category<Y> category, String origin) {
+	public LexicalEntry(List<String> tokens, Category<MR> category,
+			String origin) {
 		this.origin = origin;
 		this.tokens = Collections.unmodifiableList(tokens);
 		this.category = category;
 		this.hashCodeCache = calcHashCode();
 	}
 	
-	public static <Y> LexicalEntry<Y> parse(String line,
-			ICategoryServices<Y> categoryServices, String origin) {
+	public static <MR> LexicalEntry<MR> parse(String line,
+			ICategoryServices<MR> categoryServices, String origin) {
 		return parse(line, new IStringFilter() {
 			
 			@Override
@@ -85,8 +89,8 @@ public class LexicalEntry<Y> implements Serializable {
 	 * @param textFilter
 	 * @return
 	 */
-	public static <Y> LexicalEntry<Y> parse(String line,
-			IStringFilter textFilter, ICategoryServices<Y> categoryServices,
+	public static <MR> LexicalEntry<MR> parse(String line,
+			IStringFilter textFilter, ICategoryServices<MR> categoryServices,
 			String origin) {
 		// Split the tokens and category
 		final int split = line.indexOf(":-");
@@ -98,26 +102,26 @@ public class LexicalEntry<Y> implements Serializable {
 			while (st.hasMoreTokens()) {
 				tokens.add(st.nextToken());
 			}
-			final Category<Y> category = categoryServices.parse(line.substring(
+			final Category<MR> category = categoryServices.parse(line.substring(
 					split + 2, line.length()));
-			return new LexicalEntry<Y>(tokens, category, origin);
+			return new LexicalEntry<MR>(tokens, category, origin);
 		} else {
 			throw new IllegalStateException(
 					"Unrecognized format for lexical item: " + line);
 		}
 	}
 	
-	public void addLinkedEntries(Collection<LexicalEntry<Y>> entries) {
+	public void addLinkedEntries(Collection<LexicalEntry<MR>> entries) {
 		linkedEntries.addAll(entries);
 	}
 	
-	public void addLinkedEntry(LexicalEntry<Y> entry) {
+	public void addLinkedEntry(LexicalEntry<MR> entry) {
 		linkedEntries.add(entry);
 	}
 	
-	public LexicalEntry<Y> cloneWithDifferentOrigin(String newOrigin) {
-		final LexicalEntry<Y> newEntry = new LexicalEntry<Y>(tokens, category,
-				newOrigin);
+	public LexicalEntry<MR> cloneWithDifferentOrigin(String newOrigin) {
+		final LexicalEntry<MR> newEntry = new LexicalEntry<MR>(tokens,
+				category, newOrigin);
 		newEntry.addLinkedEntries(linkedEntries);
 		return newEntry;
 	}
@@ -139,11 +143,11 @@ public class LexicalEntry<Y> implements Serializable {
 		return tokens.equals(e.tokens) && category.equals(e.category);
 	}
 	
-	public Category<Y> getCategory() {
+	public Category<MR> getCategory() {
 		return category;
 	}
 	
-	public Set<LexicalEntry<Y>> getLinkedEntries() {
+	public Set<LexicalEntry<MR>> getLinkedEntries() {
 		return Collections.unmodifiableSet(linkedEntries);
 	}
 	

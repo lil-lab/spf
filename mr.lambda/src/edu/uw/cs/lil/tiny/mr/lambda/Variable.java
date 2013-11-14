@@ -32,10 +32,10 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class Variable extends Term {
-	public static final String		PREFIX				= "$";
 	public static final ILogger	LOG					= LoggerFactory
-																.create(Variable.class);
-	private static final long		serialVersionUID	= -2489052410662325680L;
+															.create(Variable.class);
+	public static final String	PREFIX				= "$";
+	private static final long	serialVersionUID	= -2489052410662325680L;
 	
 	public Variable(Type type) {
 		super(type);
@@ -82,6 +82,10 @@ public class Variable extends Term {
 		visitor.visit(this);
 	}
 	
+	/**
+	 * When no external mapping is present, equals() should just make identity
+	 * comparison.
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		// Without variable mapping, variables are only equal when they are
@@ -90,16 +94,16 @@ public class Variable extends Term {
 	}
 	
 	@Override
-	protected boolean doEquals(Object obj,
+	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
 		if (variablesMapping.containsKey(this)) {
 			// Comparison through mapping of variables
-			return variablesMapping.get(this) == obj;
+			return variablesMapping.get(this) == exp;
 		} else if (!variablesMapping.containsKey(this)
-				&& !variablesMapping.values().contains(obj)) {
+				&& !variablesMapping.values().contains(exp)) {
 			// Case both are not mapped, do instance comparison for free
 			// variables
-			return obj == this;
+			return exp == this;
 		} else {
 			// Not equal
 			return false;

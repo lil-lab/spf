@@ -23,6 +23,11 @@ import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.SplittingServices.SplittingPair;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 
@@ -32,7 +37,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
  * @author Yoav Artzi
  */
 public class Splitter implements IUnificationSplitter {
-	
 	private final ICategoryServices<LogicalExpression>	categoryServices;
 	
 	public Splitter(ICategoryServices<LogicalExpression> categoryServices) {
@@ -44,5 +48,31 @@ public class Splitter implements IUnificationSplitter {
 		splits.addAll(MakeApplicationSplits.of(category, categoryServices));
 		splits.addAll(MakeCompositionSplits.of(category, categoryServices));
 		return splits;
+	}
+	
+	public static class Creator implements IResourceObjectCreator<Splitter> {
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public Splitter create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			return new Splitter(
+					(ICategoryServices<LogicalExpression>) resourceRepo
+							.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE));
+		}
+		
+		@Override
+		public String type() {
+			return "splitter.unification";
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), Splitter.class)
+					.setDescription(
+							"Logical expression splitter for unification-based GENLEX")
+					.build();
+		}
+		
 	}
 }

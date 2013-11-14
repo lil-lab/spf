@@ -37,21 +37,21 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
  * 
  * @author Yoav Artzi
  */
-public class BackwardComposition<Y> extends AbstractComposition<Y> {
+public class BackwardComposition<MR> extends AbstractComposition<MR> {
 	private static String	RULE_NAME	= "bcomp";
 	
-	public BackwardComposition(ICategoryServices<Y> categoryServices) {
+	public BackwardComposition(ICategoryServices<MR> categoryServices) {
 		super(RULE_NAME, categoryServices);
 	}
 	
-	public BackwardComposition(ICategoryServices<Y> categoryServices,
+	public BackwardComposition(ICategoryServices<MR> categoryServices,
 			boolean useEisnerNormalForm) {
 		super(RULE_NAME, categoryServices, useEisnerNormalForm);
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		return doComposition(right, left, true);
 	}
 	

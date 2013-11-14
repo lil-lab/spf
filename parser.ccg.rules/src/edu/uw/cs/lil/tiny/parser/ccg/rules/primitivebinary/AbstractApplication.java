@@ -36,12 +36,12 @@ import edu.uw.cs.utils.collections.ListUtils;
  * @author Tom Kwiatkowski
  * @author Yoav Artzi
  */
-public abstract class AbstractApplication<Y> implements IBinaryParseRule<Y> {
-	private final ICategoryServices<Y>	categoryServices;
+public abstract class AbstractApplication<MR> implements IBinaryParseRule<MR> {
+	private final ICategoryServices<MR>	categoryServices;
 	private final String				ruleName;
 	
 	public AbstractApplication(String ruleName,
-			ICategoryServices<Y> categoryServices) {
+			ICategoryServices<MR> categoryServices) {
 		this.ruleName = ruleName;
 		this.categoryServices = categoryServices;
 	}
@@ -106,20 +106,20 @@ public abstract class AbstractApplication<Y> implements IBinaryParseRule<Y> {
 	 * @param result
 	 *            The result cell, if exists, will be added to this list
 	 */
-	protected List<ParseRuleResult<Y>> doApplication(Category<Y> function,
-			Category<Y> argument, boolean backward) {
+	protected List<ParseRuleResult<MR>> doApplication(Category<MR> function,
+			Category<MR> argument, boolean backward) {
 		if (function instanceof ComplexCategory) {
-			final ComplexCategory<Y> functionCategory = (ComplexCategory<Y>) function;
+			final ComplexCategory<MR> functionCategory = (ComplexCategory<MR>) function;
 			
 			// Check direction of function slash
 			if (functionCategory.getSlash() == (backward ? Slash.BACKWARD
 					: Slash.FORWARD)) {
 				// Do application and create new cell
-				final Category<Y> result = categoryServices.apply(
+				final Category<MR> result = categoryServices.apply(
 						functionCategory, argument);
 				if (result != null) {
 					return ListUtils
-							.createSingletonList(new ParseRuleResult<Y>(
+							.createSingletonList(new ParseRuleResult<MR>(
 									ruleName, result));
 				}
 			}

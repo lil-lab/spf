@@ -29,7 +29,7 @@ public class GeoDev {
 	
 	public static void run(String filename) {
 		try {
-			new GeoExperiment(new File(filename)).start();
+			new GeoExp(new File(filename)).start();
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}

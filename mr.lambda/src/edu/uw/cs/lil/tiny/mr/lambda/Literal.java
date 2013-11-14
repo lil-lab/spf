@@ -33,6 +33,8 @@ import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
 import edu.uw.cs.lil.tiny.utils.LispReader;
 import edu.uw.cs.utils.assertion.Assert;
+import edu.uw.cs.utils.collections.ListUtils;
+import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -42,10 +44,10 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class Literal extends LogicalExpression {
-	public static final String				PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
-	
-	public static final ILogger			LOG					= LoggerFactory
+	public static final ILogger				LOG					= LoggerFactory
 																		.create(Literal.class);
+	
+	public static final String				PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
 	
 	private static final long				serialVersionUID	= -4209330309716600396L;
 	
@@ -73,10 +75,11 @@ public class Literal extends LogicalExpression {
 			List<LogicalExpression> arguments, ITypeComparator typeComparator,
 			TypeRepository typeRepository) {
 		// Verify predicate and all arguments are not null -- safety measure
-		Assert.ifNull(predicate);
 		for (final LogicalExpression arg : arguments) {
 			Assert.ifNull(arg);
 		}
+		this.predicate = Assert.ifNull(predicate);
+		this.arguments = Collections.unmodifiableList(arguments);
 		
 		// Verify that the predicate has a complex type, so it will be able to
 		// take arguments
@@ -85,61 +88,115 @@ public class Literal extends LogicalExpression {
 					"Predicate must have a complex type, not %s",
 					predicate.getType()));
 		}
-		final ComplexType predicateType = (ComplexType) predicate.getType();
 		
+		// Compute the type. If the computed type is null, throw an exception.
+		final Pair<Type, List<Type>> literalTyping = computeLiteralTyping(
+				(ComplexType) predicate.getType(), ListUtils.map(arguments,
+						new ListUtils.Mapper<LogicalExpression, Type>() {
+							
+							@Override
+							public Type process(LogicalExpression obj) {
+								return obj.getType();
+							}
+						}), typeComparator, typeRepository);
+		this.type = Assert
+				.ifNull(literalTyping == null ? null : literalTyping.first(),
+						String.format(
+								"Failed to compute literal type for predicate=%s, arguments=%s",
+								predicate, arguments));
+	}
+	
+	public static Pair<Type, List<Type>> computeLiteralTyping(
+			ComplexType predicateType, List<Type> argTypes,
+			ITypeComparator typeComparator, TypeRepository typeRepository) {
 		// Calculate the type of the literal and verify the types of the
 		// arguments with regard to the signature
-		Type currentDomain = predicateType.getDomain();
-		Type currentRange = predicateType.getRange();
-		Type currentType = predicateType;
-		final Iterator<? extends LogicalExpression> argIterator = arguments
-				.iterator();
-		while (argIterator.hasNext() && currentDomain != null) {
-			final LogicalExpression arg = argIterator.next();
-			if (!typeComparator.verifyArgType(currentDomain, arg.getType())) {
-				throw new LogicalExpressionRuntimeException(String.format(
-						"Invalid argument type (%s) for signature type (%s)",
-						arg.getType(), currentDomain));
+		Type currentDomain;
+		Type currentRange = predicateType;
+		// Counts the number of arguments for the current sequence. A sequence
+		// might change if we switch to a different recursive type.
+		int currentNumArgs = 0;
+		final Iterator<Type> argIterator = argTypes.iterator();
+		final List<Type> impliedSignatureTypes = new ArrayList<Type>(
+				argTypes.size());
+		while (argIterator.hasNext() && currentRange.isComplex()) {
+			final Type argType = argIterator.next();
+			currentDomain = currentRange.getDomain();
+			currentRange = currentRange.getRange();
+			
+			// If we have a recursive complex type, and the final return
+			// type is complex, we might be seeing a switch to the argument
+			// of the final return type. For example: (pred:<e*,<t,t>> boo:e
+			// foo:e too:t). So try to switch to the type of the final range
+			// before the validity check.
+			if (!typeComparator.verifyArgType(currentDomain, argType)
+					&& currentRange instanceof RecursiveComplexType
+					&& ((RecursiveComplexType) currentRange).getFinalRange()
+							.isComplex()) {
+				// Verify that the current recursive range was given at least
+				// the minimal number of arguments.
+				if (currentNumArgs < ((RecursiveComplexType) currentRange)
+						.getMinArgs()) {
+					LOG.debug(
+							"Recursive type %s requires a minimum of %d arguments, %d were provided.",
+							currentRange,
+							((RecursiveComplexType) currentRange).getMinArgs(),
+							currentNumArgs);
+					return null;
+				}
+				
+				// Need to update both the current domain and range, basically
+				// switching to work with the complex final return type.
+				currentDomain = ((ComplexType) ((RecursiveComplexType) currentRange)
+						.getFinalRange()).getDomain();
+				currentRange = ((ComplexType) ((RecursiveComplexType) currentRange)
+						.getFinalRange()).getRange();
+				currentNumArgs = 0;
 			}
 			
-			currentType = currentType.getRange();
-			if (currentRange.isComplex()) {
-				currentDomain = currentRange.getDomain();
-				currentRange = currentRange.getRange();
-			} else {
-				currentDomain = null;
-				if (argIterator.hasNext()) {
-					throw new LogicalExpressionRuntimeException(String.format(
-							"Too many arguments for predicate %s: %s",
-							predicate, arguments));
-				}
+			// Validate the type of the argument against the current position in
+			// the signature.
+			if (!typeComparator.verifyArgType(currentDomain, argType)) {
+				LOG.debug("Invalid argument type (%s) for signature type (%s)",
+						argType, currentDomain);
+				return null;
+			}
+			impliedSignatureTypes.add(currentDomain);
+			currentNumArgs++;
+			
+			// Return null if we have more arguments than the signature
+			// supports.
+			if (argIterator.hasNext() && !currentRange.isComplex()) {
+				LOG.debug("Too many arguments for predicate of type %s: %s",
+						predicateType, argType);
+				return null;
 			}
 		}
-		if (predicateType instanceof RecursiveComplexType) {
+		if (currentRange instanceof RecursiveComplexType) {
 			// Case special predicate, such as "and"
-			final RecursiveComplexType recursivePredicateType = (RecursiveComplexType) predicateType;
-			if (arguments.size() >= recursivePredicateType.getMinArgs()) {
-				this.type = recursivePredicateType.getFinalRange();
+			final RecursiveComplexType recursivePredicateType = (RecursiveComplexType) currentRange;
+			if (currentNumArgs >= recursivePredicateType.getMinArgs()) {
+				return Pair.of(recursivePredicateType.getFinalRange(),
+						impliedSignatureTypes);
 			} else {
-				this.type = typeRepository.getTypeCreateIfNeeded(
-						predicateType.getDomain(),
-						recursivePredicateType.getFinalRange(),
-						new Option(recursivePredicateType.isOrderSensitive(),
+				return Pair.of((Type) typeRepository.getTypeCreateIfNeeded(
+						recursivePredicateType.getDomain(),
+						recursivePredicateType.getFinalRange(), new Option(
+								recursivePredicateType.isOrderSensitive(),
 								recursivePredicateType.getMinArgs()
-										- arguments.size()));
+										- currentNumArgs)),
+						impliedSignatureTypes);
 			}
 		} else {
 			// Case regular complex type
-			this.type = currentType;
+			return Pair.of(currentRange, impliedSignatureTypes);
 		}
 		
-		this.predicate = predicate;
-		this.arguments = Collections.unmodifiableList(arguments);
 	}
 	
 	protected static Literal doParse(String string,
 			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator, boolean lockOntology) {
+			ITypeComparator typeComparator) {
 		try {
 			final LispReader lispReader = new LispReader(new StringReader(
 					string));
@@ -148,8 +205,7 @@ public class Literal extends LogicalExpression {
 			// exists
 			final String predicateString = lispReader.next();
 			final LogicalExpression predicate = LogicalExpression.doParse(
-					predicateString, variables, typeRepository, typeComparator,
-					lockOntology);
+					predicateString, variables, typeRepository, typeComparator);
 			
 			// The rest of the elements are the arguments
 			final List<LogicalExpression> arguments = new ArrayList<LogicalExpression>();
@@ -157,7 +213,7 @@ public class Literal extends LogicalExpression {
 				final String stringElement = lispReader.next();
 				final LogicalExpression argument = LogicalExpression.doParse(
 						stringElement, variables, typeRepository,
-						typeComparator, lockOntology);
+						typeComparator);
 				arguments.add(argument);
 			}
 			
@@ -201,13 +257,6 @@ public class Literal extends LogicalExpression {
 		return result;
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
-		// The parent object will create the variable mapping and use it for
-		// equal. Shortcut by checking that obj is a Literal
-		return obj instanceof Literal && super.equals(obj);
-	}
-	
 	public List<LogicalExpression> getArguments() {
 		return arguments;
 	}
@@ -226,15 +275,15 @@ public class Literal extends LogicalExpression {
 	}
 	
 	@Override
-	protected boolean doEquals(Object obj,
+	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		if (this == obj) {
+		if (this == exp) {
 			return true;
 		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != exp.getClass()) {
 			return false;
 		}
-		final Literal other = (Literal) obj;
+		final Literal other = (Literal) exp;
 		if (predicate == null) {
 			if (other.predicate != null) {
 				return false;

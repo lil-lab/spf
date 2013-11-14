@@ -24,10 +24,10 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
-public class CKYBinaryParsingRule<Y> {
-	private final IBinaryParseRule<Y>	ccgParseRule;
+public class CKYBinaryParsingRule<MR> {
+	private final IBinaryParseRule<MR>	ccgParseRule;
 	
-	public CKYBinaryParsingRule(IBinaryParseRule<Y> ccgParseRule) {
+	public CKYBinaryParsingRule(IBinaryParseRule<MR> ccgParseRule) {
 		this.ccgParseRule = ccgParseRule;
 	}
 	
@@ -67,9 +67,9 @@ public class CKYBinaryParsingRule<Y> {
 	 * Takes two cell, left and right, as input. Assumes these cells are
 	 * adjacent.
 	 */
-	protected Collection<ParseRuleResult<Y>> apply(Cell<Y> left, Cell<Y> right,
+	protected Collection<ParseRuleResult<MR>> apply(Cell<MR> left, Cell<MR> right,
 			boolean isCompleteSentence) {
-		return ccgParseRule.apply(left.getCategroy(), right.getCategroy(),
+		return ccgParseRule.apply(left.getCategory(), right.getCategory(),
 				isCompleteSentence);
 	}
 }

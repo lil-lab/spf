@@ -1,7 +1,6 @@
 package edu.uw.cs.lil.tiny.data.situated;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.utils.composites.Pair;
 
 /**
  * Data item for language in a situated environment.
@@ -12,7 +11,8 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <STATE>
  *            Situated state.
  */
-public interface ISituatedDataItem<LANG, STATE> extends
-		IDataItem<Pair<LANG, STATE>> {
+public interface ISituatedDataItem<LANG, STATE> extends IDataItem<LANG> {
+	
+	STATE getState();
 	
 }

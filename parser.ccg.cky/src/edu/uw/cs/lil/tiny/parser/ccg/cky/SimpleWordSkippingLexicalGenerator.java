@@ -33,25 +33,25 @@ import edu.uw.cs.utils.collections.CollectionUtils;
  * 
  * @author Yoav Artzi
  */
-public class SimpleWordSkippingLexicalGenerator<Y> implements
-		ISentenceLexiconGenerator<Y> {
+public class SimpleWordSkippingLexicalGenerator<MR> implements
+		ISentenceLexiconGenerator<MR> {
 	public static final String			SKIPPING_LEXICAL_ORIGIN	= "skipping";
 	
-	private final ICategoryServices<Y>	categoryServices;
+	private final ICategoryServices<MR>	categoryServices;
 	
 	public SimpleWordSkippingLexicalGenerator(
-			ICategoryServices<Y> categoryServices) {
+			ICategoryServices<MR> categoryServices) {
 		this.categoryServices = categoryServices;
 	}
 	
 	@Override
-	public Set<LexicalEntry<Y>> generateLexicon(Sentence sample,
+	public Set<LexicalEntry<MR>> generateLexicon(Sentence sample,
 			Sentence evidence) {
-		final Set<LexicalEntry<Y>> lexicalEntries = new HashSet<LexicalEntry<Y>>();
+		final Set<LexicalEntry<MR>> lexicalEntries = new HashSet<LexicalEntry<MR>>();
 		final List<String> tokens = evidence.getTokens();
 		for (int j = 0; j < tokens.size(); j++) {
 			// Single token empty lexical entry
-			lexicalEntries.add(new LexicalEntry<Y>(CollectionUtils.subList(
+			lexicalEntries.add(new LexicalEntry<MR>(CollectionUtils.subList(
 					tokens, j, j + 1), categoryServices.getEmptyCategory(),
 					SKIPPING_LEXICAL_ORIGIN));
 		}

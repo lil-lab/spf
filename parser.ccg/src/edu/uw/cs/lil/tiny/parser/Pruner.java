@@ -29,20 +29,21 @@ import edu.uw.cs.utils.filter.IFilter;
  * 
  * @author Yoav Artzi
  */
-public class Pruner<X, Y> implements IFilter<Y> {
+public class Pruner<DI extends ILossDataItem<?, MR>, MR> implements IFilter<MR> {
 	
-	private final ILossDataItem<X, Y>	dataItem;
+	private final DI	dataItem;
 	
-	private Pruner(ILossDataItem<X, Y> dataItem) {
+	private Pruner(DI dataItem) {
 		this.dataItem = dataItem;
 	}
 	
-	public static <X, Y> Pruner<X, Y> create(ILossDataItem<X, Y> dataItem) {
-		return new Pruner<X, Y>(dataItem);
+	public static <DI extends ILossDataItem<?, MR>, MR> Pruner<DI, MR> create(
+			DI dataItem) {
+		return new Pruner<DI, MR>(dataItem);
 	}
 	
 	@Override
-	public boolean isValid(Y y) {
+	public boolean isValid(MR y) {
 		return !dataItem.prune(y);
 	}
 }

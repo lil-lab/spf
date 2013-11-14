@@ -30,7 +30,7 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax.SimpleSyntax;
  * 
  * @author Yoav Artzi
  */
-public abstract class Category<Y> implements Serializable {
+public abstract class Category<MR> implements Serializable {
 	
 	private static final long	serialVersionUID	= 2261734167449321894L;
 	
@@ -50,21 +50,21 @@ public abstract class Category<Y> implements Serializable {
 	/**
 	 * Category semantics
 	 */
-	private final Y				semantics;
+	private final MR				semantics;
 	
-	public Category(Y semantics) {
+	public Category(MR semantics) {
 		this.semantics = semantics;
 	}
 	
-	public static <Y> Category<Y> create(Syntax syntax) {
+	public static <MR> Category<MR> create(Syntax syntax) {
 		return create(syntax, null);
 	}
 	
-	public static <Y> Category<Y> create(Syntax syntax, Y semantics) {
+	public static <MR> Category<MR> create(Syntax syntax, MR semantics) {
 		if (syntax instanceof SimpleSyntax) {
-			return new SimpleCategory<Y>((SimpleSyntax) syntax, semantics);
+			return new SimpleCategory<MR>((SimpleSyntax) syntax, semantics);
 		} else if (syntax instanceof ComplexSyntax) {
-			return new ComplexCategory<Y>((ComplexSyntax) syntax, semantics);
+			return new ComplexCategory<MR>((ComplexSyntax) syntax, semantics);
 		} else {
 			throw new IllegalStateException("unsupported syntax type");
 		}
@@ -77,7 +77,7 @@ public abstract class Category<Y> implements Serializable {
 	 * @param newSemantics
 	 * @return
 	 */
-	abstract public Category<Y> cloneWithNewSemantics(Y newSemantics);
+	abstract public Category<MR> cloneWithNewSemantics(MR newSemantics);
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -108,7 +108,7 @@ public abstract class Category<Y> implements Serializable {
 	 */
 	abstract public boolean equalsNoSem(Object o);
 	
-	public Y getSem() {
+	public MR getSem() {
 		return semantics;
 	}
 	
@@ -124,10 +124,10 @@ public abstract class Category<Y> implements Serializable {
 	}
 	
 	// does the full thing match?
-	abstract public boolean matches(Category<Y> c);
+	abstract public boolean matches(Category<MR> c);
 	
 	// does just the syntactic component match?
-	abstract public boolean matchesNoSem(Category<Y> c);
+	abstract public boolean matchesNoSem(Category<MR> c);
 	
 	abstract public int numSlashes();
 	

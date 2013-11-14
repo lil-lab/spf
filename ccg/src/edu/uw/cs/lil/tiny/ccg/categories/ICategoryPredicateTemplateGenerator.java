@@ -25,11 +25,11 @@ import java.util.Set;
  * Template to generate categories based on seeds.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  *            Type of semantics
  * @param <S>
  *            The type of the element used to instantiate the template.
  */
-public interface ICategoryPredicateTemplateGenerator<Y, S> {
-	List<Set<Category<Y>>> generateCategories(Set<S> seeds);
+public interface ICategoryPredicateTemplateGenerator<MR, S> {
+	List<Set<Category<MR>>> generateCategories(Set<S> seeds);
 }

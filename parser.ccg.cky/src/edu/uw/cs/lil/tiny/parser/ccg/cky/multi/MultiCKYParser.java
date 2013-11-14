@@ -59,9 +59,9 @@ import edu.uw.cs.utils.log.thread.LoggingRunnable;
  */
 public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 	public static final ILogger	LOG	= LoggerFactory
-												.create(MultiCKYParser.class);
-	private final ITinyExecutor		executor;
-	private final boolean			preChartPruning;
+											.create(MultiCKYParser.class);
+	private final ITinyExecutor	executor;
+	private final boolean		preChartPruning;
 	
 	private MultiCKYParser(int maxNumberOfCellsInSpan,
 			List<CKYBinaryParsingRule<MR>> binaryParseRules,
@@ -161,7 +161,9 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 		/**
 		 * Pre-chart pruning creates a further approximation of the packed chart
 		 * which influences non-maximal children. It does mean that worker
-		 * threads will take chart span locks for shorter periods.
+		 * threads will take chart span locks for shorter periods. This option
+		 * is not to be used for gradient based learning, as it creates
+		 * instability in the non-maximal children of a cell.
 		 */
 		private boolean										preChartPruning				= false;
 		
@@ -205,6 +207,9 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 		}
 		
 		public Builder<MR> setPreChartPruning(boolean preChartPruning) {
+			if (preChartPruning) {
+				LOG.warn("Pre-chart pruning creates instability for gradient-based learners.");
+			}
 			this.preChartPruning = preChartPruning;
 			return this;
 		}
@@ -361,7 +366,7 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 						new IFilter<Cell<MR>>() {
 							@Override
 							public boolean isValid(Cell<MR> e) {
-								return !prune(pruningFilter, e.getCategroy());
+								return !prune(pruningFilter, e.getCategory());
 							}
 						});
 				LOG.debug("%s: %d new lexical cells passed hard pruning",

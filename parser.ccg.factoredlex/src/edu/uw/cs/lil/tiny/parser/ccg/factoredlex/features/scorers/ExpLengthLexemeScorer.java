@@ -18,27 +18,22 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.scorers;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import edu.uw.cs.lil.tiny.ccg.lexicon.factored.lambda.Lexeme;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 
 /**
  * Lexeme scorer that takes the number of tokens into account.
  * 
  * @author Luke Zettlemoyer
- * @param <Y>
  */
 public class ExpLengthLexemeScorer implements ISerializableScorer<Lexeme> {
 	
 	private static final long	serialVersionUID	= -5560915581878575813L;
+	
 	private final double		coef;
 	private final double		exponent;
 	
@@ -47,63 +42,37 @@ public class ExpLengthLexemeScorer implements ISerializableScorer<Lexeme> {
 		this.exponent = exponent;
 	}
 	
-	public static IDecoder<ExpLengthLexemeScorer> getDecoder() {
-		return new Decoder();
-	}
-	
 	@Override
 	public double score(Lexeme lex) {
 		return coef * Math.pow(lex.getTokens().size(), exponent);
 	}
 	
-	private static class Decoder extends
-			AbstractDecoderIntoFile<ExpLengthLexemeScorer> {
+	public static class Creator implements
+			IResourceObjectCreator<ExpLengthLexemeScorer> {
 		
-		private static final int	VERSION	= 1;
-		
-		protected Decoder() {
-			super(ExpLengthLexemeScorer.class);
+		@Override
+		public ExpLengthLexemeScorer create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			final Double base = Double.valueOf(parameters.get("coef"));
+			final Double exp = Double.valueOf(parameters.get("exponent"));
+			return new ExpLengthLexemeScorer(base, exp);
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public String type() {
+			return "scorer.lexeme.explength";
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(
-				ExpLengthLexemeScorer object) {
-			final Map<String, String> attrbiutes = new HashMap<String, String>();
-			attrbiutes.put("baseScore", Double.toString(object.coef));
-			attrbiutes.put("exponent", Double.toString(object.exponent));
-			return attrbiutes;
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					ExpLengthLexemeScorer.class)
+					.setDescription(
+							"Lexeme scorer that computes base * n ^ exponent, where n is the number of tokens in the lexeme")
+					.addParam("coef", "double", "The exponent coefficient")
+					.addParam("exponent", "double", "The exponent value")
+					.build();
 		}
-		
-		@Override
-		protected ExpLengthLexemeScorer doDecode(
-				Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			final double baseScore = Double
-					.valueOf(attributes.get("baseScore"));
-			final double exponent = Double.valueOf(attributes.get("exponent"));
-			
-			return new ExpLengthLexemeScorer(baseScore, exponent);
-		}
-		
-		@Override
-		protected void doEncode(ExpLengthLexemeScorer object,
-				BufferedWriter writer) throws IOException {
-			// Nothing to write
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(
-				ExpLengthLexemeScorer object, File directory, File parentFile)
-				throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
-		}
-		
 	}
+	
 }

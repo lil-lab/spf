@@ -37,36 +37,35 @@ import jregex.Pattern;
 import jregex.Replacer;
 import jregex.Substitution;
 import jregex.TextBuffer;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 
 public abstract class ParameterizedExperiment implements IResourceRepository {
 	
-	public static final String			CATEGORY_SERVICES_RESOURCE	= "categoryServices";
-	public static final String			DECODER_HELPER_RESOURCE		= "decoderHelper";
-	public static final String			DOMAIN_ONTOLOGY_RESOURCE	= "domainOntology";
-	public static final String			EXECUTOR_RESOURCE			= "executor";
-	public static final String			ONTOLOGY_RESOURCE			= "ontology";
+	public static final String				CATEGORY_SERVICES_RESOURCE	= "categoryServices";
+	public static final String				DOMAIN_ONTOLOGY_RESOURCE	= "domainOntology";
+	public static final String				EXECUTOR_RESOURCE			= "executor";
+	public static final String				ONTOLOGY_RESOURCE			= "ontology";
 	
-	public static final String			PARSER_RESOURCE				= "parser";
-	private static final String			INCLUDE_DIRECTIVE			= "include";
-	private static final Pattern		LINE_REPEAT_PATTERN			= new Pattern(
-																			"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
-	private static final Pattern		VAR_REF						= new Pattern(
-																			"%\\{({var}[\\w@]+)\\}");
-	private final Map<String, Object>	resources					= new HashMap<String, Object>();
-	private final File					rootDir;
-	protected final Parameters			globalParams;
-	protected final List<Parameters>	jobParams;
+	public static final String				PARSER_RESOURCE				= "parser";
+	private static final String				INCLUDE_DIRECTIVE			= "include";
+	private static final Pattern			LINE_REPEAT_PATTERN			= new Pattern(
+																				"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
+	private static final Pattern			VAR_REF						= new Pattern(
+																				"%\\{({var}[\\w@]+)\\}");
+	private final ResourceCreatorRepository	creatorRepo;
+	private final Map<String, Object>		resources					= new HashMap<String, Object>();
+	private final File						rootDir;
+	protected final Parameters				globalParams;
 	
-	protected final List<Parameters>	resourceParams;
+	protected final List<Parameters>		jobParams;
+	protected final List<Parameters>		resourceParams;
 	
-	public ParameterizedExperiment(File file) throws IOException {
-		this(file, Collections.<String, String> emptyMap());
-	}
-	
-	public ParameterizedExperiment(File file, Map<String, String> envParams)
-			throws IOException {
+	public ParameterizedExperiment(File file, Map<String, String> envParams,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		this.creatorRepo = creatorRepo;
 		this.rootDir = file.getParentFile() == null ? new File(".") : file
 				.getParentFile();
 		
@@ -108,6 +107,11 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		
 	}
 	
+	public ParameterizedExperiment(File file,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		this(file, Collections.<String, String> emptyMap(), creatorRepo);
+	}
+	
 	private static Map<String, String> readIncludedParamsFile(File file)
 			throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -134,6 +138,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			}
 		}
 		return line;
+	}
+	
+	public IResourceObjectCreator<?> getCreator(String type) {
+		return creatorRepo.getCreator(type);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -285,6 +293,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			return "true".equals(get(name));
 		}
 		
+		public double getAsDouble(String name) {
+			return Double.valueOf(get(name));
+		}
+		
 		public File getAsFile(String name) {
 			return makeAbsolute(new File(get(name)));
 		}
@@ -298,6 +310,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 				}
 			}
 			return ret;
+		}
+		
+		public double getAsFloat(String name) {
+			return Float.valueOf(get(name));
 		}
 		
 		public int getAsInteger(String name) {

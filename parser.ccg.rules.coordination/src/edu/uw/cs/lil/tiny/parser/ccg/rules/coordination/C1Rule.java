@@ -29,32 +29,32 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.utils.collections.ListUtils;
 
-class C1Rule<Y> implements IBinaryParseRule<Y> {
+class C1Rule<MR> implements IBinaryParseRule<MR> {
 	
 	private static final String				RULE_NAME	= "c1";
-	private final ICoordinationServices<Y>	services;
+	private final ICoordinationServices<MR>	services;
 	
-	public C1Rule(ICoordinationServices<Y> services) {
+	public C1Rule(ICoordinationServices<MR> services) {
 		this.services = services;
 	}
 	
 	@Override
-	public Collection<ParseRuleResult<Y>> apply(Category<Y> left,
-			Category<Y> right, boolean isCompleteSentence) {
+	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
+			Category<MR> right, boolean isCompleteSentence) {
 		if (left.getSyntax().equals(Syntax.C) && left.getSem() != null
 				&& right.getSem() != null) {
 			// Simple coordination is the case of an argument of type 't' that
 			// is coordinated through simple conjuncton/disjunction with others
-			final Y simpleCoordination = services.createSimpleCoordination(
+			final MR simpleCoordination = services.createSimpleCoordination(
 					right.getSem(), left.getSem());
 			
 			if (simpleCoordination == null) {
 				// Case simple coordination failed, try the more complex case
-				final Y semantics = services.createPartialCoordination(
+				final MR semantics = services.createPartialCoordination(
 						right.getSem(), left.getSem());
 				if (semantics != null) {
 					return ListUtils
-							.createSingletonList(new ParseRuleResult<Y>(
+							.createSingletonList(new ParseRuleResult<MR>(
 									RULE_NAME, Category.create(
 											new ComplexSyntax(
 													new ComplexSyntax(left
@@ -65,7 +65,7 @@ class C1Rule<Y> implements IBinaryParseRule<Y> {
 													Slash.BACKWARD), semantics)));
 				}
 			} else {
-				return ListUtils.createSingletonList(new ParseRuleResult<Y>(
+				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
 						RULE_NAME, Category.create(
 								new ComplexSyntax(right.getSyntax(), right
 										.getSyntax(), Slash.BACKWARD),

@@ -32,7 +32,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.utils.collections.CollectionUtils;
@@ -49,7 +48,7 @@ import edu.uw.cs.utils.log.thread.InterruptedRuntimeException;
  * @author Yoav Artzi
  */
 public class Evaluation implements ILogicalExpressionVisitor {
-	public static final ILogger		LOG			= LoggerFactory
+	public static final ILogger			LOG			= LoggerFactory
 															.create(Evaluation.class);
 	private final Map<Variable, Object>	denotations	= new HashMap<Variable, Object>();
 	private final IEvaluationServices	services;
@@ -113,17 +112,6 @@ public class Evaluation implements ILogicalExpressionVisitor {
 		// Try to get from cache
 		if (services.isCached(literal)) {
 			result = services.getFromCache(literal);
-			return;
-		}
-		
-		// Case partial literal (i.e., it requires more arguments), wrap with
-		// Lambda operators as needed and visit with the visitor
-		if (isPartialLiteral(literal)) {
-			LambdaWrapped.of(literal).accept(this);
-			
-			// Cache
-			services.cacheResult(literal, result);
-			
 			return;
 		}
 		
@@ -198,11 +186,7 @@ public class Evaluation implements ILogicalExpressionVisitor {
 			return;
 		}
 		
-		if (logicalConstant.getType().isComplex()) {
-			// Case a complex type, wrap with Lambda operators and visit as
-			// Lambda
-			LambdaWrapped.of(logicalConstant).accept(this);
-		} else if (logicalConstant.equals(LogicLanguageServices.getTrue())) {
+		if (logicalConstant.equals(LogicLanguageServices.getTrue())) {
 			result = true;
 		} else if (logicalConstant.equals(LogicLanguageServices.getFalse())) {
 			result = false;

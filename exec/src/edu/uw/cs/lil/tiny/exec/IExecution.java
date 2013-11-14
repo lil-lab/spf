@@ -18,8 +18,16 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.exec;
 
-public interface IExecution<Z> {
-	Z getResult();
+/**
+ * Execution object that allows access to overall score and final result, but
+ * abstract much of the details.
+ * 
+ * @author Yoav Artzi
+ * @param <RESULT>
+ *            Final execution outcome.
+ */
+public interface IExecution<RESULT> {
+	RESULT getResult();
 	
 	double score();
 	

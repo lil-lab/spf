@@ -35,7 +35,10 @@ import java.util.Iterator;
  */
 class TroveHashVector implements IHashVector {
 	private static final long					serialVersionUID	= -8168101355823745381L;
-	private final TObjectDoubleHashMap<KeyArgs>	values				= new TObjectDoubleHashMap<KeyArgs>();
+	private final TObjectDoubleHashMap<KeyArgs>	values				= new TObjectDoubleHashMap<KeyArgs>(
+																			10,
+																			0.5f,
+																			0.0);
 	
 	TroveHashVector() {
 	}
@@ -43,12 +46,6 @@ class TroveHashVector implements IHashVector {
 	TroveHashVector(IHashVectorImmutable other) {
 		for (final Pair<KeyArgs, Double> o : other) {
 			values.put(o.first(), o.second());
-		}
-	}
-	
-	private static void assertNull(Object o) {
-		if (o == null) {
-			throw new IllegalArgumentException("Unexpected null argument");
 		}
 	}
 	
@@ -64,7 +61,8 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
-	public IHashVector addTimes(final double times, IHashVectorImmutable other) {
+	public TroveHashVector addTimes(final double times,
+			IHashVectorImmutable other) {
 		if (other instanceof TroveHashVector) {
 			final TroveHashVector p = (TroveHashVector) other;
 			final TroveHashVector ret = new TroveHashVector(this);
@@ -97,6 +95,17 @@ class TroveHashVector implements IHashVector {
 		} else {
 			addTimesInto(times, new TroveHashVector(other));
 		}
+	}
+	
+	@Override
+	public void applyFunction(final Function function) {
+		values.transformValues(new TDoubleFunction() {
+			
+			@Override
+			public double execute(double value) {
+				return function.doApply(value);
+			}
+		});
 	}
 	
 	@Override
@@ -149,43 +158,33 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
+	public double get(KeyArgs key) {
+		return values.get(key);
+	}
+	
+	@Override
 	public double get(String arg1) {
-		assertNull(arg1);
 		return values.get(new KeyArgs(arg1));
 	}
 	
 	@Override
 	public double get(String arg1, String arg2) {
-		assertNull(arg1);
-		assertNull(arg2);
 		return values.get(new KeyArgs(arg1, arg2));
 	}
 	
 	@Override
 	public double get(String arg1, String arg2, String arg3) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
 		return values.get(new KeyArgs(arg1, arg2, arg3));
 	}
 	
 	@Override
 	public double get(String arg1, String arg2, String arg3, String arg4) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
-		assertNull(arg4);
 		return values.get(new KeyArgs(arg1, arg2, arg3, arg4));
 	}
 	
 	@Override
 	public double get(String arg1, String arg2, String arg3, String arg4,
 			String arg5) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
-		assertNull(arg4);
-		assertNull(arg5);
 		return values.get(new KeyArgs(arg1, arg2, arg3, arg4, arg5));
 	}
 	
@@ -344,8 +343,31 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
+	public TroveHashVector pairWiseProduct(final IHashVectorImmutable other) {
+		if (other instanceof TroveHashVector) {
+			final TroveHashVector p = (TroveHashVector) other;
+			if (size() <= other.size()) {
+				final TroveHashVector ret = new TroveHashVector(this);
+				p.values.forEachEntry(new TObjectDoubleProcedure<KeyArgs>() {
+					@Override
+					public boolean execute(KeyArgs a, double b) {
+						if (p.values.contains(a)) {
+							ret.values.put(a, b * p.values.get(a));
+						}
+						return true;
+					}
+				});
+				return ret;
+			} else {
+				return p.pairWiseProduct(this);
+			}
+		} else {
+			return pairWiseProduct(new TroveHashVector(other));
+		}
+	}
+	
+	@Override
 	public String printValues(IHashVectorImmutable other) {
-		
 		if (other instanceof TroveHashVector) {
 			final TroveHashVector p = (TroveHashVector) other;
 			final StringBuilder ret = new StringBuilder();
@@ -373,44 +395,34 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
+	public void set(KeyArgs key, double value) {
+		values.put(key, value);
+	}
+	
+	@Override
 	public void set(String arg1, double value) {
-		assertNull(arg1);
 		values.put(new KeyArgs(arg1), value);
 	}
 	
 	@Override
 	public void set(String arg1, String arg2, double value) {
-		assertNull(arg1);
-		assertNull(arg2);
 		values.put(new KeyArgs(arg1, arg2), value);
 	}
 	
 	@Override
 	public void set(String arg1, String arg2, String arg3, double value) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
 		values.put(new KeyArgs(arg1, arg2, arg3), value);
 	}
 	
 	@Override
 	public void set(String arg1, String arg2, String arg3, String arg4,
 			double value) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
-		assertNull(arg4);
 		values.put(new KeyArgs(arg1, arg2, arg3, arg4), value);
 	}
 	
 	@Override
 	public void set(String arg1, String arg2, String arg3, String arg4,
 			String arg5, double value) {
-		assertNull(arg1);
-		assertNull(arg2);
-		assertNull(arg3);
-		assertNull(arg4);
-		assertNull(arg5);
 		values.put(new KeyArgs(arg1, arg2, arg3, arg4, arg5), value);
 	}
 	

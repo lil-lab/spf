@@ -36,23 +36,27 @@ import edu.uw.cs.utils.collections.ListUtils;
  * @author Tom Kwiatkowski
  * @author Yoav Artzi
  */
-public abstract class AbstractComposition<Y> implements IBinaryParseRule<Y> {
-	private final ICategoryServices<Y>	categoryServices;
+public abstract class AbstractComposition<MR> implements IBinaryParseRule<MR> {
+	private final ICategoryServices<MR>	categoryServices;
 	
 	private final String				ruleName;
 	
 	/**
-	 * Flag to force Eisner normal form parsing.
+	 * Flag to force Eisner normal form parsing. While this is likely to
+	 * speed-up parsing significantly, it might incur a price in performance, as
+	 * it blocks certain paths in the chart, relying on the same hypothesis
+	 * coming through different paths. While these alternatives paths
+	 * necessarily exist, they might have been pruned.
 	 */
 	private final boolean				useEisnerNormalForm;
 	
 	public AbstractComposition(String ruleName,
-			ICategoryServices<Y> categoryServices) {
+			ICategoryServices<MR> categoryServices) {
 		this(ruleName, categoryServices, false);
 	}
 	
 	public AbstractComposition(String ruleName,
-			ICategoryServices<Y> categoryServices, boolean useEisnerNormalForm) {
+			ICategoryServices<MR> categoryServices, boolean useEisnerNormalForm) {
 		this.ruleName = ruleName;
 		this.categoryServices = categoryServices;
 		this.useEisnerNormalForm = useEisnerNormalForm;
@@ -120,12 +124,12 @@ public abstract class AbstractComposition<Y> implements IBinaryParseRule<Y> {
 	 * @param result
 	 *            The result cell, if exist, is added to this list
 	 */
-	protected List<ParseRuleResult<Y>> doComposition(Category<Y> f,
-			Category<Y> g, boolean backward) {
+	protected List<ParseRuleResult<MR>> doComposition(Category<MR> f,
+			Category<MR> g, boolean backward) {
 		// Verify both cell have complex categories
 		if (f instanceof ComplexCategory && g instanceof ComplexCategory) {
-			final ComplexCategory<Y> fCategory = (ComplexCategory<Y>) f;
-			final ComplexCategory<Y> gCategory = (ComplexCategory<Y>) g;
+			final ComplexCategory<MR> fCategory = (ComplexCategory<MR>) f;
+			final ComplexCategory<MR> gCategory = (ComplexCategory<MR>) g;
 			
 			// Verify valid composition direction
 			if (!fCategory.hasSlash(backward ? Slash.BACKWARD : Slash.FORWARD)
@@ -134,9 +138,8 @@ public abstract class AbstractComposition<Y> implements IBinaryParseRule<Y> {
 				return Collections.emptyList();
 			}
 			if (useEisnerNormalForm) {
-				// If Eisner normal form parsing is enforced, will validate the
-				// direction of
-				// the composition using the 'f' category.
+				// If Eisner normal form is enforced, will validate the
+				// direction of the composition using the 'f' category.
 				if (fCategory.getSlash() == Slash.BACKWARD
 						&& fCategory.isFromLeftComp()) {
 					return Collections.emptyList();
@@ -147,10 +150,10 @@ public abstract class AbstractComposition<Y> implements IBinaryParseRule<Y> {
 				}
 			}
 			
-			final Category<Y> result = categoryServices.compose(fCategory,
+			final Category<MR> result = categoryServices.compose(fCategory,
 					gCategory);
 			if (result != null) {
-				return ListUtils.createSingletonList(new ParseRuleResult<Y>(
+				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
 						ruleName, result));
 			}
 		}

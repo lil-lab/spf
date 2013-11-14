@@ -25,13 +25,13 @@ import edu.uw.cs.utils.composites.Pair;
  * Joint inference parse result.
  * 
  * @author Yoav Artzi
- * @param <LF>
+ * @param <MR>
  * @param <ERESULT>
  */
-public interface IJointParse<LF, ERESULT> extends IParse<LF> {
+public interface IJointParse<MR, ERESULT> extends IParse<MR> {
 	
 	double getBaseScore();
 	
-	Pair<LF, ERESULT> getResult();
+	Pair<MR, ERESULT> getResult();
 	
 }

@@ -19,24 +19,22 @@
 package edu.uw.cs.lil.tiny.ccg.lexicon;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.storage.AbstractDecoderIntoFile;
-import edu.uw.cs.lil.tiny.storage.DecoderHelper;
-import edu.uw.cs.lil.tiny.storage.IDecoder;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.SetUtils;
@@ -70,11 +68,6 @@ public class Lexicon<MR> implements ILexicon<MR> {
 	 */
 	public Lexicon(Set<LexicalEntry<MR>> entries) {
 		this.entries.addAll(entries);
-	}
-	
-	public static <Y> IDecoder<Lexicon<Y>> getDecoder(
-			DecoderHelper<Y> decoderHelper) {
-		return new Decoder<Y>(decoderHelper);
 	}
 	
 	@Override
@@ -195,60 +188,25 @@ public class Lexicon<MR> implements ILexicon<MR> {
 		return result.toString();
 	}
 	
-	private static class Decoder<Y> extends AbstractDecoderIntoFile<Lexicon<Y>> {
-		private static final int		VERSION	= 1;
-		private final DecoderHelper<Y>	decoderHelper;
+	public static class Creator<MR> implements
+			IResourceObjectCreator<Lexicon<MR>> {
 		
-		public Decoder(DecoderHelper<Y> decoderHelper) {
-			super(Lexicon.class);
-			this.decoderHelper = decoderHelper;
+		@Override
+		public Lexicon<MR> create(Parameters parameters,
+				IResourceRepository resourceRepo) {
+			return new Lexicon<MR>();
 		}
 		
 		@Override
-		public int getVersion() {
-			return VERSION;
+		public String type() {
+			return "lexicon";
 		}
 		
 		@Override
-		protected Map<String, String> createAttributesMap(Lexicon<Y> object) {
-			// No special attributes
-			return new HashMap<String, String>();
-		}
-		
-		@Override
-		protected Lexicon<Y> doDecode(Map<String, String> attributes,
-				Map<String, File> dependentFiles, BufferedReader reader)
-				throws IOException {
-			
-			// One lexical entry on each line. Read the lines through the
-			// special
-			// method to skip comments
-			final Set<LexicalEntry<Y>> entries = new HashSet<LexicalEntry<Y>>();
-			String line;
-			while ((line = readTextLine(reader)) != null) {
-				entries.add(LexicalEntry.parse(line,
-						decoderHelper.getCategoryServices(),
-						SAVED_LEXICON_ORIGIN));
-			}
-			
-			return new Lexicon<Y>(entries);
-		}
-		
-		@Override
-		protected void doEncode(Lexicon<Y> object, BufferedWriter writer)
-				throws IOException {
-			// Write a lexical entry on each line
-			for (final LexicalEntry<Y> entry : object.entries) {
-				writer.write(entry.toString());
-				writer.write("\n");
-			}
-		}
-		
-		@Override
-		protected Map<String, File> encodeDependentFiles(Lexicon<Y> object,
-				File directory, File parentFile) throws IOException {
-			// No dependent files
-			return new HashMap<String, File>();
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), Lexicon.class)
+					.setDescription("A simple collection of lexical entries")
+					.build();
 		}
 		
 	}

@@ -3,7 +3,8 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/storage"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry kind="src" path="/explat"/>
+	<classpathentry kind="src" path="/data"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

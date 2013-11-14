@@ -38,14 +38,4 @@ public interface ILexicalFeatureSet<DI extends IDataItem<?>, MR> extends
 	 * @return
 	 */
 	public boolean addEntry(LexicalEntry<MR> entry, IHashVector prametersVector);
-	
-	/**
-	 * Add and initialize a fixed lexical entry.
-	 * 
-	 * @param entry
-	 * @param prametersVector
-	 * @return
-	 */
-	public boolean addFixedEntry(LexicalEntry<MR> entry,
-			IHashVector prametersVector);
 }

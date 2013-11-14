@@ -28,11 +28,17 @@ import edu.uw.cs.lil.tiny.mr.lambda.Variable;
  */
 public class Simplify extends AbstrcatSimplify {
 	
-	private Simplify() {
+	private Simplify(boolean stripLambdas) {
+		super(stripLambdas);
 	}
 	
 	public static LogicalExpression of(LogicalExpression exp) {
-		final Simplify visitor = new Simplify();
+		return of(exp, false);
+	}
+	
+	public static LogicalExpression of(LogicalExpression exp,
+			boolean stripLambdas) {
+		final Simplify visitor = new Simplify(stripLambdas);
 		visitor.visit(exp);
 		return visitor.tempReturn;
 	}

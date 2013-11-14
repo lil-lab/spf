@@ -23,28 +23,35 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.utils.collections.CompositeIterator;
+import edu.uw.cs.utils.collections.ListUtils;
 
 /**
  * Concatenation of {@link IDataCollection}
  * 
  * @author Yoav Artzi
- * @param <T>
+ * @param <DI>
  */
-public class CompositeDataCollection<T> implements IDataCollection<T> {
+public class CompositeDataCollection<DI extends IDataItem<?>> implements
+		IDataCollection<DI> {
 	
-	private final List<IDataCollection<? extends T>>	datasets;
+	private final List<IDataCollection<? extends DI>>	datasets;
 	
-	public CompositeDataCollection(IDataCollection<? extends T>... datasets) {
+	public CompositeDataCollection(IDataCollection<? extends DI>... datasets) {
 		this(Arrays.asList(datasets));
 	}
 	
-	public CompositeDataCollection(List<IDataCollection<? extends T>> datasets) {
+	public CompositeDataCollection(List<IDataCollection<? extends DI>> datasets) {
 		this.datasets = datasets;
 	}
 	
 	@Override
-	public Iterator<T> iterator() {
+	public Iterator<DI> iterator() {
 		return createIterator();
 	}
 	
@@ -55,17 +62,63 @@ public class CompositeDataCollection<T> implements IDataCollection<T> {
 	
 	private int calculateSize() {
 		int sum = 0;
-		for (final IDataCollection<? extends T> dataset : datasets) {
+		for (final IDataCollection<? extends DI> dataset : datasets) {
 			sum += dataset.size();
 		}
 		return sum;
 	}
 	
-	private Iterator<T> createIterator() {
-		final List<Iterator<? extends T>> iterators = new LinkedList<Iterator<? extends T>>();
-		for (final IDataCollection<? extends T> dataset : datasets) {
+	private Iterator<DI> createIterator() {
+		final List<Iterator<? extends DI>> iterators = new LinkedList<Iterator<? extends DI>>();
+		for (final IDataCollection<? extends DI> dataset : datasets) {
 			iterators.add(dataset.iterator());
 		}
-		return new CompositeIterator<T>(iterators);
+		return new CompositeIterator<DI>(iterators);
+	}
+	
+	public static class Creator<DI extends IDataItem<?>> implements
+			IResourceObjectCreator<CompositeDataCollection<DI>> {
+		private static final String	DEFAULT_NAME	= "data.composite";
+		private final String		resourceName;
+		
+		public Creator() {
+			this(DEFAULT_NAME);
+		}
+		
+		public Creator(String resourceName) {
+			this.resourceName = resourceName;
+		}
+		
+		@Override
+		public CompositeDataCollection<DI> create(Parameters parameters,
+				final IResourceRepository resourceRepo) {
+			return new CompositeDataCollection<DI>(
+					ListUtils.map(
+							parameters.getSplit("sets"),
+							new ListUtils.Mapper<String, IDataCollection<? extends DI>>() {
+								
+								@Override
+								public IDataCollection<DI> process(String obj) {
+									return resourceRepo.getResource(obj);
+								}
+							}));
+		}
+		
+		@Override
+		public String type() {
+			return resourceName;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(),
+					CompositeDataCollection.class)
+					.setDescription(
+							"Composite dataset. Concatenates separate datasets of the same type into a single one")
+					.addParam("sets", "list of datasets",
+							"List of datasets of the same type (e.g., 'data1,data2,data3')")
+					.build();
+		}
+		
 	}
 }

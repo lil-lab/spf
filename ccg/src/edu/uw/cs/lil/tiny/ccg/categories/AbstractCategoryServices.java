@@ -27,10 +27,10 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
  * category services classes.
  * 
  * @author Yoav Artzi
- * @param <Y>
+ * @param <MR>
  */
-public abstract class AbstractCategoryServices<Y> implements
-		ICategoryServices<Y> {
+public abstract class AbstractCategoryServices<MR> implements
+		ICategoryServices<MR> {
 	
 	// Syntax constants
 	private static final char	CLOSE_PAREN		= ')';
@@ -39,8 +39,8 @@ public abstract class AbstractCategoryServices<Y> implements
 	private static final String	OPEN_PAREN_STR	= String.valueOf(OPEN_PAREN);
 	
 	@Override
-	public final Category<Y> apply(ComplexCategory<Y> function,
-			Category<Y> argument) {
+	public final Category<MR> apply(ComplexCategory<MR> function,
+			Category<MR> argument) {
 		if (argument == null || argument.getSem() == null
 				|| function.getSem() == null) {
 			return null;
@@ -49,7 +49,7 @@ public abstract class AbstractCategoryServices<Y> implements
 			return null;
 		}
 		if (function.getSyntax().getRight().equals(argument.getSyntax())) {
-			final Y newSemantics = doSemanticApplication(function.getSem(),
+			final MR newSemantics = doSemanticApplication(function.getSem(),
 					argument.getSem());
 			if (newSemantics != null) {
 				return Category.create(function.getSyntax().getLeft(),
@@ -60,8 +60,8 @@ public abstract class AbstractCategoryServices<Y> implements
 	}
 	
 	@Override
-	public final Category<Y> compose(ComplexCategory<Y> fCategory,
-			ComplexCategory<Y> gCategory) {
+	public final Category<MR> compose(ComplexCategory<MR> fCategory,
+			ComplexCategory<MR> gCategory) {
 		if (gCategory == null) {
 			return null;
 		}
@@ -77,7 +77,7 @@ public abstract class AbstractCategoryServices<Y> implements
 		
 		if (fCategory.getSyntax().getRight()
 				.equals(gCategory.getSyntax().getLeft())) {
-			final Y newSemantics = doSemanticComposition(fCategory.getSem(),
+			final MR newSemantics = doSemanticComposition(fCategory.getSem(),
 					gCategory.getSem());
 			if (newSemantics != null) {
 				
@@ -93,7 +93,7 @@ public abstract class AbstractCategoryServices<Y> implements
 					newCategoryFromRightComp = false;
 				}
 				
-				final ComplexCategory<Y> newcat = new ComplexCategory<Y>(
+				final ComplexCategory<MR> newcat = new ComplexCategory<MR>(
 						new ComplexSyntax(fCategory.getSyntax().getLeft(),
 								gCategory.getSyntax().getRight(),
 								fCategory.getSlash()), newSemantics,
@@ -104,8 +104,8 @@ public abstract class AbstractCategoryServices<Y> implements
 		return null;
 	}
 	
-	public ComplexCategory<Y> createComplexCategory(String syntaxString,
-			Y semantics) {
+	public ComplexCategory<MR> createComplexCategory(String syntaxString,
+			MR semantics) {
 		// find the outermost slash
 		// assumes that one exists
 		int depth = 0;
@@ -154,7 +154,7 @@ public abstract class AbstractCategoryServices<Y> implements
 					+ syntaxString);
 		}
 		
-		return new ComplexCategory<Y>(new ComplexSyntax(parse(
+		return new ComplexCategory<MR>(new ComplexSyntax(parse(
 				syntaxString.substring(0, latestSlashPosition)).getSyntax(),
 				parse(
 						syntaxString.substring(latestSlashPosition + 1,
@@ -163,13 +163,13 @@ public abstract class AbstractCategoryServices<Y> implements
 	}
 	
 	@Override
-	public final Category<Y> parse(String string) {
+	public final Category<MR> parse(String string) {
 		String trimmed = string.trim();
 		
 		final int colon = trimmed.indexOf(':');
 		
 		// Everything after the colon is semantics
-		final Y semantics;
+		final MR semantics;
 		if (colon != -1) {
 			semantics = parseSemantics(trimmed.substring(colon + 1,
 					trimmed.length()).trim());
@@ -183,7 +183,7 @@ public abstract class AbstractCategoryServices<Y> implements
 				|| trimmed.indexOf('|') != -1) {
 			return createComplexCategory(trimmed, semantics);
 		} else {
-			return new SimpleCategory<Y>(Syntax.valueOf(trimmed.trim()),
+			return new SimpleCategory<MR>(Syntax.valueOf(trimmed.trim()),
 					semantics);
 		}
 	}
@@ -196,7 +196,7 @@ public abstract class AbstractCategoryServices<Y> implements
 	 * @return
 	 */
 	@Override
-	public Y parseSemantics(String string) {
+	public MR parseSemantics(String string) {
 		return parseSemantics(string, true);
 	}
 	
@@ -206,7 +206,7 @@ public abstract class AbstractCategoryServices<Y> implements
 	 * @param string
 	 * @return
 	 */
-	public abstract Y parseSemantics(String string, boolean checkType);
+	public abstract MR parseSemantics(String string, boolean checkType);
 	
 	/**
 	 * Do the application of the semantics.
@@ -215,7 +215,7 @@ public abstract class AbstractCategoryServices<Y> implements
 	 * @param argument
 	 * @return
 	 */
-	protected abstract Y doSemanticApplication(Y function, Y argument);
+	protected abstract MR doSemanticApplication(MR function, MR argument);
 	
 	/**
 	 * Do the composition of the semantics.
@@ -224,6 +224,6 @@ public abstract class AbstractCategoryServices<Y> implements
 	 * @param g
 	 * @return
 	 */
-	protected abstract Y doSemanticComposition(Y f, Y g);
+	protected abstract MR doSemanticComposition(MR f, MR g);
 	
 }

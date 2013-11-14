@@ -19,6 +19,8 @@
 package edu.uw.cs.lil.tiny.test.stats;
 
 import edu.uw.cs.lil.tiny.data.IDataItem;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
  * Testing statistics for the exact match metric.
@@ -28,40 +30,50 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
  * @param <MR>
  */
 public class SimpleStats<DI extends IDataItem<?>> implements IStatistics<DI> {
+	
+	public static final ILogger	LOG					= LoggerFactory
+															.create(SimpleStats.class);
+	
 	/**
 	 * The number of correct.
 	 */
-	private int	corrects			= 0;
+	private int					corrects			= 0;
 	
 	/**
 	 * Number of inference failures.
 	 */
-	private int	failures			= 0;
+	private int					failures			= 0;
 	
 	/**
 	 * Number of incorrects.
 	 */
-	private int	incorrects			= 0;
+	private int					incorrects			= 0;
+	
+	private final String		label;
 	
 	/**
 	 * Number of correct. With sloppy inference.
 	 */
-	private int	sloppyCorrects		= 0;
+	private int					sloppyCorrects		= 0;
 	
 	/**
 	 * Number of inference failures. With sloppy inference.
 	 */
-	private int	sloppyFailures		= 0;
+	private int					sloppyFailures		= 0;
 	
 	/**
 	 * Number of incorrects. With sloppy inference.
 	 */
-	private int	sloppyIncorrects	= 0;
+	private int					sloppyIncorrects	= 0;
 	
 	/**
 	 * Total number of inference attempts.
 	 */
-	private int	total				= 0;
+	private int					total				= 0;
+	
+	public SimpleStats(String label) {
+		this.label = label;
+	}
 	
 	@Override
 	public double f1() {
@@ -82,6 +94,11 @@ public class SimpleStats<DI extends IDataItem<?>> implements IStatistics<DI> {
 	@Override
 	public double getIncorrects() {
 		return incorrects;
+	}
+	
+	@Override
+	public String getLabel() {
+		return label;
 	}
 	
 	@Override
@@ -117,34 +134,40 @@ public class SimpleStats<DI extends IDataItem<?>> implements IStatistics<DI> {
 	
 	@Override
 	public void recordCorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record correct.", getLabel());
 		total++;
 		corrects++;
 	}
 	
 	@Override
 	public void recordFailure(DI dataItem) {
+		LOG.info("[%s stats]  Record failure.", getLabel());
 		total++;
 		failures++;
 	}
 	
 	@Override
 	public void recordIncorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record incorrect.", getLabel());
 		total++;
 		incorrects++;
 	}
 	
 	@Override
 	public void recordSloppyCorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy correct.", getLabel());
 		sloppyCorrects++;
 	}
 	
 	@Override
 	public void recordSloppyFailure(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy failure.", getLabel());
 		sloppyFailures++;
 	}
 	
 	@Override
 	public void recordSloppyIncorrect(DI dataItem) {
+		LOG.info("[%s stats]  Record sloppy incorrect.", getLabel());
 		sloppyIncorrects++;
 	}
 	

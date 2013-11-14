@@ -20,8 +20,10 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
@@ -29,6 +31,7 @@ import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.IScorer;
+import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**
@@ -79,7 +82,7 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 		return best;
 	}
 	
-	private static <Y> List<CKYParse<Y>> findBestParses(List<CKYParse<Y>> all) {
+	private static <MR> List<CKYParse<MR>> findBestParses(List<CKYParse<MR>> all) {
 		return findBestParses(all, null);
 	}
 	
@@ -91,12 +94,13 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 			public boolean isValid(MR e) {
 				return true;
 			}
-		});
+		}, false);
 	}
 	
 	@Override
-	public IHashVector expectedFeatures(IFilter<MR> filter) {
-		return chart.expectedFeatures(filter);
+	public IHashVector expectedFeatures(IFilter<MR> filter, boolean maxOnly) {
+		return chart.expectedFeatures(maxOnly ? createMaxFilter(filter)
+				: filter);
 	}
 	
 	@Override
@@ -149,11 +153,38 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 			public boolean isValid(MR e) {
 				return true;
 			}
-		});
+		}, false);
 	}
 	
 	@Override
-	public double norm(IFilter<MR> filter) {
-		return chart.norm(filter);
+	public double norm(final IFilter<MR> filter, boolean maxOnly) {
+		return chart.norm(maxOnly ? createMaxFilter(filter) : filter);
+	}
+	
+	/**
+	 * Create a filter that returns as valid parses that pass the base filter
+	 * and have a maximal score.
+	 * 
+	 * @param filter
+	 * @return
+	 */
+	private IFilter<MR> createMaxFilter(IFilter<MR> filter) {
+		final Set<MR> sems = new HashSet<MR>(ListUtils.map(
+				getMaxParses(filter),
+				new ListUtils.Mapper<IGraphParse<MR>, MR>() {
+					
+					@Override
+					public MR process(IGraphParse<MR> obj) {
+						return obj.getSemantics();
+					}
+				}));
+		return new IFilter<MR>() {
+			
+			@Override
+			public boolean isValid(MR e) {
+				return sems.contains(e);
+			}
+			
+		};
 	}
 }

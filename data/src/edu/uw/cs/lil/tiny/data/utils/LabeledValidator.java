@@ -19,21 +19,59 @@
 package edu.uw.cs.lil.tiny.data.utils;
 
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
+import edu.uw.cs.lil.tiny.explat.IResourceRepository;
+import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
+import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
+import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 
 /**
  * Simple validator for labeled data items. Compares the hypothesis label to the
  * gold label.
  * 
  * @author Yoav Artzi
- * @param <X>
- * @param <Z>
+ * @param <DI>
+ *            Labeled data item to use for validation.
+ * @param <LABEL>
+ *            Type of label.
  */
-public class LabeledValidator<DI extends ILabeledDataItem<?, Z>, Z> implements
-		IValidator<DI, Z> {
+public class LabeledValidator<DI extends ILabeledDataItem<?, LABEL>, LABEL>
+		implements IValidator<DI, LABEL> {
 	
 	@Override
-	public boolean isValid(DI dataItem, Z label) {
+	public boolean isValid(DI dataItem, LABEL label) {
 		return dataItem.getLabel().equals(label);
+	}
+	
+	public static class Creator<DI extends ILabeledDataItem<?, LABEL>, LABEL>
+			implements IResourceObjectCreator<LabeledValidator<DI, LABEL>> {
+		
+		private String	type;
+		
+		public Creator() {
+			this("validator.labeled");
+		}
+		
+		public Creator(String type) {
+			this.type = type;
+		}
+		
+		@Override
+		public LabeledValidator<DI, LABEL> create(Parameters params,
+				IResourceRepository repo) {
+			return new LabeledValidator<DI, LABEL>();
+		}
+		
+		@Override
+		public String type() {
+			return type;
+		}
+		
+		@Override
+		public ResourceUsage usage() {
+			return new ResourceUsage.Builder(type(), LabeledValidator.class)
+					.build();
+		}
+		
 	}
 	
 }

@@ -40,7 +40,7 @@ public class CKYParse<MR> implements IGraphParse<MR> {
 	
 	public CKYParse(Cell<MR> cell) {
 		this.cell = cell;
-		this.semantics = cell.getCategroy().getSem();
+		this.semantics = cell.getCategory().getSem();
 	}
 	
 	protected CKYParse(CKYParse<MR> parse) {

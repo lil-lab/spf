@@ -119,7 +119,7 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 	
 	@Override
 	public Category<MR> getChild(int i) {
-		return getChildCell(i).getCategroy();
+		return getChildCell(i).getCategory();
 	}
 	
 	public Cell<MR> getChildCell(int i) {

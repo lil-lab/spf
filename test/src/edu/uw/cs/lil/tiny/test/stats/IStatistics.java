@@ -35,6 +35,8 @@ public interface IStatistics<DI extends IDataItem<?>> {
 	
 	double getIncorrects();
 	
+	String getLabel();
+	
 	double getSloppyCorrects();
 	
 	double getSloppyFailures();

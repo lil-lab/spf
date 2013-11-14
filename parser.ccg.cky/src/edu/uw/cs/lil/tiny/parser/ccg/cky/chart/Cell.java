@@ -199,7 +199,7 @@ public class Cell<MR> {
 		return result;
 	}
 	
-	public Category<MR> getCategroy() {
+	public Category<MR> getCategory() {
 		return category;
 	}
 	
@@ -642,10 +642,10 @@ public class Cell<MR> {
 		}
 	}
 	
-	public static class ScoreComparator<Y> implements Comparator<Cell<Y>> {
+	public static class ScoreComparator<MR> implements Comparator<Cell<MR>> {
 		
 		@Override
-		public int compare(Cell<Y> o1, Cell<Y> o2) {
+		public int compare(Cell<MR> o1, Cell<MR> o2) {
 			final int scoreComparison = Double.compare(o1.getPruneScore(),
 					o2.getPruneScore());
 			if (scoreComparison == 0) {
