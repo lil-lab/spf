@@ -4,7 +4,6 @@
     </description>
 	<!-- set global properties for this build -->
 	<property file="build.properties" />
-	<property name="version" value="1.5" />
 	<property name="build" location="build" />
 	<property name="build.src" location="build.src" />
 	<property name="dist" location="dist" />

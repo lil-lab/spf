@@ -274,6 +274,10 @@ public class Literal extends LogicalExpression {
 		return type;
 	}
 	
+	public int numArgs() {
+		return arguments.size();
+	}
+	
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {

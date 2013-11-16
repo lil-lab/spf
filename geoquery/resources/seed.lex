@@ -77,8 +77,8 @@ with the :- PP/(S\NP) : (lambda $0:<e,t> $0)
 capital :- (S\NP)/NP : (lambda $0:e (lambda $1:e (capital2:<s,<c,t>> $1 $0)))
 
 // for "populations of the states .."
-populations :- (S\NP)/NP : (lambda $0:i (lambda $1:e (population:<lo,<i,t>> $1 $0)))
-of :- N\(S\NP/NP)/N : (lambda $0:<e,t> (lambda $1:<e,<i,t>> (lambda $2:i (exists:<<e,t>,t> (lambda $3:e (and:<t*,t> ($0 $3) ($1 $3 $2)))))))
+populations :- (S\NP)/NP : (lambda $0:e (lambda $1:e (population:<lo,<i,t>> $1 $0)))
+of :- N\(S\NP/NP)/N : (lambda $0:<e,t> (lambda $1:<e,<e,t>> (lambda $2:e (exists:<<e,t>,t> (lambda $3:e (and:<t*,t> ($0 $3) ($1 $3 $2)))))))
 
 
 // for "what is the population of seattle"
@@ -123,7 +123,7 @@ is :- S/S : (lambda $0:t $0)
 
 // quantifier
 largest :- NP/N : (lambda $0:<e,t> (argmax:<<e,t>,<<e,i>,e>> $0 size:<lo,i>))
-largest :- NP/N/PP : (lambda $0:<e,i> (lambda $1:<e,t> (lambda $2:<e,t> (argmax:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) size:<lo,i>))))
+largest :- NP/N/PP : (lambda $0:<e,e> (lambda $1:<e,t> (lambda $2:<e,t> (argmax:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) size:<lo,i>))))
 smallest :- NP/N : (lambda $0:<e,t> (argmin:<<e,t>,<<e,i>,e>> $0 size:<lo,i>))
 smallest :- NP/N/PP : (lambda $0:<e,i> (lambda $1:<e,t> (lambda $2:<e,t> (argmin:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) size:<lo,i>))))
 longest :- NP/N : (lambda $0:<e,t> (argmax:<<e,t>,<<e,i>,e>> $0 len:<r,i>))
@@ -135,24 +135,24 @@ are  :- (NP\N)/(NP/N)  : (lambda $0:<<e,t>,e> $0)
 with  :- (NP\N)/(NP/N)  : (lambda $0:<<e,t>,e> $0)
 
 // what is the most populated state
-most :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
-highest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
-biggest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
-largest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
-largest :- (NP/N)/PP/N : (lambda $0:<e,i> (lambda $1:<e,t> (lambda $2:<e,t> (argmax:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) $0))))
-lowest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
-sparsest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
-smallest :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
-smallest :- (NP/N)/PP/N : (lambda $0:<e,i> (lambda $1:<e,t> (lambda $2:<e,t> (argmin:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) $0))))
-least :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
+most :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
+highest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
+biggest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
+largest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmax:<<e,t>,<<e,i>,e>> $1 $0)))
+largest :- (NP/N)/PP/N : (lambda $0:<e,e> (lambda $1:<e,t> (lambda $2:<e,t> (argmax:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) $0))))
+lowest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
+sparsest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
+smallest :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
+smallest :- (NP/N)/PP/N : (lambda $0:<e,e> (lambda $1:<e,t> (lambda $2:<e,t> (argmin:<<e,t>,<<e,i>,e>> (lambda $3:e (and:<t*,t> ($1 $3) ($2 $3))) $0))))
+least :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (argmin:<<e,t>,<<e,i>,e>> $1 $0)))
 // largest city by population
-largest :- (NP/N)/N : (lambda $0:<e,t> (lambda $1:<e,i> (argmax:<<e,t>,<<e,i>,e>> $0 $1)))
-by :- N/N : (lambda $0:<e,i> $0)
+largest :- (NP/N)/N : (lambda $0:<e,t> (lambda $1:<e,e> (argmax:<<e,t>,<<e,i>,e>> $0 $1)))
+by :- N/N : (lambda $0:<e,e> $0)
 
 // area of all of the states combined
-combined :- (NP\N)\N : (lambda $0:<e,t> (lambda $1:<e,i> (sum:<<e,t>,<<e,i>,i>> $0 $1)))
+combined :- (NP\N)\N : (lambda $0:<e,t> (lambda $1:<e,e> (sum:<<e,t>,<<e,i>,i>> $0 $1)))
 // total population of ...
-total :- (NP/N)/N : (lambda $0:<e,i> (lambda $1:<e,t> (sum:<<e,t>,<<e,i>,i>> $1 $0)))
+total :- (NP/N)/N : (lambda $0:<e,e> (lambda $1:<e,t> (sum:<<e,t>,<<e,i>,i>> $1 $0)))
 
 // what river traverses the most states
 the most :- NP\N\(S\NP/NP)/N : (lambda $0:<e,t> (lambda $1:<e,<e,t>> (lambda $2:<e,t> (argmax:<<e,t>,<<e,i>,e>> $2 (lambda $3:e (count:<<e,t>,i> (lambda $4:e (and:<t*,t> ($0 $4) ($1 $4 $3)))))))))

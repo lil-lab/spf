@@ -1,3 +1,8 @@
+# v1.5.1
+- Fixed inconsistencies in GeoQuery experiments.
+- Release GeoQuery experiments with unification-based GENLEX. NOTE: these experiments don't re-create the results of Kwiatkowski et al. 2010/2011 as the implementation of GENLEX is different. 
+- Move version info outside of README and build.xml.
+
 # v1.5
 - Better support for closed and open ontologies
 	- Add option to allow using an ontology or not

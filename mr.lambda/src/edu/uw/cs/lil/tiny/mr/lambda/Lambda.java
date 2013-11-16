@@ -125,10 +125,8 @@ public class Lambda extends LogicalExpression {
 			}
 			
 			// Need to remove the variable from the table. Since we keep them in
-			// a
-			// map, this is going to be ugly, but we will tolerate it since it's
-			// not
-			// really going to be a large map.
+			// a map, this is going to be ugly, but we will tolerate it since
+			// it's not really going to be a large map.
 			final Iterator<Entry<String, Variable>> variablesIterator = variables
 					.entrySet().iterator();
 			boolean removed = false;

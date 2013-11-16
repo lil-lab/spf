@@ -5,7 +5,7 @@ Web: http://yoavartzi.com
 
 <div style="float: right"><img src="http://yoavartzi.com/img/uw.png" height="120px" alt="UW logo" /></div>
 
-# [_**UW SPF v1.5**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework v1.5 
+# [_**UW SPF**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework 
 
 [TOC]
 
