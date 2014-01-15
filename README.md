@@ -131,8 +131,11 @@ More coming soon ...
 **I am getting NaNs and/or infinity values in my updates or an exception saying my updates are invalid.**  
 If you are using an exponentiated model with gradient updates, try to adjust the learning rate. With an exponentiated model the values might get too large and it's advised to scale them down.
 
-**I am having trouble re-creating the results from Kwiatkowski et al. 2010 and Kwiatkowski et al. 2011 with the Unification-based GENLEX procedure.** 
+**I am having trouble re-creating the results from Kwiatkowski et al. 2010 and Kwiatkowski et al. 2011 with the Unification-based GENLEX procedure.**  
 The unification code in SPF is not identical to the original paper. The code for the original paper is available [online](https://homes.cs.washington.edu/~lsz/code/UBL.tgz). If you want to re-create the results, this is the way to go. This code is basically a very old version of what SPF started from. Be warned, it's messy. The code in SPF is doing a few things differently, including more liberal splitting and no support of certain features that the original code contains. We hope to bring SPF's version of splitting closer to the original paper in the future. 
+
+**When using a factored lexicon, I sometimes see two lexical entries that have a similar structure factored into different lexical templates, although they should share the same template.**  
+This is a known issue in the implementation of factoring the current version of SPF. We hope to update the framework soon with a fix, but have no concrete date. However, in practice, we noticed no degradation in performance due to this issue. 
 
 ## Publications and Projects Using SPF
 
