@@ -30,21 +30,33 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
+/**
+ * Dump the underlying CKY chart into a file followed by all logical forms, each
+ * with all the lexical entries that participate in any max-scoring parses
+ * leading to it.
+ * 
+ * @author Yoav Artzi
+ * @param <ESTEP>
+ *            Formal semantics evaluation step.
+ * @param <ERESULT>
+ *            Formal semantics evaluation result.
+ */
 public class JointInferenceChartLogger<ESTEP, ERESULT> implements
 		IJointOutputLogger<LogicalExpression, ESTEP, ERESULT> {
-	public static final ILogger	LOG	= LoggerFactory.create(JointInferenceChartLogger.class);
+	public static final ILogger	LOG	= LoggerFactory
+											.create(JointInferenceChartLogger.class);
 	private final File			outputDir;
 	
 	public JointInferenceChartLogger(File outputDir) {
@@ -90,14 +102,14 @@ public class JointInferenceChartLogger<ESTEP, ERESULT> implements
 			}
 			
 			writer.write("\n\n");
-			for (final IJointParse<LogicalExpression, ERESULT> parse : CollectionUtils
-					.sorted(output.getAllParses(),
-							new Comparator<IJointParse<LogicalExpression, ERESULT>>() {
+			for (final IParse<LogicalExpression> parse : CollectionUtils
+					.sorted(output.getBaseParserOutput().getAllParses(),
+							new Comparator<IParse<LogicalExpression>>() {
 								
 								@Override
 								public int compare(
-										IJointParse<LogicalExpression, ERESULT> o1,
-										IJointParse<LogicalExpression, ERESULT> o2) {
+										IParse<LogicalExpression> o1,
+										IParse<LogicalExpression> o2) {
 									final int comp = Double.compare(
 											o1.getScore(), o2.getScore());
 									return comp == 0 ? o1
@@ -146,8 +158,8 @@ public class JointInferenceChartLogger<ESTEP, ERESULT> implements
 		}
 		
 		@Override
-		public JointInferenceChartLogger<ESTEP, ERESULT> create(Parameters params,
-				IResourceRepository repo) {
+		public JointInferenceChartLogger<ESTEP, ERESULT> create(
+				Parameters params, IResourceRepository repo) {
 			return new JointInferenceChartLogger<ESTEP, ERESULT>(
 					params.getAsFile("outputDir"));
 		}
@@ -159,7 +171,8 @@ public class JointInferenceChartLogger<ESTEP, ERESULT> implements
 		
 		@Override
 		public ResourceUsage usage() {
-			return new ResourceUsage.Builder(type(), JointInferenceChartLogger.class)
+			return new ResourceUsage.Builder(type(),
+					JointInferenceChartLogger.class)
 					.setDescription(
 							"Joint output logger that will dump CKY charts to logs")
 					.addParam("outputDir", "dir",

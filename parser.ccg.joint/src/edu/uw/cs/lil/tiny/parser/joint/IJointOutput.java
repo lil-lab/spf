@@ -20,9 +20,7 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**
@@ -30,82 +28,80 @@ import edu.uw.cs.utils.filter.IFilter;
  * 
  * @author Yoav Artzi
  * @param <MR>
+ *            Semantics formal meaning representation.
  * @param <ERESULT>
+ *            Semantics evaluation result.
+ * @see IJointParser
  */
 public interface IJointOutput<MR, ERESULT> {
 	
 	/**
-	 * All joint parses. Including failed executions.
-	 */
-	List<? extends IJointParse<MR, ERESULT>> getAllParses();
-	
-	/**
-	 * All joint parses.
-	 * 
-	 * @param includeFails
-	 *            exclude failed execution iff 'false'
-	 */
-	List<? extends IJointParse<MR, ERESULT>> getAllParses(boolean includeFails);
-	
-	/**
-	 * Internal output of the base parser.
-	 * 
-	 * @return
+	 * Base parser output.
 	 */
 	IParserOutput<MR> getBaseParserOutput();
 	
-	List<? extends IJointParse<MR, ERESULT>> getBestParses();
+	/**
+	 * All joint derivations. Including evaluations that terminate in
+	 * <code>null</code>.
+	 */
+	List<? extends IJointDerivation<MR, ERESULT>> getDerivations();
 	
-	List<? extends IJointParse<MR, ERESULT>> getBestParses(boolean includeFails);
+	/**
+	 * All joint derivations.
+	 * 
+	 * @param includeFails
+	 *            Include evaluations that terminate in <code>null</code>.
+	 */
+	List<? extends IJointDerivation<MR, ERESULT>> getDerivations(
+			boolean includeFails);
 	
-	List<? extends IJointParse<MR, ERESULT>> getBestParsesFor(
-			Pair<MR, ERESULT> label);
+	/**
+	 * All derivations that conclude with the provided result.
+	 * 
+	 * @param result
+	 *            Not null.
+	 */
+	List<? extends IJointDerivation<MR, ERESULT>> getDerivations(ERESULT result);
 	
-	List<? extends IJointParse<MR, ERESULT>> getBestParsesForY(MR partialLabel);
-	
-	List<? extends IJointParse<MR, ERESULT>> getBestParsesForZ(
-			ERESULT partialLabel);
+	/**
+	 * All derivations that are valid according to the supplied filter.
+	 */
+	List<? extends IJointDerivation<MR, ERESULT>> getDerivations(
+			IFilter<ERESULT> filter);
 	
 	/**
 	 * Total inference time in milliseconds.
-	 * 
-	 * @return
 	 */
 	long getInferenceTime();
 	
-	List<LexicalEntry<MR>> getMaxLexicalEntries(Pair<MR, ERESULT> label);
+	/**
+	 * All max-scoring derivations.
+	 */
+	List<? extends IJointDerivation<MR, ERESULT>> getMaxDerivations();
 	
 	/**
-	 * Get highest scoring complete valid parses (can get multiple parses, since
-	 * syntax is not constrained).
+	 * All max-scoring derivations.
 	 * 
-	 * @param filter
-	 * @return
+	 * @param includeFails
+	 *            Include evaluations that terminate in <code>null</code>.
 	 */
-	List<? extends IJointParse<MR, ERESULT>> getMaxParses(
-			IFilter<Pair<MR, ERESULT>> filter);
+	List<? extends IJointDerivation<MR, ERESULT>> getMaxDerivations(
+			boolean includeFails);
 	
 	/**
-	 * Get all complete valid parses (can get multiple parses, since syntax is
-	 * not constrained).
-	 * 
-	 * @param filter
-	 * @return
+	 * All max-scoring derivations for the given result.
 	 */
-	List<? extends IJointParse<MR, ERESULT>> getParses(
-			IFilter<Pair<MR, ERESULT>> filter);
+	List<? extends IJointDerivation<MR, ERESULT>> getMaxDerivations(
+			ERESULT result);
 	
 	/**
-	 * Get all parses for the given result.
-	 * 
-	 * @param label
-	 * @return null if no parse has this label
+	 * All max-scoring joint derivations that the filter validates.
 	 */
-	List<? extends IJointParse<MR, ERESULT>> getParsesFor(
-			Pair<MR, ERESULT> label);
+	List<? extends IJointDerivation<MR, ERESULT>> getMaxDerivations(
+			IFilter<ERESULT> filter);
 	
-	List<? extends IJointParse<MR, ERESULT>> getParsesForY(MR partialLabel);
-	
-	List<? extends IJointParse<MR, ERESULT>> getParsesForZ(ERESULT partialLabel);
-	
+	/**
+	 * Indicates if inference was exact or approximate.
+	 */
+	boolean isExact();
 }

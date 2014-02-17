@@ -33,17 +33,17 @@ import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 public interface IJointGraphParser<DI extends ISituatedDataItem<?, ?>, MR, ESTEP, ERESULT>
 		extends IJointParser<DI, MR, ESTEP, ERESULT>, IGraphParser<DI, MR> {
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
+	IJointGraphOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
+	IJointGraphOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
+	IJointGraphOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon);
 	
-	IJointGraphParserOutput<MR, ERESULT> parse(DI dataItem,
+	IJointGraphOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer beamSize);
 	

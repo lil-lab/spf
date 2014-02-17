@@ -53,7 +53,7 @@ what state is dallas in
 (lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> dallas_tx:c $0)))
 
 which states have points that are higher than the highest point in texas
-(lambda $0:e (and:<t*,t> (state:<s,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (place:<p,t> $1) (>:<i,<i,t>> (elevation:<lo,i> $1) (elevation:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $2:e (and:<t*,t> (place:<p,t> $2) (loc:<lo,<lo,t>> $2 texas:s))) (lambda $3:e (elevation:<lo,i> $3))))))))))
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (place:<p,t> $1) (>:<i,<i,t>> (elevation:<lo,i> $1) (elevation:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $2:e (and:<t*,t> (place:<p,t> $2) (loc:<lo,<lo,t>> $2 texas:s))) (lambda $3:e (elevation:<lo,i> $3))))) (loc:<lo,<lo,t>> $1 $0))))))
 
 which state has the red river
 (lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> red_river:r $0)))

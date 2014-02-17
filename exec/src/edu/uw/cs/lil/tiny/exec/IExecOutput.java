@@ -34,7 +34,7 @@ import edu.uw.cs.utils.filter.IFilter;
 public interface IExecOutput<RESULT> {
 	List<IExecution<RESULT>> getAllExecutions();
 	
-	List<IExecution<RESULT>> getBestExecutions();
+	List<IExecution<RESULT>> getMaxExecutions();
 	
 	long getExecTime();
 	

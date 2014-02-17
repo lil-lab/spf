@@ -50,8 +50,8 @@ import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
+import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.utils.collections.CollectionUtils;
@@ -74,7 +74,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * all GENLEX entries that participate in complete parses that score higher that
  * the best pre-generation valid parse are collected. Using their tokens and
  * templates, a new lexicon is generated using all possible constants (from the
- * ontology). This lexicon is returned. TODO Update
+ * ontology). This lexicon is returned. TODO Update javadoc
  * 
  * @author Yoav Artzi
  */
@@ -94,7 +94,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 	private final Set<Pair<List<Type>, List<LogicalConstant>>>				potentialConstantSeqs;
 	private final Set<LexicalTemplate>										templates;
 	
-	private final IValidator<DI, Pair<LogicalExpression, ERESULT>>			validator;
+	private final IValidator<DI, ERESULT>									validator;
 	
 	protected JointTemplatedAbstractLexiconGenerator(
 			Set<LexicalTemplate> templates,
@@ -104,8 +104,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 			IParser<Sentence, LogicalExpression> baseParser,
 			int generationParsingBeam,
 			IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT> jointParser,
-			double margin,
-			IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
+			double margin, IValidator<DI, ERESULT> validator) {
 		this.potentialConstantSeqs = pontetialConstantSeqs;
 		this.abstractConstantSeqs = abstractConstantSeqs;
 		this.baseParser = baseParser;
@@ -130,22 +129,38 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 				.getTokens();
 		final int numTokens = tokens.size();
 		
-		// Pre-generation joint parse to get the score of the best valid joint
-		// parse
+		// Pre-generation joint parse to get the base parse score of the best
+		// valid joint parse.
 		final IJointOutput<LogicalExpression, ERESULT> preModelParseOutput = jointParser
 				.parse(dataItem.getSample(),
 						model.createJointDataItemModel(dataItem.getSample()));
 		Double bestValidScore = null;
-		for (final IJointParse<LogicalExpression, ERESULT> parse : preModelParseOutput
-				.getAllParses()) {
+		for (final IJointDerivation<LogicalExpression, ERESULT> parse : preModelParseOutput
+				.getDerivations()) {
 			if (validator.isValid(dataItem, parse.getResult())) {
-				if (bestValidScore == null
-						|| parse.getBaseScore() > bestValidScore) {
-					bestValidScore = parse.getBaseScore();
+				final List<LogicalExpression> maxSemantics = parse
+						.getMaxSemantics();
+				for (final LogicalExpression semantics : maxSemantics) {
+					final List<? extends IParse<LogicalExpression>> maxParses = preModelParseOutput
+							.getBaseParserOutput().getMaxParses(
+									new IFilter<LogicalExpression>() {
+										
+										@Override
+										public boolean isValid(
+												LogicalExpression e) {
+											return semantics.equals(e);
+										}
+									});
+					for (final IParse<LogicalExpression> baseParse : maxParses) {
+						if (bestValidScore == null
+								|| baseParse.getScore() > bestValidScore) {
+							bestValidScore = baseParse.getScore();
+						}
+					}
 				}
 			}
 		}
-		LOG.debug("Best valid score: %s", bestValidScore);
+		LOG.debug("Best base parse valid score: %s", bestValidScore);
 		final Double thresholdScore = bestValidScore == null ? null
 				: (bestValidScore + margin);
 		
@@ -293,14 +308,14 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		
 		protected final Set<LexicalTemplate>									templates		= new HashSet<LexicalTemplate>();
 		
-		protected final IValidator<DI, Pair<LogicalExpression, ERESULT>>		validator;
+		protected final IValidator<DI, ERESULT>									validator;
 		
 		public Builder(
 				int maxTokens,
 				IParser<Sentence, LogicalExpression> parser,
 				int generationParsingBeam,
 				IJointParser<SAMPLE, LogicalExpression, ESTEP, ERESULT> jointParser,
-				IValidator<DI, Pair<LogicalExpression, ERESULT>> validator) {
+				IValidator<DI, ERESULT> validator) {
 			this.maxTokens = maxTokens;
 			this.baseParser = parser;
 			this.generationParsingBeam = generationParsingBeam;

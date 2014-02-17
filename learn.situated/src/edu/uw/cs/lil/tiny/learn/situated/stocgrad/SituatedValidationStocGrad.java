@@ -36,11 +36,11 @@ import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.situated.AbstractSituatedLearner;
 import edu.uw.cs.lil.tiny.learn.situated.perceptron.SituatedValidationPerceptron;
+import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
+import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphOutput;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParser;
-import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
@@ -122,14 +122,14 @@ public class SituatedValidationStocGrad<SAMPLE extends ISituatedDataItem<Sentenc
 			int epochNumber) {
 		
 		// Parse with current model
-		final IJointGraphParserOutput<MR, ERESULT> parserOutput = graphParser
-				.parse(dataItem.getSample(), dataItemModel);
+		final IJointGraphOutput<MR, ERESULT> parserOutput = graphParser.parse(
+				dataItem.getSample(), dataItemModel);
 		stats.recordModelParsing(parserOutput.getInferenceTime());
 		parserOutputLogger.log(parserOutput, dataItemModel);
-		final List<? extends IJointParse<MR, ERESULT>> modelParses = parserOutput
-				.getAllParses();
-		final List<? extends IJointParse<MR, ERESULT>> bestModelParses = parserOutput
-				.getBestParses();
+		final List<? extends IJointDerivation<MR, ERESULT>> modelParses = parserOutput
+				.getDerivations();
+		final List<? extends IJointDerivation<MR, ERESULT>> bestModelParses = parserOutput
+				.getMaxDerivations();
 		
 		if (modelParses.isEmpty()) {
 			// Skip the rest of the process if no complete parses
@@ -143,6 +143,8 @@ public class SituatedValidationStocGrad<SAMPLE extends ISituatedDataItem<Sentenc
 				modelParses.size());
 		LOG.info("Model parsing time: %.4fsec",
 				parserOutput.getInferenceTime() / 1000.0);
+		LOG.info("Output is %s", parserOutput.isExact() ? "exact"
+				: "approximate");
 		
 		// Record if the best is the gold standard, if such debug
 		// information is available
@@ -160,17 +162,17 @@ public class SituatedValidationStocGrad<SAMPLE extends ISituatedDataItem<Sentenc
 		final IFilter<ERESULT> filter = new IFilter<ERESULT>() {
 			@Override
 			public boolean isValid(ERESULT e) {
-				return validate(dataItem, Pair.of((MR) null, e));
+				return validate(dataItem, e);
 			}
 		};
-		final double conditionedNorm = parserOutput.norm(filter, false);
+		final double conditionedNorm = parserOutput.norm(filter);
 		if (conditionedNorm == 0.0) {
 			// No positive update, skip the update
 			return;
 		} else {
 			// Case have complete valid parses
-			final IHashVector expectedFeatures = parserOutput.expectedFeatures(
-					filter, false);
+			final IHashVector expectedFeatures = parserOutput
+					.expectedFeatures(filter);
 			expectedFeatures.divideBy(conditionedNorm);
 			expectedFeatures.dropSmallEntries();
 			LOG.info("Positive update: %s", expectedFeatures);
@@ -228,8 +230,8 @@ public class SituatedValidationStocGrad<SAMPLE extends ISituatedDataItem<Sentenc
 	}
 	
 	@Override
-	protected boolean validate(DI dataItem, Pair<MR, ERESULT> hypothesis) {
-		return validator.isValid(dataItem, hypothesis.second());
+	protected boolean validate(DI dataItem, ERESULT hypothesis) {
+		return validator.isValid(dataItem, hypothesis);
 	}
 	
 	public static class Builder<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>> {

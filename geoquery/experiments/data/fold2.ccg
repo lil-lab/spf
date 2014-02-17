@@ -20,7 +20,7 @@ what are the states that border the state with the greatest population
 (lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (state:<s,t> $1)) (lambda $2:e (population:<lo,i> $2))))))
 
 what state has the highest elevation
-(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (state:<s,t> $0)) (lambda $1:e (elevation:<lo,i> $1)))
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (loc:<lo,<lo,t>> (argmax:<<e,t>,<<e,i>,e>> (lambda $1:e (place:<p,t> $1)) (lambda $2:e (elevation:<lo,i> $2))) $0)))
 
 what rivers are in new mexico
 (lambda $0:e (and:<t*,t> (river:<r,t> $0) (loc:<lo,<lo,t>> $0 new_mexico:s)))

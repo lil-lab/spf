@@ -43,6 +43,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 import edu.uw.cs.lil.tiny.parser.graph.AbstractGraphParser;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.DirectAccessBoundedPriorityQueue;
+import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -267,15 +268,21 @@ public abstract class AbstractCKYParser<MR> extends
 	
 	/**
 	 * Processing a (single) split of a (single) span.
+	 * 
+	 * @return Pair of cells to add to the chart and a pruning flag (to indicate
+	 *         pruning external to the chart).
 	 */
-	protected List<Cell<MR>> processSplit(int start, int end, int split,
-			Chart<MR> chart, AbstractCellFactory<MR> cellFactory,
+	protected Pair<List<Cell<MR>>, Boolean> processSplit(int start, int end,
+			int split, Chart<MR> chart, AbstractCellFactory<MR> cellFactory,
 			int numTokens, IFilter<MR> pruningFilter, IDataItemModel<MR> model) {
 		// Processing a (single) split of a (single) span
 		
 		LOG.debug("Processing split (%d, %d)[%d] with %d x %d cells", start,
 				end, split, chart.spanSize(start, start + split),
 				chart.spanSize(start + split + 1, end));
+		
+		// Flag to track if external pruning happened.
+		boolean pruned = false;
 		
 		final List<Cell<MR>> newCells = new LinkedList<Cell<MR>>();
 		int counter = 0;
@@ -307,6 +314,7 @@ public abstract class AbstractCKYParser<MR> extends
 						if (prune(pruningFilter, prr.getResultCategory())) {
 							LOG.debug("Pruned (hard pruning): [%d,%d] %s",
 									start, end, prr);
+							pruned = true;
 						} else {
 							// Create the parse step
 							final CKYParseStep<MR> parseStep = new CKYParseStep<MR>(
@@ -332,7 +340,7 @@ public abstract class AbstractCKYParser<MR> extends
 				"Finished processing split (%d, %d)[%d], generated %d cells, returning %d cells",
 				start, end, split, counter, newCells.size());
 		
-		return newCells;
+		return Pair.of(newCells, pruned);
 	}
 	
 	/**
@@ -340,10 +348,14 @@ public abstract class AbstractCKYParser<MR> extends
 	 * using the size of the beam. Using this method creates a further
 	 * approximation of the packed chart, which influences non-maximal children
 	 * of cells.
+	 * 
+	 * @return Pair of cells to add to the chart and a pruning flag (to indicate
+	 *         pruning external to the chart).
 	 */
-	protected List<Cell<MR>> processSplitAndPrune(int start, int end,
-			int split, Chart<MR> chart, AbstractCellFactory<MR> cellFactory,
-			int numTokens, IFilter<MR> pruningFilter, int chartBeamSize,
+	protected Pair<List<Cell<MR>>, Boolean> processSplitAndPrune(int start,
+			int end, int split, Chart<MR> chart,
+			AbstractCellFactory<MR> cellFactory, int numTokens,
+			IFilter<MR> pruningFilter, int chartBeamSize,
 			IDataItemModel<MR> model) {
 		// Processing a (single) split of a (single) span
 		
@@ -353,6 +365,9 @@ public abstract class AbstractCKYParser<MR> extends
 		
 		final DirectAccessBoundedPriorityQueue<Cell<MR>> queue = new DirectAccessBoundedPriorityQueue<Cell<MR>>(
 				chartBeamSize * 2 + 1, new Cell.ScoreComparator<MR>());
+		
+		// Flag to track if external pruning happened.
+		boolean pruned = false;
 		
 		int counter = 0;
 		final Iterator<Cell<MR>> leftIter = chart.getSpanIterator(start, start
@@ -385,6 +400,7 @@ public abstract class AbstractCKYParser<MR> extends
 						if (prune(pruningFilter, prr.getResultCategory())) {
 							LOG.debug("Pruned (hard pruning): [%d,%d] %s",
 									start, end, prr);
+							pruned = true;
 						} else {
 							// Create a CKY parse step from the result
 							final CKYParseStep<MR> parseStep = new CKYParseStep<MR>(
@@ -429,6 +445,7 @@ public abstract class AbstractCKYParser<MR> extends
 								if (!queue.offer(newCell)) {
 									LOG.debug("Pruned (pre-chart pruning): %s",
 											newCell);
+									pruned = true;
 								}
 							}
 							LOG.debug("Pre-chart queue size = %d", queue.size());
@@ -442,7 +459,8 @@ public abstract class AbstractCKYParser<MR> extends
 				"Finished processing split (%d, %d)[%d], generated %d cells, returning %d cells",
 				start, end, split, counter, queue.size());
 		
-		return new ArrayList<Cell<MR>>(queue);
+		final List<Cell<MR>> cells = new ArrayList<Cell<MR>>(queue);
+		return Pair.of(cells, pruned);
 	}
 	
 	/**

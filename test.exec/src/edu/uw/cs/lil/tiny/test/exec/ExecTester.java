@@ -107,7 +107,7 @@ public class ExecTester<DI extends IDataItem<?>, RESULT> {
 		LOG.info("Test execution time %.2f", execOutput.getExecTime() / 1000.0);
 		
 		final List<IExecution<RESULT>> bestExecs = execOutput
-				.getBestExecutions();
+				.getMaxExecutions();
 		if (bestExecs.size() == 1) {
 			// Case we have a single execution
 			processSingleBestParse(dataItem, execOutput, bestExecs.get(0),
@@ -155,7 +155,7 @@ public class ExecTester<DI extends IDataItem<?>, RESULT> {
 				LOG.info("SLOPPY execution time %f",
 						sloppyExecOutput.getExecTime() / 1000.0);
 				final List<IExecution<RESULT>> bestSloppyExecutions = sloppyExecOutput
-						.getBestExecutions();
+						.getMaxExecutions();
 				
 				if (bestSloppyExecutions.size() == 1) {
 					processSingleBestParse(dataItem, sloppyExecOutput,

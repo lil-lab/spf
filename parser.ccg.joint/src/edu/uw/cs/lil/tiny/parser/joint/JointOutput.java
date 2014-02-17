@@ -18,16 +18,103 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import edu.uw.cs.lil.tiny.parser.IParse;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
+import edu.uw.cs.utils.collections.ListUtils;
+import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.filter.FilterUtils;
 
+/**
+ * Joint inference output. Doesn't support fancy dynamic programming for
+ * semantics evaluation.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ *            Semantics formal meaning representation.
+ * @param <ERESULT>
+ *            Semantics evaluation result.
+ */
 public class JointOutput<MR, ERESULT> extends
-		GenericJointOutput<MR, ERESULT, IJointParse<MR, ERESULT>> {
+		AbstractJointOutput<MR, ERESULT, JointDerivation<MR, ERESULT>> {
 	
-	public JointOutput(IParserOutput<MR> baseParserOutput,
-			List<IJointParse<MR, ERESULT>> jointParses, long inferenceTime) {
-		super(baseParserOutput, jointParses, inferenceTime);
+	public JointOutput(IParserOutput<MR> baseOutput, long inferenceTime,
+			List<JointDerivation<MR, ERESULT>> derivations,
+			List<JointDerivation<MR, ERESULT>> maxDerivations,
+			boolean exactEvaluation) {
+		super(baseOutput, inferenceTime, derivations, maxDerivations,
+				exactEvaluation && baseOutput.isExact());
+	}
+	
+	@Override
+	public IParserOutput<MR> getBaseParserOutput() {
+		return baseOutput;
+	}
+	
+	public static class Builder<MR, ERESULT> {
+		
+		private final IParserOutput<MR>								baseOutput;
+		private boolean												exactEvaluation	= false;
+		private final List<Pair<IParse<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IParse<MR>, IEvaluation<ERESULT>>>();
+		private final long											inferenceTime;
+		
+		public Builder(IParserOutput<MR> baseOutput, long inferenceTime) {
+			this.baseOutput = baseOutput;
+			this.inferenceTime = inferenceTime;
+		}
+		
+		public Builder<MR, ERESULT> addInferencePair(
+				Pair<IParse<MR>, IEvaluation<ERESULT>> pair) {
+			inferencePairs.add(pair);
+			return this;
+		}
+		
+		public Builder<MR, ERESULT> addInferencePairs(
+				List<Pair<IParse<MR>, IEvaluation<ERESULT>>> pairs) {
+			inferencePairs.addAll(pairs);
+			return this;
+		}
+		
+		public JointOutput<MR, ERESULT> build() {
+			final Map<ERESULT, JointDerivation.Builder<MR, ERESULT>> builders = new HashMap<ERESULT, JointDerivation.Builder<MR, ERESULT>>();
+			for (final Pair<IParse<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
+				final ERESULT pairResult = pair.second().getResult();
+				if (!builders.containsKey(pairResult)) {
+					builders.put(
+							pairResult,
+							new JointDerivation.Builder<MR, ERESULT>(pairResult));
+				}
+				builders.get(pairResult).addInferencePair(pair);
+			}
+			// Create all derivations.
+			final List<JointDerivation<MR, ERESULT>> derivations = Collections
+					.unmodifiableList(ListUtils.map(
+							builders.values(),
+							new ListUtils.Mapper<JointDerivation.Builder<MR, ERESULT>, JointDerivation<MR, ERESULT>>() {
+								@Override
+								public JointDerivation<MR, ERESULT> process(
+										JointDerivation.Builder<MR, ERESULT> obj) {
+									return obj.build();
+								}
+							}));
+			// Get max derivations.
+			final List<JointDerivation<MR, ERESULT>> maxDerivations = Collections
+					.unmodifiableList(filterDerivations(derivations,
+							FilterUtils.<ERESULT> stubTrue(), true));
+			return new JointOutput<MR, ERESULT>(baseOutput, inferenceTime,
+					derivations, maxDerivations, exactEvaluation);
+		}
+		
+		public Builder<MR, ERESULT> setExactEvaluation(boolean exactEvaluation) {
+			this.exactEvaluation = exactEvaluation;
+			return this;
+		}
+		
 	}
 	
 }

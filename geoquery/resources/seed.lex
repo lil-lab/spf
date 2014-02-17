@@ -51,10 +51,10 @@ major :- N/N : (lambda $0:<e,t> (lambda $1:e (and:<t*,t> ($0 $1) (major:<lo,t> $
 texas :- N/N : (lambda $0:<e,t> (lambda $1:e (and:<t*,t> ($0 $1) (loc:<lo,<lo,t>> $1 texas:s))))
 
 // for eliptical sentences such as "states bordering texas"
-// states :- S/(S\NP) : (lambda $0:<e,t> (lambda $1:e (and:<t*,t> (state:<s,t> $1) ($0 $1))))
-// number :- S/N : (lambda $0:<e,t> (count:<<e,t>,i> $0))
+states :- S/(S\NP) : (lambda $0:<e,t> (lambda $1:e (and:<t*,t> (state:<s,t> $1) ($0 $1))))
+number :- S/N : (lambda $0:<e,t> (count:<<e,t>,i> $0))
 // for "sentences" such as "population of seattle"
-// population :- S/NP : (lambda $0:e (population:<lo,i> $0))
+population :- S/NP : (lambda $0:e (population:<lo,i> $0))
 
 //determiners
 the :- N/N : (lambda $0:<e,t> $0)

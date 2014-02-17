@@ -108,6 +108,7 @@ public class UnificationGenlex<DI extends SingleSentence>
 					}
 				});
 		if (correctParses.isEmpty()) {
+			LOG.info("No correct parses generated for unification GENLEX.");
 			return new Lexicon<LogicalExpression>(
 					CollectionUtils
 							.singletonSetOf(new LexicalEntry<LogicalExpression>(

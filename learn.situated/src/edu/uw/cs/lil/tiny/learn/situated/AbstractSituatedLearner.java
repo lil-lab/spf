@@ -34,9 +34,9 @@ import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
@@ -213,67 +213,66 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 		if (generatedLexicon.size() > 0) {
 			// Case generated lexical entries
 			
-			// Record lexical generation parsing start time
-			final long genStartTime = System.currentTimeMillis();
-			
 			// Parse with generated lexicon
 			final IJointOutput<MR, ERESULT> generateLexiconParserOutput = parser
 					.parse(dataItem.getSample(), dataItemModel, false,
 							generatedLexicon, lexiconGenerationBeamSize);
 			
 			// Log lexical generation parsing time
-			final long genTime = System.currentTimeMillis() - genStartTime;
-			stats.recordGenerationParsing(genTime);
+			stats.recordGenerationParsing(generateLexiconParserOutput
+					.getInferenceTime());
 			LOG.info("Lexicon induction parsing time: %.4fsec",
-					genTime / 1000.0);
+					generateLexiconParserOutput.getInferenceTime() / 1000.0);
+			LOG.info("Output is %s",
+					generateLexiconParserOutput.isExact() ? "exact"
+							: "approximate");
 			
 			// Log generation parser output
 			parserOutputLogger.log(generateLexiconParserOutput, dataItemModel);
 			
 			// Get lexical generation parses
-			final List<? extends IJointParse<MR, ERESULT>> generationParses = new LinkedList<IJointParse<MR, ERESULT>>(
-					generateLexiconParserOutput.getAllParses());
+			final List<? extends IJointDerivation<MR, ERESULT>> generationParses = new LinkedList<IJointDerivation<MR, ERESULT>>(
+					generateLexiconParserOutput.getDerivations());
 			LOG.info(
 					"Created %d lexicon generation parses for training sample",
 					generationParses.size());
 			
 			// Use validation function to prune generation parses
 			CollectionUtils.filterInPlace(generationParses,
-					new IFilter<IJointParse<MR, ERESULT>>() {
+					new IFilter<IJointDerivation<MR, ERESULT>>() {
 						@Override
-						public boolean isValid(IJointParse<MR, ERESULT> e) {
+						public boolean isValid(IJointDerivation<MR, ERESULT> e) {
 							return validate(dataItem, e.getResult());
 						}
 					});
 			LOG.info("Removed %d invalid parses", generateLexiconParserOutput
-					.getAllParses().size() - generationParses.size());
+					.getDerivations().size() - generationParses.size());
 			
 			// Collect max scoring valid generation parses
-			final List<IJointParse<MR, ERESULT>> bestGenerationParses = new LinkedList<IJointParse<MR, ERESULT>>();
+			final List<IJointDerivation<MR, ERESULT>> bestGenerationParses = new LinkedList<IJointDerivation<MR, ERESULT>>();
 			double currentMaxModelScore = -Double.MAX_VALUE;
-			for (final IJointParse<MR, ERESULT> parse : generationParses) {
-				if (parse.getScore() > currentMaxModelScore) {
-					currentMaxModelScore = parse.getScore();
+			for (final IJointDerivation<MR, ERESULT> parse : generationParses) {
+				if (parse.getViterbiScore() > currentMaxModelScore) {
+					currentMaxModelScore = parse.getViterbiScore();
 					bestGenerationParses.clear();
 					bestGenerationParses.add(parse);
-				} else if (parse.getScore() == currentMaxModelScore) {
+				} else if (parse.getViterbiScore() == currentMaxModelScore) {
 					bestGenerationParses.add(parse);
 				}
 			}
 			LOG.info("%d valid best parses for lexical generation:",
 					bestGenerationParses.size());
-			for (final IJointParse<MR, ERESULT> parse : bestGenerationParses) {
+			for (final IJointDerivation<MR, ERESULT> parse : bestGenerationParses) {
 				logParse(dataItem, parse, true, true, dataItemModel);
-				LOG.info(
-						"Feature weights: %s",
-						model.getTheta().printValues(
-								parse.getAverageMaxFeatureVector()));
+				LOG.info("Feature weights: %s",
+						model.getTheta()
+								.printValues(parse.getMeanMaxFeatures()));
 			}
 			
 			// Update the model's lexicon with generated lexical
 			// entries from the max scoring valid generation parses
 			int newLexicalEntries = 0;
-			for (final IJointParse<MR, ERESULT> parse : bestGenerationParses) {
+			for (final IJointDerivation<MR, ERESULT> parse : bestGenerationParses) {
 				for (final LexicalEntry<MR> entry : parse
 						.getMaxLexicalEntries()) {
 					if (model.addLexEntry(entry
@@ -311,7 +310,7 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 		}
 	}
 	
-	protected boolean isGoldDebugCorrect(DI dataItem, Pair<MR, ERESULT> label) {
+	protected boolean isGoldDebugCorrect(DI dataItem, ERESULT label) {
 		if (trainingDataDebug.containsKey(dataItem)) {
 			return trainingDataDebug.get(dataItem).equals(label);
 		} else {
@@ -319,12 +318,12 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 		}
 	}
 	
-	protected void logParse(DI dataItem, IJointParse<MR, ERESULT> parse,
+	protected void logParse(DI dataItem, IJointDerivation<MR, ERESULT> parse,
 			Boolean valid, boolean verbose, IDataItemModel<MR> dataItemModel) {
 		logParse(dataItem, parse, valid, verbose, null, dataItemModel);
 	}
 	
-	protected void logParse(DI dataItem, IJointParse<MR, ERESULT> parse,
+	protected void logParse(DI dataItem, IJointDerivation<MR, ERESULT> parse,
 			Boolean valid, boolean verbose, String tag,
 			IDataItemModel<MR> dataItemModel) {
 		final boolean isGold;
@@ -334,7 +333,7 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 			isGold = false;
 		}
 		LOG.info("%s%s[%.2f%s] %s", isGold ? "* " : "  ", tag == null ? ""
-				: tag + " ", parse.getScore(), valid == null ? ""
+				: tag + " ", parse.getViterbiScore(), valid == null ? ""
 				: (valid ? ", V" : ", X"), parse);
 		if (verbose) {
 			for (final LexicalEntry<MR> entry : parse.getMaxLexicalEntries()) {
@@ -346,9 +345,9 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 								dataItemModel.computeFeatures(entry)));
 			}
 			LOG.info("Rules used: %s",
-					ListUtils.join(parse.getMaxRulesUsed(), ", "));
+					ListUtils.join(parse.getMaxParsingRules(), ", "));
 			LOG.info(dataItemModel.getTheta().printValues(
-					parse.getAverageMaxFeatureVector()));
+					parse.getMeanMaxFeatures()));
 		}
 	}
 	
@@ -360,6 +359,5 @@ public abstract class AbstractSituatedLearner<SAMPLE extends ISituatedDataItem<S
 			JointModel<SAMPLE, MR, ESTEP> model, int itemCounter,
 			int epochNumber);
 	
-	abstract protected boolean validate(DI dataItem,
-			Pair<MR, ERESULT> hypothesis);
+	abstract protected boolean validate(DI dataItem, ERESULT hypothesis);
 }

@@ -70,4 +70,10 @@ public interface IParserOutput<MR> {
 	 * @return
 	 */
 	long getParsingTime();
+	
+	/**
+	 * Indicates if inference was exact or approximate.
+	 */
+	boolean isExact();
+	
 }

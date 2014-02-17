@@ -37,7 +37,6 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.learn.PerceptronServices;
 import edu.uw.cs.lil.tiny.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
 import edu.uw.cs.lil.tiny.parser.IParse;
@@ -47,6 +46,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.ITester;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
@@ -115,6 +115,101 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 				"Init ValidationPerceptron: ... conflateParses=%s, errorDriven=%s",
 				conflateGenlexAndPrunedParses ? "true" : "false",
 				errorDriven ? "true" : "false");
+	}
+	
+	public static <MR, P extends IParse<MR>, MODEL extends IModelImmutable<?, MR>> IHashVector constructUpdate(
+			List<P> violatingValidParses, List<P> violatingInvalidParses,
+			MODEL model) {
+		// Create the parameter update
+		final IHashVector update = HashVectorFactory.create();
+		
+		// Get the update for valid violating samples
+		for (final P parse : violatingValidParses) {
+			parse.getAverageMaxFeatureVector().addTimesInto(
+					1.0 / violatingValidParses.size(), update);
+		}
+		
+		// Get the update for the invalid violating samples
+		for (final P parse : violatingInvalidParses) {
+			parse.getAverageMaxFeatureVector().addTimesInto(
+					-1.0 * (1.0 / violatingInvalidParses.size()), update);
+		}
+		
+		// Prune small entries from the update
+		update.dropSmallEntries();
+		
+		// Validate the update
+		if (!model.isValidWeightVector(update)) {
+			throw new IllegalStateException("invalid update: " + update);
+		}
+		
+		return update;
+	}
+	
+	public static <LF, P extends IParse<LF>, MODEL extends IModelImmutable<?, LF>> Pair<List<P>, List<P>> marginViolatingSets(
+			MODEL model, double margin, List<P> validParses,
+			List<P> invalidParses) {
+		// Construct margin violating sets
+		final List<P> violatingValidParses = new LinkedList<P>();
+		final List<P> violatingInvalidParses = new LinkedList<P>();
+		
+		// Flags to mark that we inserted a parse into the violating
+		// sets, so no need to check for its violation against others
+		final boolean[] validParsesFlags = new boolean[validParses.size()];
+		final boolean[] invalidParsesFlags = new boolean[invalidParses.size()];
+		int validParsesCounter = 0;
+		for (final P validParse : validParses) {
+			int invalidParsesCounter = 0;
+			for (final P invalidParse : invalidParses) {
+				if (!validParsesFlags[validParsesCounter]
+						|| !invalidParsesFlags[invalidParsesCounter]) {
+					// Create the delta vector if needed, we do it only
+					// once. This is why we check if we are going to
+					// need it in the above 'if'.
+					final IHashVector featureDelta = validParse
+							.getAverageMaxFeatureVector().addTimes(-1.0,
+									invalidParse.getAverageMaxFeatureVector());
+					final double deltaScore = featureDelta.vectorMultiply(model
+							.getTheta());
+					
+					// Test valid parse for insertion into violating
+					// valid parses
+					if (!validParsesFlags[validParsesCounter]) {
+						// Case this valid sample is still not in the
+						// violating set
+						if (deltaScore < margin * featureDelta.l1Norm()) {
+							// Case of violation
+							// Add to the violating set
+							violatingValidParses.add(validParse);
+							// Mark flag, so we won't test it again
+							validParsesFlags[validParsesCounter] = true;
+						}
+					}
+					
+					// Test invalid parse for insertion into
+					// violating invalid parses
+					if (!invalidParsesFlags[invalidParsesCounter]) {
+						// Case this invalid sample is still not in
+						// the violating set
+						if (deltaScore < margin * featureDelta.l1Norm()) {
+							// Case of violation
+							// Add to the violating set
+							violatingInvalidParses.add(invalidParse);
+							// Mark flag, so we won't test it again
+							invalidParsesFlags[invalidParsesCounter] = true;
+						}
+					}
+				}
+				
+				// Increase the counter, as we move to the next sample
+				++invalidParsesCounter;
+			}
+			// Increase the counter, as we move to the next sample
+			++validParsesCounter;
+		}
+		
+		return Pair.of(violatingValidParses, violatingInvalidParses);
+		
 	}
 	
 	/**
@@ -200,8 +295,8 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		}
 		
 		// Construct margin violating sets
-		final Pair<List<IParse<MR>>, List<IParse<MR>>> marginViolatingSets = PerceptronServices
-				.marginViolatingSets(model, margin, validParses, invalidParses);
+		final Pair<List<IParse<MR>>, List<IParse<MR>>> marginViolatingSets = marginViolatingSets(
+				model, margin, validParses, invalidParses);
 		final List<IParse<MR>> violatingValidParses = marginViolatingSets
 				.first();
 		final List<IParse<MR>> violatingInvalidParses = marginViolatingSets
@@ -222,8 +317,8 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		}
 		
 		// Construct weight update vector
-		final IHashVector update = PerceptronServices.constructUpdate(
-				violatingValidParses, violatingInvalidParses, model);
+		final IHashVector update = constructUpdate(violatingValidParses,
+				violatingInvalidParses, model);
 		
 		// Update the parameters vector
 		LOG.info("Update: %s", update);

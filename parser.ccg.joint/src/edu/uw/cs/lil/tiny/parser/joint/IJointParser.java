@@ -20,22 +20,22 @@ package edu.uw.cs.lil.tiny.parser.joint;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
-import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 
 /**
+ * Joint inference procedure.
+ * 
  * @author Yoav Artzi
  * @param <DI>
- *            Inference situated data item.
+ *            Situated inference data item.
  * @param <MR>
- *            Type of the semantics (e.g., LogicalExpression).
+ *            Semantics formal meaning representation (e.g., LogicalExpression).
  * @param <ESTEP>
- *            Execution step.
+ *            Semantics evaluation step.
  * @param <ERESULT>
- *            Execution result.
+ *            Semantics evaluation results.
  */
-public interface IJointParser<DI extends ISituatedDataItem<?, ?>, MR, ESTEP, ERESULT>
-		extends IParser<DI, MR> {
+public interface IJointParser<DI extends ISituatedDataItem<?, ?>, MR, ESTEP, ERESULT> {
 	
 	IJointOutput<MR, ERESULT> parse(DI dataItem,
 			IJointDataItemModel<MR, ESTEP> model);

@@ -199,15 +199,15 @@ public class LogicalConstant extends Term {
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		// Do instance comparison, since constants are unique across the system.
-		return this == exp;
+		// Variable mapping is irrelevant for constants mapping.
+		return equals(exp);
 	}
 	
 	@Override
 	protected boolean equals(LogicalExpression exp,
 			Map<Variable, Variable> variablesMapping) {
-		// Constants are singletons and re-used, so do instance comparison.
-		return this == exp;
+		// Variable mapping is irrelevant for constants mapping.
+		return equals(exp);
 	}
 	
 	/**

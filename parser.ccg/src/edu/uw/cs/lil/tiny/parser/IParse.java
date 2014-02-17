@@ -36,8 +36,6 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 public interface IParse<MR> {
 	/**
 	 * Collect all lexical entries from all trees in this parse.
-	 * 
-	 * @return
 	 */
 	LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntries();
 	
@@ -45,29 +43,22 @@ public interface IParse<MR> {
 	
 	/**
 	 * Get all lexical entries from all maximally scoring trees in this parse.
-	 * 
-	 * @return
 	 */
 	LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries();
 	
 	/**
 	 * Get all rules applied within all maximally scoring trees in this parse.
-	 * 
-	 * @return
 	 */
 	LinkedHashSet<RuleUsageTriplet> getMaxRulesUsed();
 	
 	/**
 	 * Parse viterbi score.
-	 * 
-	 * @return
 	 */
 	double getScore();
 	
 	/**
 	 * The semantics at the root of the parse.
-	 * 
-	 * @return
 	 */
 	MR getSemantics();
+	
 }

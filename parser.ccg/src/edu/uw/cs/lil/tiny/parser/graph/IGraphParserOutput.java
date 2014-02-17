@@ -38,19 +38,18 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter);
 	
 	/**
-	 * Compute expected feature values over all complete parses.
-	 * 
-	 * @return
+	 * Compute non-normalized expected features values over all complete parses.
+	 * To normalize, simply divide the vector by the normalization constant (
+	 * {@link #norm()}).
 	 */
 	IHashVector expectedFeatures();
 	
 	/**
-	 * Compute expected feature values over all complete parses that pass the
-	 * filter.
-	 * 
-	 * @return
+	 * Compute non-normalized expected features values over all complete parses
+	 * that pass the filter. To normalize, simply divide the vector by the
+	 * normalization constant ({@link #norm()}).
 	 */
-	IHashVector expectedFeatures(IFilter<MR> filter, boolean maxOnly);
+	IHashVector expectedFeatures(IFilter<MR> filter);
 	
 	/**
 	 * Computes expected feature values over all complete parses. Outside scores
@@ -82,5 +81,5 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	 * @param filter
 	 * @return
 	 */
-	double norm(IFilter<MR> filter, boolean maxOnly);
+	double norm(IFilter<MR> filter);
 }

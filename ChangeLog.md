@@ -1,3 +1,11 @@
+# v1.5.2
+- Revamp joint inference derivations and output: a derivation now includes all possible ways to create a certain result (i.e., it marginalizes over everything except the final result). Injective inference makes certain assumptions to provide a simpler interface. The general joint derivation doesn't support any dynamic programming for semantics evaluation. 
+- Improve joint inference javadocs. 
+- Add approximate/exact inference indication for inference outputs.
+- Fix bug in TroveHashVector.
+- Fix bug in LogicalConstant equality.
+
+
 # v1.5.1
 - Fixed inconsistencies in GeoQuery experiments.
 - Release GeoQuery experiments with unification-based GENLEX. NOTE: these experiments don't re-create the results of Kwiatkowski et al. 2010/2011 as the implementation of GENLEX is different. 

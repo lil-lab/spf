@@ -352,7 +352,7 @@ class TroveHashVector implements IHashVector {
 					@Override
 					public boolean execute(KeyArgs a, double b) {
 						if (p.values.contains(a)) {
-							ret.values.put(a, b * p.values.get(a));
+							ret.values.put(a, b * values.get(a));
 						}
 						return true;
 					}

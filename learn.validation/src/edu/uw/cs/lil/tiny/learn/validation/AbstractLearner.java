@@ -198,6 +198,8 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					
 					LOG.info("Model parsing time: %.4fsec",
 							parserOutput.getParsingTime() / 1000.0);
+					LOG.info("Output is %s", parserOutput.isExact() ? "exact"
+							: "approximate");
 					LOG.info("Created %d model parses for training sample:",
 							modelParses.size());
 					for (final IParse<MR> parse : modelParses) {
@@ -250,11 +252,12 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 								generationParserOutput, model, itemCounter,
 								epochNumber);
 					} else {
-						parameterUpdate(
-								dataItem,
-								parserOutput,
-								parse(dataItem, createPruningFilter(dataItem),
-										dataItemModel), model, itemCounter,
+						final PO prunedParserOutput = parse(dataItem,
+								createPruningFilter(dataItem), dataItemModel);
+						LOG.info("Constrained parsing time: %.4fsec",
+								prunedParserOutput.getParsingTime() / 1000.0);
+						parameterUpdate(dataItem, parserOutput,
+								prunedParserOutput, model, itemCounter,
 								epochNumber);
 					}
 					
@@ -338,9 +341,6 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 		if (generatedLexicon.size() > 0) {
 			// Case generated lexical entries
 			
-			// Record lexical generation parsing start time
-			final long genStartTime = System.currentTimeMillis();
-			
 			// Create pruning filter, if the data item fits
 			final IFilter<MR> pruningFilter = createPruningFilter(dataItem);
 			
@@ -349,10 +349,11 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					dataItemModel, generatedLexicon, lexiconGenerationBeamSize);
 			
 			// Log lexical generation parsing time
-			final long genTime = System.currentTimeMillis() - genStartTime;
-			stats.recordGenerationParsing(genTime);
+			stats.recordGenerationParsing(parserOutput.getParsingTime());
 			LOG.info("Lexicon induction parsing time: %.4fsec",
-					genTime / 1000.0);
+					parserOutput.getParsingTime() / 1000.0);
+			LOG.info("Output is %s", parserOutput.isExact() ? "exact"
+					: "approximate");
 			
 			// Log generation parser output
 			parserOutputLogger.log(parserOutput, dataItemModel);

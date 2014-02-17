@@ -107,7 +107,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		final AbstractSpan<MR> span = chart[cell.getStart()][cell.getEnd()];
 		final Cell<MR> existingCell = span.get(cell);
 		if (existingCell == null) {
-			// Case we are adding a new cell
+			// Case we are adding a new cell.
 			addNew(cell);
 		} else {
 			// Case adding the content of this cell to an existing cell
@@ -152,6 +152,14 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		return collectExpectedFeatures();
 	}
 	
+	/**
+	 * Signals that the span of the given start and end indices was pruned
+	 * externally (i.e., before anything was added to the chart).
+	 */
+	public void externalPruning(int start, int end) {
+		chart[start][end].externallyPruned = true;
+	}
+	
 	public int getBeamSize() {
 		return beamSize;
 	}
@@ -178,6 +186,23 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			ret.offer(new CKYParse<MR>(cell));
 		}
 		return new ArrayList<CKYParse<MR>>(ret);
+	}
+	
+	/**
+	 * Span boundaries (as <start,end> pairs) for all span that experienced
+	 * pruning, if internally when adding things to the chart or externally (as
+	 * signaled by {@link #externalPruning(int, int)}).
+	 */
+	public List<Pair<Integer, Integer>> getPrunedSpans() {
+		final List<Pair<Integer, Integer>> spans = new LinkedList<Pair<Integer, Integer>>();
+		for (int i = 0; i < sentenceLength; i++) {
+			for (int j = i; j < sentenceLength; j++) {
+				if (chart[i][j].isPruned()) {
+					spans.add(Pair.of(i, j));
+				}
+			}
+		}
+		return spans;
 	}
 	
 	public int getSentenceLength() {
@@ -252,31 +277,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			}
 		}
 		return norm;
-	}
-	
-	/**
-	 * Compute outside probabilities with a constraining category. Assumes that
-	 * we are parsing with a probabilistic model.
-	 * 
-	 * @param constrainingCategory
-	 */
-	public void recomputeInsideScore() {
-		// TODO [yoav] Clarify this method and its uses -- not clear what it's
-		// supposed to do and if it actually does that
-		
-		// Iterate over all spans from the entire sentence to the token level
-		// and propagate outside probabilities
-		for (int len = 0; len < sentenceLength; len++) {
-			for (int begin = 0; begin < sentenceLength - len; begin++) {
-				
-				// Must first do cells that results from unary parsing rules
-				final Iterator<Cell<MR>> spanIterator = getSpanIterator(begin,
-						begin + len);
-				while (spanIterator.hasNext()) {
-					spanIterator.next().recomputeInsideScore();
-				}
-			}
-		}
 	}
 	
 	/**
@@ -409,10 +409,10 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	}
 	
 /**
-	 * Initializes outside probabilities based on the given filter in preparation to propagate them (see {@link #propagateOutsideProbabilities()).
-	 * 
-	 * @param initialScorer
-	 */
+		 * Initializes outside probabilities based on the given filter in preparation to propagate them (see {@link #propagateOutsideProbabilities()).
+		 * 
+		 * @param initialScorer
+		 */
 	private void initializeOutsideProbabilities(IScorer<MR> initialScorer) {
 		// First, init all outside probabilities. All roots of complete parses
 		// are scored using the given scorer.
@@ -494,11 +494,20 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * 
 	 * @author Yoav Artzi
 	 */
-	private static abstract class AbstractSpan<MR> implements Iterable<Cell<MR>> {
+	private static abstract class AbstractSpan<MR> implements
+			Iterable<Cell<MR>> {
+		/**
+		 * A flag to indicate if this abstract was pruned externally (i.e.,
+		 * outside the chart).
+		 */
+		protected boolean	externallyPruned	= false;
+		
 		public abstract void addToExisting(Cell<MR> existingCell,
 				Cell<MR> newCell, IDataItemModel<MR> model);
 		
 		public abstract Cell<MR> get(Cell<MR> cell);
+		
+		public abstract boolean isPruned();
 		
 		public abstract Pair<Double, Double> minNonLexicalScore();
 		
@@ -586,7 +595,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				IDataItemModel<MR> model) {
 			// Adding the cell into an existing one, may change the score of the
 			// cell, so we have to remove it from the queue and re-insert it, if
-			// its max-children changed
+			// its max-children changed. The score can only increase, so this
+			// step can't cause pruning.
 			if (existingCell.addCell(newCell)) {
 				queue.remove(existingCell);
 				queue.add(existingCell);
@@ -596,6 +606,11 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		@Override
 		public Cell<MR> get(Cell<MR> cell) {
 			return queue.get(cell);
+		}
+		
+		@Override
+		public boolean isPruned() {
+			return externallyPruned || queue.hasThreshold();
 		}
 		
 		@Override
@@ -627,7 +642,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	}
 	
 	private static class TwoQueueSpan<MR> extends AbstractSpan<MR> {
-		private final Map<Cell<MR>, Cell<MR>>								lexicals	= new HashMap<Cell<MR>, Cell<MR>>();
+		private final Map<Cell<MR>, Cell<MR>>							lexicals	= new HashMap<Cell<MR>, Cell<MR>>();
 		private final OrderInvariantDirectAccessBoundedQueue<Cell<MR>>	nonLexicalQueue;
 		
 		public TwoQueueSpan(int capacity) {
@@ -640,12 +655,13 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				IDataItemModel<MR> model) {
 			if (existingCell.hasLexicalStep()) {
 				// No need to remove and re-insert since the lexical map
-				// maintains no ordering
+				// maintains no ordering.
 				existingCell.addCell(newCell);
 			} else {
 				// Adding the cell into an existing one, may change the score of
 				// the cell, so we have to remove it from the queue and
-				// re-insert it, if its max-children changed
+				// re-insert it, if its max-children changed. The score can only
+				// increase, so this step can't lead to pruning.
 				if (existingCell.addCell(newCell)) {
 					nonLexicalQueue.remove(existingCell);
 					nonLexicalQueue.add(existingCell);
@@ -660,6 +676,11 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			} else {
 				return nonLexicalQueue.get(cell);
 			}
+		}
+		
+		@Override
+		public boolean isPruned() {
+			return externallyPruned || nonLexicalQueue.hasThreshold();
 		}
 		
 		@Override

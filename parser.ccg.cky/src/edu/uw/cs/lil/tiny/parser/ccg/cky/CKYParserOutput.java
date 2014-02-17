@@ -20,10 +20,8 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
@@ -31,7 +29,7 @@ import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.IScorer;
-import edu.uw.cs.utils.collections.ListUtils;
+import edu.uw.cs.utils.filter.FilterUtils;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**
@@ -63,6 +61,10 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 				.unmodifiableList(findBestParses(allParses));
 	}
 	
+	private static <MR> List<CKYParse<MR>> findBestParses(List<CKYParse<MR>> all) {
+		return findBestParses(all, null);
+	}
+	
 	private static <MR> List<CKYParse<MR>> findBestParses(
 			List<CKYParse<MR>> all, IFilter<MR> filter) {
 		final List<CKYParse<MR>> best = new LinkedList<CKYParse<MR>>();
@@ -82,25 +84,14 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 		return best;
 	}
 	
-	private static <MR> List<CKYParse<MR>> findBestParses(List<CKYParse<MR>> all) {
-		return findBestParses(all, null);
-	}
-	
 	@Override
 	public IHashVector expectedFeatures() {
-		return expectedFeatures(new IFilter<MR>() {
-			
-			@Override
-			public boolean isValid(MR e) {
-				return true;
-			}
-		}, false);
+		return expectedFeatures(FilterUtils.<MR> stubTrue());
 	}
 	
 	@Override
-	public IHashVector expectedFeatures(IFilter<MR> filter, boolean maxOnly) {
-		return chart.expectedFeatures(maxOnly ? createMaxFilter(filter)
-				: filter);
+	public IHashVector expectedFeatures(IFilter<MR> filter) {
+		return chart.expectedFeatures(filter);
 	}
 	
 	@Override
@@ -146,45 +137,17 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	@Override
-	public double norm() {
-		return norm(new IFilter<MR>() {
-			
-			@Override
-			public boolean isValid(MR e) {
-				return true;
-			}
-		}, false);
+	public boolean isExact() {
+		return chart.getPrunedSpans().isEmpty();
 	}
 	
 	@Override
-	public double norm(final IFilter<MR> filter, boolean maxOnly) {
-		return chart.norm(maxOnly ? createMaxFilter(filter) : filter);
+	public double norm() {
+		return norm(FilterUtils.<MR> stubTrue());
 	}
 	
-	/**
-	 * Create a filter that returns as valid parses that pass the base filter
-	 * and have a maximal score.
-	 * 
-	 * @param filter
-	 * @return
-	 */
-	private IFilter<MR> createMaxFilter(IFilter<MR> filter) {
-		final Set<MR> sems = new HashSet<MR>(ListUtils.map(
-				getMaxParses(filter),
-				new ListUtils.Mapper<IGraphParse<MR>, MR>() {
-					
-					@Override
-					public MR process(IGraphParse<MR> obj) {
-						return obj.getSemantics();
-					}
-				}));
-		return new IFilter<MR>() {
-			
-			@Override
-			public boolean isValid(MR e) {
-				return sems.contains(e);
-			}
-			
-		};
+	@Override
+	public double norm(final IFilter<MR> filter) {
+		return chart.norm(filter);
 	}
 }

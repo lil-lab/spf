@@ -36,16 +36,15 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.learn.PerceptronServices;
 import edu.uw.cs.lil.tiny.learn.situated.AbstractSituatedLearner;
-import edu.uw.cs.lil.tiny.learn.situated.stocgrad.SituatedValidationStocGrad;
+import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutputLogger;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
 import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
@@ -74,20 +73,12 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sentence, ?>, MR, ESTEP, ERESULT, DI extends ILabeledDataItem<SAMPLE, ?>>
 		extends AbstractSituatedLearner<SAMPLE, MR, ESTEP, ERESULT, DI> {
-	public static final ILogger						LOG	= LoggerFactory
-																.create(SituatedValidationPerceptron.class);
-	private final boolean							hardUpdates;
-	private final double							margin;
+	public static final ILogger				LOG	= LoggerFactory
+														.create(SituatedValidationPerceptron.class);
+	private final boolean					hardUpdates;
+	private final double					margin;
 	
-	/**
-	 * The perceptron validator can validate both the output logical form and
-	 * the execution result, in contrast to the validator in
-	 * {@link SituatedValidationStocGrad}. A validator that decided only based
-	 * on the execution result basically will lead the learner to marginalize
-	 * over the logical form to a certain extent (note: the perceptron looks at
-	 * the viterbi output and has no sense of probabilities or normalization).
-	 */
-	private final IValidator<DI, Pair<MR, ERESULT>>	validator;
+	private final IValidator<DI, ERESULT>	validator;
 	
 	private SituatedValidationPerceptron(
 			int numIterations,
@@ -99,7 +90,7 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 			IJointParser<SAMPLE, MR, ESTEP, ERESULT> parser,
 			boolean hardUpdates,
 			IJointOutputLogger<MR, ESTEP, ERESULT> parserOutputLogger,
-			IValidator<DI, Pair<MR, ERESULT>> validator,
+			IValidator<DI, ERESULT> validator,
 			ICategoryServices<MR> categoryServices,
 			ILexiconGenerator<DI, MR, IJointModelImmutable<SAMPLE, MR, ESTEP>> genlex) {
 		super(numIterations, trainingData, trainingDataDebug,
@@ -117,6 +108,103 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 				lexiconGenerationBeamSize);
 	}
 	
+	public Pair<List<IJointDerivation<MR, ERESULT>>, List<IJointDerivation<MR, ERESULT>>> marginViolatingSets(
+			JointModel<SAMPLE, MR, ESTEP> model,
+			List<IJointDerivation<MR, ERESULT>> validParses,
+			List<IJointDerivation<MR, ERESULT>> invalidParses) {
+		// Construct margin violating sets
+		final List<IJointDerivation<MR, ERESULT>> violatingValidParses = new LinkedList<IJointDerivation<MR, ERESULT>>();
+		final List<IJointDerivation<MR, ERESULT>> violatingInvalidParses = new LinkedList<IJointDerivation<MR, ERESULT>>();
+		
+		// Flags to mark that we inserted a parse into the violating
+		// sets, so no need to check for its violation against others
+		final boolean[] validParsesFlags = new boolean[validParses.size()];
+		final boolean[] invalidParsesFlags = new boolean[invalidParses.size()];
+		int validParsesCounter = 0;
+		for (final IJointDerivation<MR, ERESULT> validParse : validParses) {
+			int invalidParsesCounter = 0;
+			for (final IJointDerivation<MR, ERESULT> invalidParse : invalidParses) {
+				if (!validParsesFlags[validParsesCounter]
+						|| !invalidParsesFlags[invalidParsesCounter]) {
+					// Create the delta vector if needed, we do it only
+					// once. This is why we check if we are going to
+					// need it in the above 'if'.
+					final IHashVector featureDelta = validParse
+							.getMeanMaxFeatures().addTimes(-1.0,
+									invalidParse.getMeanMaxFeatures());
+					final double deltaScore = featureDelta.vectorMultiply(model
+							.getTheta());
+					
+					// Test valid parse for insertion into violating
+					// valid parses
+					if (!validParsesFlags[validParsesCounter]) {
+						// Case this valid sample is still not in the
+						// violating set
+						if (deltaScore < margin * featureDelta.l1Norm()) {
+							// Case of violation
+							// Add to the violating set
+							violatingValidParses.add(validParse);
+							// Mark flag, so we won't test it again
+							validParsesFlags[validParsesCounter] = true;
+						}
+					}
+					
+					// Test invalid parse for insertion into
+					// violating invalid parses
+					if (!invalidParsesFlags[invalidParsesCounter]) {
+						// Case this invalid sample is still not in
+						// the violating set
+						if (deltaScore < margin * featureDelta.l1Norm()) {
+							// Case of violation
+							// Add to the violating set
+							violatingInvalidParses.add(invalidParse);
+							// Mark flag, so we won't test it again
+							invalidParsesFlags[invalidParsesCounter] = true;
+						}
+					}
+				}
+				
+				// Increase the counter, as we move to the next sample
+				++invalidParsesCounter;
+			}
+			// Increase the counter, as we move to the next sample
+			++validParsesCounter;
+		}
+		
+		return Pair.of(violatingValidParses, violatingInvalidParses);
+		
+	}
+	
+	private IHashVector constructUpdate(
+			List<IJointDerivation<MR, ERESULT>> violatingValidParses,
+			List<IJointDerivation<MR, ERESULT>> violatingInvalidParses,
+			JointModel<SAMPLE, MR, ESTEP> model) {
+		// Create the parameter update
+		final IHashVector update = HashVectorFactory.create();
+		
+		// Get the update for valid violating samples
+		for (final IJointDerivation<MR, ERESULT> parse : violatingValidParses) {
+			parse.getMeanMaxFeatures().addTimesInto(
+					1.0 / violatingValidParses.size(), update);
+		}
+		
+		// Get the update for the invalid violating samples
+		for (final IJointDerivation<MR, ERESULT> parse : violatingInvalidParses) {
+			parse.getMeanMaxFeatures().addTimesInto(
+					-1.0 * (1.0 / violatingInvalidParses.size()), update);
+		}
+		
+		// Prune small entries from the update
+		update.dropSmallEntries();
+		
+		// Validate the update
+		if (!model.isValidWeightVector(update)) {
+			throw new IllegalStateException("invalid update: " + update);
+		}
+		
+		return update;
+	}
+	
 	/**
 	 * Split the list parses to valid and invalid ones.
 	 * 
@@ -124,21 +212,22 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 	 * @param parseResults
 	 * @return Pair of (good parses, bad parses)
 	 */
-	private Pair<List<IJointParse<MR, ERESULT>>, List<IJointParse<MR, ERESULT>>> createValidInvalidSets(
-			DI dataItem, Collection<? extends IJointParse<MR, ERESULT>> parses) {
-		final List<IJointParse<MR, ERESULT>> validParses = new LinkedList<IJointParse<MR, ERESULT>>();
-		final List<IJointParse<MR, ERESULT>> invalidParses = new LinkedList<IJointParse<MR, ERESULT>>();
+	private Pair<List<IJointDerivation<MR, ERESULT>>, List<IJointDerivation<MR, ERESULT>>> createValidInvalidSets(
+			DI dataItem,
+			Collection<? extends IJointDerivation<MR, ERESULT>> parses) {
+		final List<IJointDerivation<MR, ERESULT>> validParses = new LinkedList<IJointDerivation<MR, ERESULT>>();
+		final List<IJointDerivation<MR, ERESULT>> invalidParses = new LinkedList<IJointDerivation<MR, ERESULT>>();
 		double validScore = -Double.MAX_VALUE;
-		for (final IJointParse<MR, ERESULT> parse : parses) {
+		for (final IJointDerivation<MR, ERESULT> parse : parses) {
 			if (validate(dataItem, parse.getResult())) {
 				if (hardUpdates) {
 					// Case using hard updates, only keep the highest scored
 					// valid ones
-					if (parse.getScore() > validScore) {
-						validScore = parse.getScore();
+					if (parse.getViterbiScore() > validScore) {
+						validScore = parse.getViterbiScore();
 						validParses.clear();
 						validParses.add(parse);
-					} else if (parse.getScore() == validScore) {
+					} else if (parse.getViterbiScore() == validScore) {
 						validParses.add(parse);
 					}
 				} else {
@@ -162,10 +251,10 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 				dataItem.getSample(), dataItemModel);
 		stats.recordModelParsing(parserOutput.getInferenceTime());
 		parserOutputLogger.log(parserOutput, dataItemModel);
-		final List<? extends IJointParse<MR, ERESULT>> modelParses = parserOutput
-				.getAllParses();
-		final List<? extends IJointParse<MR, ERESULT>> bestModelParses = parserOutput
-				.getBestParses();
+		final List<? extends IJointDerivation<MR, ERESULT>> modelParses = parserOutput
+				.getDerivations();
+		final List<? extends IJointDerivation<MR, ERESULT>> bestModelParses = parserOutput
+				.getMaxDerivations();
 		
 		if (modelParses.isEmpty()) {
 			// Skip the rest of the process if no complete parses
@@ -179,6 +268,8 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 				modelParses.size());
 		LOG.info("Model parsing time: %.4fsec",
 				parserOutput.getInferenceTime() / 1000.0);
+		LOG.info("Output is %s", parserOutput.isExact() ? "exact"
+				: "approximate");
 		
 		// Record if the best is the gold standard, if such debug
 		// information is available
@@ -189,16 +280,16 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 		}
 		
 		// Split all parses to valid and invalid sets
-		final Pair<List<IJointParse<MR, ERESULT>>, List<IJointParse<MR, ERESULT>>> validInvalidSetsPair = createValidInvalidSets(
+		final Pair<List<IJointDerivation<MR, ERESULT>>, List<IJointDerivation<MR, ERESULT>>> validInvalidSetsPair = createValidInvalidSets(
 				dataItem, modelParses);
-		final List<IJointParse<MR, ERESULT>> validParses = validInvalidSetsPair
+		final List<IJointDerivation<MR, ERESULT>> validParses = validInvalidSetsPair
 				.first();
-		final List<IJointParse<MR, ERESULT>> invalidParses = validInvalidSetsPair
+		final List<IJointDerivation<MR, ERESULT>> invalidParses = validInvalidSetsPair
 				.second();
 		LOG.info("%d valid parses, %d invalid parses", validParses.size(),
 				invalidParses.size());
 		LOG.info("Valid parses:");
-		for (final IJointParse<MR, ERESULT> parse : validParses) {
+		for (final IJointDerivation<MR, ERESULT> parse : validParses) {
 			logParse(dataItem, parse, true, true, dataItemModel);
 		}
 		
@@ -214,11 +305,11 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 		}
 		
 		// Construct margin violating sets
-		final Pair<List<IJointParse<MR, ERESULT>>, List<IJointParse<MR, ERESULT>>> marginViolatingSets = PerceptronServices
-				.marginViolatingSets(model, margin, validParses, invalidParses);
-		final List<IJointParse<MR, ERESULT>> violatingValidParses = marginViolatingSets
+		final Pair<List<IJointDerivation<MR, ERESULT>>, List<IJointDerivation<MR, ERESULT>>> marginViolatingSets = marginViolatingSets(
+				model, validParses, invalidParses);
+		final List<IJointDerivation<MR, ERESULT>> violatingValidParses = marginViolatingSets
 				.first();
-		final List<IJointParse<MR, ERESULT>> violatingInvalidParses = marginViolatingSets
+		final List<IJointDerivation<MR, ERESULT>> violatingInvalidParses = marginViolatingSets
 				.second();
 		LOG.info("%d violating valid parses, %d violating invalid parses",
 				violatingValidParses.size(), violatingInvalidParses.size());
@@ -227,17 +318,17 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 			return;
 		}
 		LOG.info("Violating valid parses: ");
-		for (final IJointParse<MR, ERESULT> pair : violatingValidParses) {
+		for (final IJointDerivation<MR, ERESULT> pair : violatingValidParses) {
 			logParse(dataItem, pair, true, true, dataItemModel);
 		}
 		LOG.info("Violating invalid parses: ");
-		for (final IJointParse<MR, ERESULT> parse : violatingInvalidParses) {
+		for (final IJointDerivation<MR, ERESULT> parse : violatingInvalidParses) {
 			logParse(dataItem, parse, false, true, dataItemModel);
 		}
 		
 		// Construct weight update vector
-		final IHashVector update = PerceptronServices.constructUpdate(
-				violatingValidParses, violatingInvalidParses, model);
+		final IHashVector update = constructUpdate(violatingValidParses,
+				violatingInvalidParses, model);
 		
 		// Update the parameters vector
 		LOG.info("Update: %s", update);
@@ -247,7 +338,7 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 	}
 	
 	@Override
-	protected boolean validate(DI dataItem, Pair<MR, ERESULT> hypothesis) {
+	protected boolean validate(DI dataItem, ERESULT hypothesis) {
 		return validator.isValid(dataItem, hypothesis);
 	}
 	
@@ -311,11 +402,11 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 		 */
 		private Map<DI, Pair<MR, ERESULT>>											trainingDataDebug			= new HashMap<DI, Pair<MR, ERESULT>>();
 		
-		private final IValidator<DI, Pair<MR, ERESULT>>								validator;
+		private final IValidator<DI, ERESULT>										validator;
 		
 		public Builder(IDataCollection<DI> trainingData,
 				IJointParser<SAMPLE, MR, ESTEP, ERESULT> parser,
-				IValidator<DI, Pair<MR, ERESULT>> validator) {
+				IValidator<DI, ERESULT> validator) {
 			this.trainingData = trainingData;
 			this.parser = parser;
 			this.validator = validator;
@@ -405,7 +496,7 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 					trainingData,
 					(IJointParser<SAMPLE, MR, ESTEP, ERESULT>) repo
 							.getResource(ParameterizedExperiment.PARSER_RESOURCE),
-					(IValidator<DI, Pair<MR, ERESULT>>) repo.getResource(params
+					(IValidator<DI, ERESULT>) repo.getResource(params
 							.get("validator")));
 			
 			if ("true".equals(params.get("hard"))) {
@@ -478,4 +569,5 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 		}
 		
 	}
+	
 }

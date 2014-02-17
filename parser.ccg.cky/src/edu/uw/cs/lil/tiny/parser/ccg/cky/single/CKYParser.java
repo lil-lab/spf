@@ -34,6 +34,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.utils.collections.CollectionUtils;
+import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -106,10 +107,13 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 		for (int len = 1; len < numTokens; len++) {
 			for (int begin = 0; begin < numTokens - len; begin++) {
 				for (int split = 0; split < len; split++) {
-					addAllToChart(
-							processSplit(begin, begin + len, split, chart,
-									cellFactory, numTokens, pruningFilter,
-									model), chart, model);
+					final Pair<List<Cell<MR>>, Boolean> processingPair = processSplit(
+							begin, begin + len, split, chart, cellFactory,
+							numTokens, pruningFilter, model);
+					addAllToChart(processingPair.first(), chart, model);
+					if (processingPair.second()) {
+						chart.externalPruning(begin, begin + len);
+					}
 				}
 			}
 		}

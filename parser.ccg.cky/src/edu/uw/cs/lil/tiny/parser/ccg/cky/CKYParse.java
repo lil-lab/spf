@@ -126,4 +126,5 @@ public class CKYParse<MR> implements IGraphParse<MR> {
 	public String toString() {
 		return semantics.toString();
 	}
+	
 }

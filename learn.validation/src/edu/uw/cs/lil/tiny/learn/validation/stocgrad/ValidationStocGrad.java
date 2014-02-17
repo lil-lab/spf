@@ -137,15 +137,15 @@ public class ValidationStocGrad<SAMPLE extends IDataItem<SAMPLE>, DI extends ILa
 				return validate(dataItem, e);
 			}
 		};
-		final double conditionedNorm = goodOutput.norm(filter, false);
+		final double conditionedNorm = goodOutput.norm(filter);
 		if (conditionedNorm == 0.0) {
 			// No positive update, skip the update
 			LOG.info("No positive update");
 			return;
 		} else {
 			// Case have complete valid parses
-			final IHashVector expectedFeatures = goodOutput.expectedFeatures(
-					filter, false);
+			final IHashVector expectedFeatures = goodOutput
+					.expectedFeatures(filter);
 			expectedFeatures.divideBy(conditionedNorm);
 			LOG.info("Positive update: %s", expectedFeatures);
 			expectedFeatures.addTimesInto(1.0, update);

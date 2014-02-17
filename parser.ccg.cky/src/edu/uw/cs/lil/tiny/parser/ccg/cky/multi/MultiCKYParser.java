@@ -45,6 +45,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
 import edu.uw.cs.utils.collections.CollectionUtils;
+import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -566,11 +567,13 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 		public void loggedRun() {
 			LOG.debug("%s: Split job started", split);
 			
-			final List<Cell<MR>> newCells = preChartPruning ? processSplitAndPrune(
+			final Pair<List<Cell<MR>>, Boolean> processingPair = preChartPruning ? processSplitAndPrune(
 					split.begin, split.end, split.split, chart, cellFactory,
 					numTokens, pruningFilter, chart.getBeamSize(), model)
 					: processSplit(split.begin, split.end, split.split, chart,
 							cellFactory, numTokens, pruningFilter, model);
+			
+			final List<Cell<MR>> newCells = processingPair.first();
 			
 			LOG.debug("%s: %d new cells", split, newCells.size());
 			
@@ -578,6 +581,9 @@ public class MultiCKYParser<MR> extends AbstractCKYParser<MR> {
 			lock.lock(split.begin, split.end);
 			for (final Cell<MR> newCell : newCells) {
 				chart.add(newCell, model);
+			}
+			if (processingPair.second()) {
+				chart.externalPruning(split.begin, split.end);
 			}
 			lock.unlock(split.begin, split.end);
 			

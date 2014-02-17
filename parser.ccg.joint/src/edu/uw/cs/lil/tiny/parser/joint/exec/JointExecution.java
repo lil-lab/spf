@@ -18,69 +18,31 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.exec;
 
-import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.exec.IExecution;
-import edu.uw.cs.lil.tiny.parser.joint.IJointParse;
+import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
-import edu.uw.cs.utils.composites.Pair;
 
-public class JointExecution<MR, ERESUL> implements IExecution<Pair<MR, ERESUL>> {
+/**
+ * Single execution wrapper for joint inference. The final execution output is
+ * simply the evaluation result. This class provides no access to the underlying
+ * semantics (for that see {@link MaxSemanticsJointExecution}).
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ *            Semantic formal meaning representation.
+ * @param <ERESULT>
+ *            Semantic evaluation result.
+ */
+public class JointExecution<MR, ERESULT> extends
+		AbstractJointExecution<MR, ERESULT, ERESULT> {
 	
-	private final IJointDataItemModel<MR, ERESUL>	dataItemModel;
-	private final IJointParse<MR, ERESUL>			jointParse;
-	
-	public JointExecution(IJointParse<MR, ERESUL> jointParse,
-			IJointDataItemModel<MR, ERESUL> dataItemModel) {
-		this.jointParse = jointParse;
-		this.dataItemModel = dataItemModel;
-	}
-	
-	private static <MR, ERESULT> String lexToString(
-			Iterable<LexicalEntry<MR>> lexicalEntries,
-			IJointDataItemModel<MR, ERESULT> model) {
-		final StringBuilder ret = new StringBuilder();
-		ret.append("[LexEntries and scores:\n");
-		for (final LexicalEntry<MR> entry : lexicalEntries) {
-			ret.append("[").append(model.score(entry)).append("] ");
-			ret.append(entry);
-			ret.append(" [");
-			ret.append(model.getTheta().printValues(
-					model.computeFeatures(entry)));
-			ret.append("]\n");
-		}
-		ret.append("]");
-		return ret.toString();
+	public JointExecution(IJointDerivation<MR, ERESULT> jointDerivation,
+			IJointDataItemModel<MR, ERESULT> dataItemModel) {
+		super(jointDerivation, dataItemModel);
 	}
 	
 	@Override
-	public Pair<MR, ERESUL> getResult() {
-		return jointParse.getResult();
-	}
-	
-	@Override
-	public double score() {
-		return jointParse.getScore();
-	}
-	
-	@Override
-	public String toString() {
-		return toString(false);
-	}
-	
-	@Override
-	public String toString(boolean verbose) {
-		final StringBuilder sb = new StringBuilder();
-		
-		sb.append(String.format("[S%.2f] %s", score(), getResult()));
-		if (verbose) {
-			sb.append('\n');
-			sb.append(String.format("Features: %s\n", dataItemModel.getTheta()
-					.printValues(jointParse.getAverageMaxFeatureVector())));
-			sb.append(lexToString(jointParse.getMaxLexicalEntries(),
-					dataItemModel));
-		}
-		
-		return sb.toString();
+	public ERESULT getResult() {
+		return jointDerivation.getResult();
 	}
 	
 }
