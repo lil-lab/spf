@@ -52,8 +52,8 @@ public class InjectiveJointOutput<MR, ERESULT>
 	
 	@Override
 	public boolean isExact() {
-		// TODO Auto-generated method stub
-		return false;
+		// Assuming no approximation is done during evaluation.
+		return baseParserOutput.isExact();
 	}
 	
 }

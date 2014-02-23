@@ -136,7 +136,7 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		}
 		
 		// Prune small entries from the update
-		update.dropSmallEntries();
+		update.dropNoise();
 		
 		// Validate the update
 		if (!model.isValidWeightVector(update)) {

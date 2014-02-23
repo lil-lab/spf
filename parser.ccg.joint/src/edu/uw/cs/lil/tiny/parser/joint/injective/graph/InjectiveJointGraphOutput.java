@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.injective.graph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,9 +28,11 @@ import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphOutput;
 import edu.uw.cs.lil.tiny.parser.joint.injective.AbstractInjectiveJointOutput;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.IFilter;
+import edu.uw.cs.utils.math.LogSumExp;
 
 /**
  * Output for joint inference of parsing and semantics evaluation using a
@@ -69,8 +72,13 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 	}
 	
 	@Override
-	public IHashVector expectedFeatures() {
-		return expectedFeatures(new IFilter<ERESULT>() {
+	public IGraphParserOutput<MR> getBaseParserOutput() {
+		return baseParserOutput;
+	}
+	
+	@Override
+	public IHashVector logExpectedFeatures() {
+		return logExpectedFeatures(new IFilter<ERESULT>() {
 			
 			@Override
 			public boolean isValid(ERESULT e) {
@@ -80,7 +88,7 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 	}
 	
 	@Override
-	public IHashVector expectedFeatures(IFilter<ERESULT> filter) {
+	public IHashVector logExpectedFeatures(IFilter<ERESULT> filter) {
 		// To propagate the outside scores into the graph of the base output, we
 		// create a scorer that uses the outside scores of the joint
 		// derivations. Preparing a mapping of logical forms to their initial
@@ -89,23 +97,23 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 		// cell. Iterate over result cells. For each cell, first init result
 		// cells outside scores. Then iterate over all parses and sum the
 		// outside contribution.
-		final Map<MR, Double> initBaseParseOutsideScores = new HashMap<MR, Double>();
+		final Map<MR, Double> initBaseParseLogOutsideScores = new HashMap<MR, Double>();
 		for (final ResultCell cell : resultCells.values()) {
 			// Init result cell outside scores.
-			cell.initOutsideScore(filter);
+			cell.initLogOutsideScore(filter);
 			// Iterate over over all joint parses to create the initialization
 			// score for the base parse logical form.
 			for (final InjectiveJointGraphDerivation<MR, ERESULT> parse : cell.parses) {
 				final MR semantics = parse.getBaseParse().getSemantics();
-				final double outsideContribution = cell.getOutsideScore()
-						* Math.exp(parse.getExecResult().getScore());
-				if (initBaseParseOutsideScores.containsKey(semantics)) {
-					initBaseParseOutsideScores.put(semantics,
-							initBaseParseOutsideScores.get(semantics)
-									+ outsideContribution);
+				final double logOutsideContribution = cell.logOutsideScore
+						+ parse.getExecResult().getScore();
+				if (initBaseParseLogOutsideScores.containsKey(semantics)) {
+					initBaseParseLogOutsideScores.put(semantics, LogSumExp.of(
+							initBaseParseLogOutsideScores.get(semantics),
+							logOutsideContribution));
 				} else {
-					initBaseParseOutsideScores.put(semantics,
-							outsideContribution);
+					initBaseParseLogOutsideScores.put(semantics,
+							logOutsideContribution);
 				}
 				
 			}
@@ -117,25 +125,24 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 			public double score(MR e) {
 				// If the MR was executed and has a joint parse, it has an
 				// outside score, so use it, otherwise, consider as if the score
-				// of the execution is -\inf --> return 0.
-				return initBaseParseOutsideScores.containsKey(e) ? initBaseParseOutsideScores
-						.get(e) : 0.0;
+				// of the execution is -\inf (if exponentiated it will be 0.0).
+				return initBaseParseLogOutsideScores.containsKey(e) ? initBaseParseLogOutsideScores
+						.get(e) : Double.NEGATIVE_INFINITY;
 			}
 		};
 		
 		// Get expected features from base parser output.
 		final IHashVector expectedFeatures = baseParserOutput
-				.expectedFeatures(scorer);
+				.logExpectedFeatures(scorer);
 		
 		// Add expected features from the execution result cells.
 		for (final ResultCell cell : resultCells.values()) {
 			for (final InjectiveJointGraphDerivation<MR, ERESULT> parse : cell.parses) {
-				final double weight = Math
-						.exp(parse.getExecResult().getScore())
-						* parse.getBaseParse().getInsideScore()
-						* cell.outsideScore;
-				parse.getExecResult().getFeatures()
-						.addTimesInto(weight, expectedFeatures);
+				final double logWeight = parse.getExecResult().getScore()
+						+ parse.getBaseParse().getLogInsideScore()
+						* cell.logOutsideScore;
+				HashVectorUtils.logSumExpAdd(logWeight, parse.getExecResult()
+						.getFeatures(), expectedFeatures);
 			}
 		}
 		
@@ -143,13 +150,8 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> getBaseParserOutput() {
-		return baseParserOutput;
-	}
-	
-	@Override
-	public double norm() {
-		return norm(new IFilter<ERESULT>() {
+	public double logNorm() {
+		return logNorm(new IFilter<ERESULT>() {
 			
 			@Override
 			public boolean isValid(ERESULT e) {
@@ -159,22 +161,22 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 	}
 	
 	@Override
-	public double norm(IFilter<ERESULT> filter) {
-		double norm = 0.0;
-		// Iterate over all result cells
+	public double logNorm(IFilter<ERESULT> filter) {
+		final List<Double> logInsideScores = new ArrayList<Double>(resultCells
+				.values().size());
 		for (final ResultCell cell : resultCells.values()) {
-			// Test the result with the filter
-			if (filter.isValid(cell.getResult())) {
-				// Sum inside score
-				norm += cell.insideScore;
+			// Test the result with the filter.
+			if (filter.isValid(cell.result)) {
+				logInsideScores.add(cell.logInsideScore);
 			}
 		}
-		return norm;
+		// Do the log-sum-exp trick and return the log of the sum.
+		return LogSumExp.of(logInsideScores);
 	}
 	
 	private class ResultCell {
-		private double													insideScore		= 0.0;
-		private double													outsideScore	= 0.0;
+		private double													logInsideScore	= Double.NEGATIVE_INFINITY;
+		private double													logOutsideScore	= Double.NEGATIVE_INFINITY;
 		private final List<InjectiveJointGraphDerivation<MR, ERESULT>>	parses			= new LinkedList<InjectiveJointGraphDerivation<MR, ERESULT>>();
 		private final ERESULT											result;
 		
@@ -191,24 +193,16 @@ public class InjectiveJointGraphOutput<MR, ERESULT>
 			// Update the cell's inside score. Execution involves a single step,
 			// so take a product of the inside score of the base parse and the
 			// exponent of the local score of the execution step.
-			final double parseInsideScore = Math.exp(parse.getExecResult()
-					.getScore()) * parse.getBaseParse().getInsideScore();
-			insideScore += parseInsideScore;
+			final double parseLogInsideScore = parse.getExecResult().getScore()
+					+ parse.getBaseParse().getLogInsideScore();
+			logInsideScore = LogSumExp.of(logInsideScore, parseLogInsideScore);
 		}
 		
-		public double getOutsideScore() {
-			return outsideScore;
-		}
-		
-		public ERESULT getResult() {
-			return result;
-		}
-		
-		public void initOutsideScore(IFilter<ERESULT> filter) {
+		public void initLogOutsideScore(IFilter<ERESULT> filter) {
 			if (filter.isValid(result)) {
-				outsideScore = 1.0;
+				logOutsideScore = 0.0;
 			} else {
-				outsideScore = 0.0;
+				logOutsideScore = Double.NEGATIVE_INFINITY;
 			}
 		}
 		

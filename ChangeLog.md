@@ -1,3 +1,9 @@
+# v1.5.3
+- Fix pruning in SingleSentence.
+- Fixes and cleaning in LogicLanguageServices. Mostly relevant when working without a close ontology. 
+- Keep the overflows away. Switch all exponentiated computations to log-space. 
+- Fixed a small bug in example GeoQuery experiment.
+
 # v1.5.2
 - Revamp joint inference derivations and output: a derivation now includes all possible ways to create a certain result (i.e., it marginalizes over everything except the final result). Injective inference makes certain assumptions to provide a simpler interface. The general joint derivation doesn't support any dynamic programming for semantics evaluation. 
 - Improve joint inference javadocs. 

@@ -72,6 +72,7 @@ class TreeHashVector implements IHashVector {
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void addTimesInto(final double times, IHashVector other) {
 		if (other instanceof TreeHashVector) {
@@ -83,26 +84,65 @@ class TreeHashVector implements IHashVector {
 				if (p.values.containsKey(key)) {
 					p.values.put(key, value + p.values.get(key));
 				} else {
-					p.values.put(key, value);
+					p.values.put(key, value + ZERO_VALUE);
 				}
 			}
 		} else {
-			addTimesInto(times, new TreeHashVector(other));
+			// Less efficient when we can't access the underlying map.
+			for (final Entry<KeyArgs, Double> entry : values.entrySet()) {
+				final double value = times * entry.getValue();
+				final KeyArgs key = entry.getKey();
+				other.set(key, value + other.get(key));
+			}
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
-	public void applyFunction(Function function) {
+	public void applyFunction(ValueFunction function) {
 		for (final Entry<KeyArgs, Double> entry : values.entrySet()) {
-			entry.setValue(function.doApply(entry.getValue()));
+			entry.setValue(function.apply(entry.getValue()));
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void clear() {
 		values.clear();
 	}
 	
+	@Override
+	public boolean contains(KeyArgs key) {
+		return values.containsKey(key);
+	}
+	
+	@Override
+	public boolean contains(String arg1) {
+		return values.containsKey(new KeyArgs(arg1));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2) {
+		return values.containsKey(new KeyArgs(arg1, arg2));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3, String arg4) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3, arg4));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3, String arg4,
+			String arg5) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3, arg4, arg5));
+	}
+	
+	/** {@inheritDoc} */
 	@Override
 	public void divideBy(final double d) {
 		for (final Entry<KeyArgs, Double> entry : values.entrySet()) {
@@ -111,7 +151,7 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
-	public void dropSmallEntries() {
+	public void dropNoise() {
 		final Iterator<Entry<KeyArgs, Double>> iterator = values.entrySet()
 				.iterator();
 		while (iterator.hasNext()) {
@@ -150,9 +190,21 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
+	public double get(KeyArgs key, double defaultReturn) {
+		final Double value = values.get(key);
+		return value == null ? defaultReturn : value;
+	}
+	
+	@Override
 	public double get(String arg1) {
 		final Double value = values.get(new KeyArgs(arg1));
 		return value == null ? IHashVector.ZERO_VALUE : value;
+	}
+	
+	@Override
+	public double get(String arg1, double defaultReturn) {
+		final Double value = values.get(new KeyArgs(arg1));
+		return value == null ? defaultReturn : value;
 	}
 	
 	@Override
@@ -162,9 +214,22 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
+	public double get(String arg1, String arg2, double defaultReturn) {
+		final Double value = values.get(new KeyArgs(arg1, arg2));
+		return value == null ? defaultReturn : value;
+	}
+	
+	@Override
 	public double get(String arg1, String arg2, String arg3) {
 		final Double value = values.get(new KeyArgs(arg1, arg2, arg3));
 		return value == null ? IHashVector.ZERO_VALUE : value;
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3,
+			double defaultReturn) {
+		final Double value = values.get(new KeyArgs(arg1, arg2, arg3));
+		return value == null ? defaultReturn : value;
 	}
 	
 	@Override
@@ -175,10 +240,25 @@ class TreeHashVector implements IHashVector {
 	
 	@Override
 	public double get(String arg1, String arg2, String arg3, String arg4,
+			double defaultReturn) {
+		final Double value = values.get(new KeyArgs(arg1, arg2, arg3, arg4));
+		return value == null ? defaultReturn : value;
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3, String arg4,
 			String arg5) {
 		final Double value = values.get(new KeyArgs(arg1, arg2, arg3, arg4,
 				arg5));
 		return value == null ? IHashVector.ZERO_VALUE : value;
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3, String arg4,
+			String arg5, double defaultReturn) {
+		final Double value = values.get(new KeyArgs(arg1, arg2, arg3, arg4,
+				arg5));
+		return value == null ? defaultReturn : value;
 	}
 	
 	@Override
@@ -268,6 +348,13 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
+	public void iterate(EntryFunction function) {
+		for (final Entry<KeyArgs, Double> entry : values.entrySet()) {
+			function.apply(entry.getKey(), entry.getValue());
+		}
+	}
+	
+	@Override
 	public Iterator<Pair<KeyArgs, Double>> iterator() {
 		return new Iterator<Pair<KeyArgs, Double>>() {
 			private final Iterator<Entry<KeyArgs, Double>>	innerIterator	= values.entrySet()
@@ -305,9 +392,9 @@ class TreeHashVector implements IHashVector {
 	}
 	
 	@Override
-	public void multiplyBy(final double d) {
+	public void multiplyBy(double value) {
 		for (final Entry<KeyArgs, Double> entry : values.entrySet()) {
-			entry.setValue(entry.getValue() * d);
+			entry.setValue(entry.getValue() * value);
 		}
 	}
 	
@@ -357,43 +444,51 @@ class TreeHashVector implements IHashVector {
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(KeyArgs key, double value) {
 		values.put(key, value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(String arg1, double value) {
 		values.put(new KeyArgs(arg1), value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(String arg1, String arg2, double value) {
 		values.put(new KeyArgs(arg1, arg2), value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(String arg1, String arg2, String arg3, double value) {
 		values.put(new KeyArgs(arg1, arg2, arg3), value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(String arg1, String arg2, String arg3, String arg4,
 			double value) {
 		values.put(new KeyArgs(arg1, arg2, arg3, arg4), value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void set(String arg1, String arg2, String arg3, String arg4,
 			String arg5, double value) {
 		values.put(new KeyArgs(arg1, arg2, arg3, arg4, arg5), value);
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public int size() {
 		return values.size();
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public String toString() {
 		final StringBuilder ret = new StringBuilder();

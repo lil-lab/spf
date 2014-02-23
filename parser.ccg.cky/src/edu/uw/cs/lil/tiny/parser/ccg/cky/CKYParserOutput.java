@@ -85,21 +85,6 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	@Override
-	public IHashVector expectedFeatures() {
-		return expectedFeatures(FilterUtils.<MR> stubTrue());
-	}
-	
-	@Override
-	public IHashVector expectedFeatures(IFilter<MR> filter) {
-		return chart.expectedFeatures(filter);
-	}
-	
-	@Override
-	public IHashVector expectedFeatures(IScorer<MR> initialScorer) {
-		return chart.expectedFeatures(initialScorer);
-	}
-	
-	@Override
 	public List<CKYParse<MR>> getAllParses() {
 		return allParses;
 	}
@@ -141,13 +126,34 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 		return chart.getPrunedSpans().isEmpty();
 	}
 	
+	/** {@inheritDoc} */
 	@Override
-	public double norm() {
-		return norm(FilterUtils.<MR> stubTrue());
+	public IHashVector logExpectedFeatures() {
+		return logExpectedFeatures(FilterUtils.<MR> stubTrue());
 	}
 	
+	/** {@inheritDoc} */
 	@Override
-	public double norm(final IFilter<MR> filter) {
-		return chart.norm(filter);
+	public IHashVector logExpectedFeatures(IFilter<MR> filter) {
+		return chart.logExpectedFeatures(filter);
 	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public IHashVector logExpectedFeatures(IScorer<MR> initialScorer) {
+		return chart.logExpectedFeatures(initialScorer);
+	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public double logNorm() {
+		return logNorm(FilterUtils.<MR> stubTrue());
+	}
+	
+	/** {@inheritDoc} */
+	@Override
+	public double logNorm(IFilter<MR> filter) {
+		return chart.logNorm(filter);
+	}
+	
 }

@@ -49,6 +49,7 @@ class TroveHashVector implements IHashVector {
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public void add(final double num) {
 		values.transformValues(new TDoubleFunction() {
@@ -60,6 +61,7 @@ class TroveHashVector implements IHashVector {
 		});
 	}
 	
+	/** {@inheritDoc} */
 	@Override
 	public TroveHashVector addTimes(final double times,
 			IHashVectorImmutable other) {
@@ -80,30 +82,39 @@ class TroveHashVector implements IHashVector {
 		}
 	}
 	
+	/** {@inheritDoc} */
 	@Override
-	public void addTimesInto(final double times, IHashVector other) {
+	public void addTimesInto(final double times, final IHashVector other) {
 		if (other instanceof TroveHashVector) {
 			final TroveHashVector p = (TroveHashVector) other;
 			values.forEachEntry(new TObjectDoubleProcedure<KeyArgs>() {
 				@Override
 				public boolean execute(KeyArgs a, double b) {
 					final double val = times * b;
-					p.values.adjustOrPutValue(a, val, val);
+					p.values.adjustOrPutValue(a, val, val + ZERO_VALUE);
 					return true;
 				}
 			});
 		} else {
-			addTimesInto(times, new TroveHashVector(other));
+			// Less efficient when we can't access the underlying map.
+			values.forEachEntry(new TObjectDoubleProcedure<KeyArgs>() {
+				@Override
+				public boolean execute(KeyArgs a, double b) {
+					final double value = times * b;
+					other.set(a, value + other.get(a));
+					return true;
+				}
+			});
 		}
 	}
 	
 	@Override
-	public void applyFunction(final Function function) {
+	public void applyFunction(final ValueFunction function) {
 		values.transformValues(new TDoubleFunction() {
 			
 			@Override
 			public double execute(double value) {
-				return function.doApply(value);
+				return function.apply(value);
 			}
 		});
 	}
@@ -111,6 +122,37 @@ class TroveHashVector implements IHashVector {
 	@Override
 	public void clear() {
 		values.clear();
+	}
+	
+	@Override
+	public boolean contains(KeyArgs key) {
+		return values.containsKey(key);
+	}
+	
+	@Override
+	public boolean contains(String arg1) {
+		return values.containsKey(new KeyArgs(arg1));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2) {
+		return values.containsKey(new KeyArgs(arg1, arg2));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3, String arg4) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3, arg4));
+	}
+	
+	@Override
+	public boolean contains(String arg1, String arg2, String arg3, String arg4,
+			String arg5) {
+		return values.containsKey(new KeyArgs(arg1, arg2, arg3, arg4, arg5));
 	}
 	
 	@Override
@@ -125,7 +167,7 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
-	public void dropSmallEntries() {
+	public void dropNoise() {
 		values.retainEntries(new TObjectDoubleProcedure<KeyArgs>() {
 			
 			@Override
@@ -163,8 +205,27 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
+	public double get(KeyArgs key, double defaultReturn) {
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
+	}
+	
+	@Override
 	public double get(String arg1) {
 		return values.get(new KeyArgs(arg1));
+	}
+	
+	@Override
+	public double get(String arg1, double defaultReturn) {
+		final KeyArgs key = new KeyArgs(arg1);
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
 	}
 	
 	@Override
@@ -173,8 +234,29 @@ class TroveHashVector implements IHashVector {
 	}
 	
 	@Override
+	public double get(String arg1, String arg2, double defaultReturn) {
+		final KeyArgs key = new KeyArgs(arg1, arg2);
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
+	}
+	
+	@Override
 	public double get(String arg1, String arg2, String arg3) {
 		return values.get(new KeyArgs(arg1, arg2, arg3));
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3,
+			double defaultReturn) {
+		final KeyArgs key = new KeyArgs(arg1, arg2, arg3);
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
 	}
 	
 	@Override
@@ -184,8 +266,30 @@ class TroveHashVector implements IHashVector {
 	
 	@Override
 	public double get(String arg1, String arg2, String arg3, String arg4,
+			double defaultReturn) {
+		final KeyArgs key = new KeyArgs(arg1, arg2, arg3, arg4);
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3, String arg4,
 			String arg5) {
 		return values.get(new KeyArgs(arg1, arg2, arg3, arg4, arg5));
+	}
+	
+	@Override
+	public double get(String arg1, String arg2, String arg3, String arg4,
+			String arg5, double defaultReturn) {
+		final KeyArgs key = new KeyArgs(arg1, arg2, arg3, arg4, arg5);
+		if (values.contains(key)) {
+			return values.get(key);
+		} else {
+			return defaultReturn;
+		}
 	}
 	
 	@Override
@@ -293,6 +397,18 @@ class TroveHashVector implements IHashVector {
 				} else {
 					return true;
 				}
+			}
+		});
+	}
+	
+	@Override
+	public void iterate(final EntryFunction function) {
+		values.forEachEntry(new TObjectDoubleProcedure<KeyArgs>() {
+			
+			@Override
+			public boolean execute(KeyArgs a, double b) {
+				function.apply(a, b);
+				return true;
 			}
 		});
 	}

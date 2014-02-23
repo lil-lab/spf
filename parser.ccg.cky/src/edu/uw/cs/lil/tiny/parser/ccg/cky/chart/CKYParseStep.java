@@ -43,9 +43,12 @@ public class CKYParseStep<MR> extends AbstractCKYParseStep<MR> {
 			Cell<MR> rightChild, boolean isFullParse, String ruleName,
 			IDataItemModel<MR> model) {
 		super(root, leftChild, rightChild, isFullParse, ruleName);
-		// TODO [boo] Get both from the same call
-		this.localScore = model.score(this);
+		// Doing this in two separate steps due to the way lexical feature sets
+		// behave when scoring unknown lexical entries. Therefore, it's not
+		// possible to simply recycle the feature vector and multiply it by
+		// the model's theta (weight vector).
 		this.localFeatures = model.computeFeatures(this);
+		this.localScore = model.score(this);
 	}
 	
 	@Override

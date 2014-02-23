@@ -132,8 +132,7 @@ public class GeoExp extends DistributedExperiment {
 		// //////////////////////////////////////////////////
 		
 		final Set<LogicalConstant> unfactoredConstants = new HashSet<LogicalConstant>();
-		unfactoredConstants.add(LogicalConstant.parse("a:<<e,t>,e>"));
-		unfactoredConstants.add(LogicalConstant.parse("io:<<e,t>,e>"));
+		unfactoredConstants.add(LogicalConstant.parse("the:<<e,t>,e>"));
 		unfactoredConstants.add(LogicalConstant.parse("exists:<<e,t>,t>"));
 		FactoredLexiconServices.set(unfactoredConstants);
 		

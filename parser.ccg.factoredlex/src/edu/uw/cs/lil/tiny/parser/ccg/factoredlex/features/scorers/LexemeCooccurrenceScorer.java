@@ -84,9 +84,6 @@ public class LexemeCooccurrenceScorer implements ISerializableScorer<Lexeme> {
 	
 	protected static Map<String, Double> readStatsFile(File f)
 			throws IOException {
-		// TODO [luke] [save2] Why do we need this method? Can't we just use the
-		// storage system to load from a file? It's more consistent. Now we have
-		// two formats that basically store the same structure.
 		final BufferedReader reader = new BufferedReader(new FileReader(f));
 		try {
 			return readStats(reader);

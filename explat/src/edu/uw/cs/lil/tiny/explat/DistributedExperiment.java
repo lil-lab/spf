@@ -92,6 +92,12 @@ public abstract class DistributedExperiment extends LoggedExperiment implements
 	}
 	
 	@Override
+	public void end() {
+		executor.shutdown();
+		super.end();
+	}
+	
+	@Override
 	public void execute(Runnable command) {
 		executor.execute(command);
 	}
@@ -176,7 +182,7 @@ public abstract class DistributedExperiment extends LoggedExperiment implements
 		synchronized (completionSignalObject) {
 			try {
 				completionSignalObject.wait();
-				executor.shutdown();
+				end();
 			} catch (final InterruptedException e) {
 				throw new RuntimeException(e);
 			}

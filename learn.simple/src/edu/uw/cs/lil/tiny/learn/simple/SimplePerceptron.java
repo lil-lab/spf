@@ -125,7 +125,7 @@ public class SimplePerceptron implements
 					}
 					
 					// Prune small entries from the update
-					update.dropSmallEntries();
+					update.dropNoise();
 					
 					// Validate the update
 					if (!model.isValidWeightVector(update)) {

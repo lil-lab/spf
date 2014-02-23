@@ -324,7 +324,7 @@ public class LexicalTemplate implements Serializable {
 			
 			// In case of an order insensitive, sort the arguments by hashcode,
 			// so the abstraction of constants will be insensitive to order,
-			// when that order doesn't matter. TODO [yoav] [urgent] this
+			// when that order doesn't matter. TODO [yoav] [limitations] this
 			// solution is still not perfect and might cause duplicate
 			// templates/lexemes where such shouldn't exist. To fix it, we need
 			// to change lexemes to hold a set of constants and not a list

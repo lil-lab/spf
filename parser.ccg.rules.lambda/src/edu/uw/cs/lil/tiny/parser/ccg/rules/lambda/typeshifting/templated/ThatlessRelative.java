@@ -66,7 +66,8 @@ public class ThatlessRelative extends AbstractApplication<LogicalExpression> {
 			Category<LogicalExpression> left,
 			Category<LogicalExpression> right, boolean isCompleteSentence) {
 		
-		// TODO [Yoav] make sure this function can't be applied on top of any
+		// TODO [Yoav] [limitation] make sure this function can't be applied on
+		// top of any
 		// unary type shifting rules
 		
 		if (!(right.getSyntax() instanceof ComplexSyntax)) {

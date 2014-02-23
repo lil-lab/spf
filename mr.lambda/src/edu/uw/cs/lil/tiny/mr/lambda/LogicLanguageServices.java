@@ -59,14 +59,23 @@ public class LogicLanguageServices {
 	
 	private static final String									ARRAY_SUB_PREDICATE_NAME			= "sub";
 	private static LogicLanguageServices						INSTANCE							= null;
-	private static final String									PREDICATE_RETURN_TYPE_SEPARATOR		= ":";
+	
 	/**
 	 * Generic simplifier for index access predicates for any type of array.
 	 */
 	private final IPredicateSimplifier							arrayIndexPredicateSimplifier		= ArrayIndexAccessSimplifier.INSTANCE;
+	
+	/**
+	 * Logical constant that might be removed from the logical form during
+	 * simplification without changing its meaning. Several dynamic constants
+	 * are not covered by this set, see
+	 * {@link #isCollpasibleConstant(LogicalConstant)}.
+	 */
+	private final Set<LogicalConstant>							collapsibleConstants				= new HashSet<LogicalConstant>();
 	private final LogicalConstant								conjunctionPredicate;
 	private final LogicalConstant								disjunctionPredicate;
 	private final LogicalConstant								falseConstant;
+	
 	private final LogicalConstant								indexIncreasePredicate;
 	
 	private final LogicalConstant								negationPredicate;
@@ -76,9 +85,8 @@ public class LogicLanguageServices {
 	 * type.
 	 */
 	private final Type											numeralType;
-	private final Ontology										ontology;
 	
-	private final Set<LogicalConstant>							predicateCollapsible				= new HashSet<LogicalConstant>();
+	private final Ontology										ontology;
 	
 	private final Map<LogicalConstant, IPredicateSimplifier>	simplifiers							= new ConcurrentHashMap<LogicalConstant, IPredicateSimplifier>();
 	
@@ -121,6 +129,8 @@ public class LogicLanguageServices {
 		// Special constants
 		this.trueConstant = trueConstant;
 		this.falseConstant = falseConstant;
+		this.collapsibleConstants.add(trueConstant);
+		this.collapsibleConstants.add(falseConstant);
 	}
 	
 	/**
@@ -168,7 +178,7 @@ public class LogicLanguageServices {
 	static public LogicalConstant getIndexPredicateForArray(ArrayType arrayType) {
 		final ComplexType predicateType = INSTANCE.typeRepository
 				.getIndexPredicateTypeForArray(arrayType);
-		final String name = composePredicateName(
+		final String name = LogicalConstant.makeName(
 				ARRAY_INDEX_ACCESS_PREDICATE_NAME, predicateType);
 		if (INSTANCE.ontology != null && INSTANCE.ontology.contains(name)) {
 			return INSTANCE.ontology.get(name);
@@ -201,7 +211,7 @@ public class LogicLanguageServices {
 	static public LogicalConstant getSubPredicateForArray(ArrayType arrayType) {
 		final ComplexType predicateType = INSTANCE.typeRepository
 				.getSubPredicateTypeForArray(arrayType);
-		final String name = composePredicateName(ARRAY_SUB_PREDICATE_NAME,
+		final String name = LogicalConstant.makeName(ARRAY_SUB_PREDICATE_NAME,
 				predicateType);
 		if (INSTANCE.ontology != null && INSTANCE.ontology.contains(name)) {
 			return INSTANCE.ontology.get(name);
@@ -264,20 +274,26 @@ public class LogicLanguageServices {
 	
 	public static boolean isArrayIndexPredicate(LogicalExpression pred) {
 		return pred instanceof LogicalConstant
-				&& ((LogicalConstant) pred).getName().startsWith(
-						ARRAY_INDEX_ACCESS_PREDICATE_NAME
-								+ PREDICATE_RETURN_TYPE_SEPARATOR);
+				&& ((LogicalConstant) pred).getName()
+						.startsWith(
+								ARRAY_INDEX_ACCESS_PREDICATE_NAME
+										+ Term.TYPE_SEPARATOR);
 	}
 	
 	public static boolean isArraySubPredicate(LogicalExpression pred) {
 		return pred instanceof LogicalConstant
 				&& ((LogicalConstant) pred).getName().startsWith(
-						ARRAY_SUB_PREDICATE_NAME
-								+ PREDICATE_RETURN_TYPE_SEPARATOR);
+						ARRAY_SUB_PREDICATE_NAME + Term.TYPE_SEPARATOR);
 	}
 	
-	public static boolean isCollpasiblePredicate(LogicalExpression predicate) {
-		return INSTANCE.predicateCollapsible.contains(predicate);
+	/**
+	 * Returns 'true' iff the constant may disappear form the logical form
+	 * during simplification (without modifying the meaning of the logical
+	 * form).
+	 */
+	public static boolean isCollpasibleConstant(LogicalExpression exp) {
+		return INSTANCE.collapsibleConstants.contains(exp)
+				|| isArraySubPredicate(exp);
 	}
 	
 	/**
@@ -287,8 +303,8 @@ public class LogicLanguageServices {
 	 * @return
 	 */
 	static public boolean isCoordinationPredicate(LogicalExpression pred) {
-		return pred == INSTANCE.conjunctionPredicate
-				|| pred == INSTANCE.disjunctionPredicate;
+		return pred.equals(INSTANCE.conjunctionPredicate)
+				|| pred.equals(INSTANCE.disjunctionPredicate);
 	}
 	
 	public static boolean isOntologyClosed() {
@@ -312,15 +328,11 @@ public class LogicLanguageServices {
 		INSTANCE = logicLanguageServices;
 	}
 	
-	private static String composePredicateName(String name, ComplexType type) {
-		return name + PREDICATE_RETURN_TYPE_SEPARATOR + type.getName();
-	}
-	
 	public void setSimplifier(LogicalConstant predicate,
 			IPredicateSimplifier simplifier, boolean collapsable) {
 		if (collapsable) {
-			synchronized (predicateCollapsible) {
-				predicateCollapsible.add(predicate);
+			synchronized (collapsibleConstants) {
+				collapsibleConstants.add(predicate);
 			}
 		}
 		simplifiers.put(predicate, simplifier);

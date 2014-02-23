@@ -21,7 +21,10 @@ package edu.uw.cs.lil.tiny.utils.hashvector;
 import java.io.Serializable;
 
 /**
- * Hash vector to store sparse vectors.
+ * Hash vector to store sparse vectors. Any key not present in the vector is
+ * mapped to {@value #ZERO_VALUE} by default. However, not all keys for which
+ * the vector returns the {@value #ZERO_VALUE} are not present. To check
+ * membership, use the contain methods.
  * 
  * @author Yoav Artzi
  */
@@ -32,46 +35,50 @@ public interface IHashVector extends IHashVectorImmutable, Serializable {
 	 */
 	public static final double	NOISE		= 0.001;
 	
-	/** The value of zero */
+	/**
+	 * The value of zero. Quite a few implementation decisions depend on this
+	 * being 0.0. Beware of changing this value.
+	 */
 	static final double			ZERO_VALUE	= 0.0;
 	
 	/**
 	 * Add a given constant to all the values in the vector.
-	 * 
-	 * @param num
 	 */
-	void add(final double num);
+	void add(double num);
 	
 	/**
 	 * Apply a function to modify each value in the sparse vector. The method is
 	 * guaranteed to preserve {@link IHashVector#ZERO_VALUE}s. Meaning, if a
 	 * value equals {@link IHashVector#ZERO_VALUE} it will remain the same.
-	 * 
-	 * @param function
 	 */
-	void applyFunction(Function function);
+	void applyFunction(ValueFunction function);
 	
 	/**
 	 * Remove all the values from the vector.
 	 */
 	void clear();
 	
-	/**
-	 * Divide all the values by the given constant.
-	 * 
-	 * @param d
-	 */
-	void divideBy(final double d);
+	void divideBy(double d);
 	
 	/**
 	 * Drop all the small entries according to the {@link #NOISE} constant.
 	 */
-	void dropSmallEntries();
+	void dropNoise();
 	
-	void multiplyBy(final double d);
+	/**
+	 * Multiply each value by the given value.
+	 */
+	void multiplyBy(double value);
 	
+	/**
+	 * Set given value for the provided given.
+	 */
 	void set(KeyArgs key, double value);
 	
+	/**
+	 * Set given value for the key where the first portion is arg1, and the rest
+	 * is null.
+	 */
 	void set(String arg1, double value);
 	
 	void set(String arg1, String arg2, double value);
@@ -84,22 +91,21 @@ public interface IHashVector extends IHashVectorImmutable, Serializable {
 			double value);
 	
 	/**
-	 * Function from double to double. The function is guaranteed to preserve
-	 * {@link IHashVector#ZERO_VALUE}. Meaning, if a value equals
-	 * {@link IHashVector#ZERO_VALUE} it will remain the same.
+	 * Function to process a key and its value. Doesn't modify the vector.
 	 * 
 	 * @author Yoav Artzi
 	 */
-	public abstract static class Function {
-		public abstract double apply(double value);
-		
-		protected final double doApply(double value) {
-			if (value == ZERO_VALUE) {
-				return value;
-			} else {
-				return apply(value);
-			}
-		}
+	public interface EntryFunction {
+		void apply(KeyArgs key, double value);
+	}
+	
+	/**
+	 * Function from double to double.
+	 * 
+	 * @author Yoav Artzi
+	 */
+	public interface ValueFunction {
+		double apply(double value);
 	}
 	
 }

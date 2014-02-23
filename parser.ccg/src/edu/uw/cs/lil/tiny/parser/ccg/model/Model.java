@@ -233,11 +233,11 @@ public class Model<DI extends IDataItem<?>, MR> implements
 	@Override
 	public double score(IParseStep<MR> parseStep, DI dataItem) {
 		double score = 0.0;
-		// Parse features
+		// Parse features.
 		for (final IParseFeatureSet<DI, MR> featureSet : parseFeatures) {
 			score += featureSet.score(parseStep, theta, dataItem);
 		}
-		// Lexical features
+		// Lexical features.
 		for (final IIndependentLexicalFeatureSet<DI, MR> featureSet : lexicalFeatures) {
 			score += featureSet.score(parseStep, theta, dataItem);
 		}

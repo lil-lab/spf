@@ -42,6 +42,7 @@ import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
+import edu.uw.cs.utils.math.LogSumExp;
 
 /**
  * A CKY chart.
@@ -60,10 +61,10 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	
 	private final AbstractCellFactory<MR>	cellFactory;
 	
-	/** An array of spans for every starting and end indices */
+	/** An array of spans for every starting and end indices. */
 	private final AbstractSpan<MR>[][]		chart;
 	
-	/** Number of words in input sentence */
+	/** Number of words in input sentence. */
 	private final int						sentenceLength;
 	
 	/**
@@ -93,8 +94,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * relevant span or its score is higher than the current minimum for that
 	 * span. Otherwise, it won't be added. Adding might cause pruning of a
 	 * previously added cell.
-	 * 
-	 * @param cell
 	 */
 	public void add(Cell<MR> cell, IDataItemModel<MR> model) {
 		
@@ -110,7 +109,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			// Case we are adding a new cell.
 			addNew(cell);
 		} else {
-			// Case adding the content of this cell to an existing cell
+			// Case adding the content of this cell to an existing cell.
 			LOG.debug("Adding to existing cell: %s --> %s", cell, existingCell);
 			// Adding to existing is done through a special model. In some cases
 			// it requires special operations on the queue, due to the potential
@@ -118,38 +117,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			span.addToExisting(existingCell, cell, model);
 			LOG.debug("Added to cell: %s", existingCell);
 		}
-	}
-	
-	/**
-	 * Traditional expected features. Outside scores of complete parses that
-	 * pass the filter are set to 1.0, all others are set to 0.0.
-	 * 
-	 * @param filter
-	 * @return
-	 */
-	public IHashVector expectedFeatures(final IFilter<MR> filter) {
-		return expectedFeatures(new IScorer<MR>() {
-			@Override
-			public double score(MR e) {
-				if (filter.isValid(e)) {
-					return 1.0;
-				} else {
-					return 0.0;
-				}
-			}
-		});
-	}
-	
-	public IHashVector expectedFeatures(IScorer<MR> initialScorer) {
-		// Step I: compute outside probabilities
-		// Initialize outside probabilities
-		initializeOutsideProbabilities(initialScorer);
-		
-		// Propagate outside probabilities
-		propagateOutsideProbabilities();
-		
-		// Step II: Collected expected features
-		return collectExpectedFeatures();
 	}
 	
 	/**
@@ -174,7 +141,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	
 	public List<CKYParse<MR>> getParseResults() {
 		// Need a bounded queue here to make sure we don't return more than the
-		// beam, because lexical cells might exist outside of the beam
+		// beam, because lexical cells might exist outside of the beam.
 		final OrderInvariantBoundedPriorityQueue<CKYParse<MR>> ret = new OrderInvariantBoundedPriorityQueue<CKYParse<MR>>(
 				beamSize, new Comparator<CKYParse<MR>>() {
 					@Override
@@ -211,10 +178,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	
 	/**
 	 * Return an iterator over the cells in a given span.
-	 * 
-	 * @param startIndex
-	 * @param endIndex
-	 * @return
 	 */
 	public Iterator<Cell<MR>> getSpanIterator(int startIndex, int endIndex) {
 		return getSpanIterator(startIndex, endIndex, null);
@@ -222,10 +185,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	
 	/**
 	 * Return a sorted iterator over the cells in a given span.
-	 * 
-	 * @param startIndex
-	 * @param endIndex
-	 * @return
 	 */
 	public Iterator<Cell<MR>> getSpanIterator(int startIndex, int endIndex,
 			Comparator<Cell<MR>> comparator) {
@@ -263,33 +222,58 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	}
 	
 	/**
-	 * Compute the total probability of all parses with their root category
-	 * passing the filter.
-	 * 
-	 * @param filter
-	 * @return
+	 * Traditional expected features. Log outside scores of complete parses that
+	 * pass the filter are set to 0.0, all others are set to NEGATIVE_INFINITE.
 	 */
-	public double norm(IFilter<MR> filter) {
-		double norm = 0.0;
-		for (final Cell<MR> c : fullparses()) {
+	public IHashVector logExpectedFeatures(final IFilter<MR> filter) {
+		return logExpectedFeatures(new IScorer<MR>() {
+			@Override
+			public double score(MR e) {
+				if (filter.isValid(e)) {
+					return 0.0;
+				} else {
+					return Double.NEGATIVE_INFINITY;
+				}
+			}
+		});
+	}
+	
+	public IHashVector logExpectedFeatures(IScorer<MR> initialScorer) {
+		// Step I: compute outside probabilities.
+		// Initialize outside probabilities.
+		initializeLogOutsideProbabilities(initialScorer);
+		
+		// Propagate outside probabilities.
+		propagateLogOutsideProbabilities();
+		
+		// Step II: Collected expected features.
+		return collectLogExpectedFeatures();
+	}
+	
+	/**
+	 * Compute the log norm for all complete parses that pass the filter.
+	 */
+	public double logNorm(IFilter<MR> filter) {
+		final List<Cell<MR>> fullParses = fullparses();
+		final List<Double> logInsideScores = new ArrayList<Double>(
+				fullParses.size());
+		for (final Cell<MR> c : fullParses) {
 			if (filter.isValid(c.getCategory().getSem())) {
-				norm += c.getInsideScore();
+				logInsideScores.add(c.getLogInsideScore());
 			}
 		}
-		return norm;
+		return LogSumExp.of(logInsideScores);
 	}
 	
 	/**
 	 * Flag all cells that participate in the parses with the highest score that
 	 * lead to given semantics.
-	 * 
-	 * @param semantics
 	 */
 	public void setMaxes(MR semantics) {
-		// First, clear out all of the maxes
+		// First, clear out all of the maxes.
 		resetMaxes();
 		
-		// Find the max parses for the given expression
+		// Find the max parses for the given expression.
 		final List<Cell<MR>> maxCells = new LinkedList<Cell<MR>>();
 		double highest = -Double.MAX_VALUE;
 		for (final Cell<MR> cell : fullparses()) {
@@ -304,12 +288,12 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			}
 		}
 		
-		// Flag the cells found as participating in max-score parse
+		// Flag the cells found as participating in max-score parse.
 		for (final Cell<MR> cell : maxCells) {
 			cell.setIsMax(true);
 		}
 		
-		// Propagate the max flags through the chart
+		// Propagate the max flags through the chart.
 		propogateMaxes();
 	}
 	
@@ -353,10 +337,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	/**
 	 * Add entry to chart and do pruning on the cell that it's added to if there
 	 * are pruneN entries already there
-	 * 
-	 * @param begin
-	 * @param end
-	 * @param cell
 	 */
 	private void addNew(Cell<MR> cell) {
 		
@@ -377,19 +357,20 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	}
 	
 	/**
-	 * Iterates over the chart and collects expected feature values. Assumes
-	 * outside probabilities were computed.
-	 * 
-	 * @return
+	 * Iterates over the chart and collects log expected feature values. Assumes
+	 * log outside scores were computed.
 	 */
-	private IHashVector collectExpectedFeatures() {
+	private IHashVector collectLogExpectedFeatures() {
 		final IHashVector feats = HashVectorFactory.create();
 		for (int len = sentenceLength - 1; len >= 0; len--) {
 			for (int begin = 0; begin < sentenceLength - len; begin++) {
 				final Iterator<Cell<MR>> i = getSpanIterator(begin, begin + len);
 				while (i.hasNext()) {
 					final Cell<MR> c = i.next();
-					c.collectExpectedFeatures(feats);
+					c.collectLogExpectedFeatures(feats);
+					if (feats.isBad()) {
+						System.out.println("boo");
+					}
 				}
 			}
 		}
@@ -408,12 +389,12 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		return result;
 	}
 	
-/**
-		 * Initializes outside probabilities based on the given filter in preparation to propagate them (see {@link #propagateOutsideProbabilities()).
-		 * 
-		 * @param initialScorer
-		 */
-	private void initializeOutsideProbabilities(IScorer<MR> initialScorer) {
+	/**
+	 * Initializes log outside probabilities based on the given filter in
+	 * preparation to propagate them (see
+	 * {@link #propagateLogOutsideProbabilities()).
+	 */
+	private void initializeLogOutsideProbabilities(IScorer<MR> initialScorer) {
 		// First, init all outside probabilities. All roots of complete parses
 		// are scored using the given scorer.
 		for (int len = sentenceLength - 1; len >= 0; len--) {
@@ -421,35 +402,34 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				final Iterator<Cell<MR>> spanIterator = getSpanIterator(begin,
 						begin + len);
 				while (spanIterator.hasNext()) {
-					spanIterator.next().initializeOutsideProbabilities(
+					spanIterator.next().initializeLogOutsideProbabilities(
 							initialScorer);
 				}
 			}
 		}
-		
 	}
 	
 	/**
-	 * Propagates outside probabilities. Assumes that all appropriate source
-	 * cells were initialized appropriately (usually to 1.0) and the others were
-	 * initialized to 0.0.
+	 * Propagates log outside probabilities. Assumes that all appropriate source
+	 * cells were initialized.
 	 */
-	private void propagateOutsideProbabilities() {
-		// Iterate over all spans from the entire sentence to the token level
+	private void propagateLogOutsideProbabilities() {
+		// Iterate over all spans from the entire sentence to the token level.
 		for (int len = sentenceLength - 1; len >= 0; len--) {
 			for (int begin = 0; begin < sentenceLength - len; begin++) {
-				// Must first process unary derivation steps
+				// Must first process unary derivation steps.
 				final Iterator<Cell<MR>> unarySpanIterator = getSpanIterator(
 						begin, begin + len);
 				while (unarySpanIterator.hasNext()) {
-					unarySpanIterator.next().updateUnaryChildrenOutsideScore();
+					unarySpanIterator.next()
+							.updateUnaryChildrenLogOutsideScore();
 				}
 				// Now do the rest of the steps (i.e., results of binary steps)
 				final Iterator<Cell<MR>> binarySpanIterator = getSpanIterator(
 						begin, begin + len);
 				while (binarySpanIterator.hasNext()) {
 					binarySpanIterator.next()
-							.updateBinaryChildrenOutsideScore();
+							.updateBinaryChildrenLogOutsideScore();
 				}
 			}
 		}

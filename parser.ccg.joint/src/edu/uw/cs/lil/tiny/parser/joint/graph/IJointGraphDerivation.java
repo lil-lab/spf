@@ -36,10 +36,8 @@ public interface IJointGraphDerivation<MR, ERESULT> extends
 		IJointDerivation<MR, ERESULT> {
 	
 	/**
-	 * Exponentiated inside score.
-	 * 
-	 * @return
+	 * Log inside score.
 	 */
-	double getInsideScore();
+	double getLogInsideScore();
 	
 }

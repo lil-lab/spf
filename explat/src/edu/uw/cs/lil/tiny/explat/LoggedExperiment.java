@@ -39,40 +39,46 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public abstract class LoggedExperiment extends ParameterizedExperiment {
 	public static final ILogger	LOG	= LoggerFactory
 											.create(LoggedExperiment.class);
+	private final boolean		closeDefaultLog;
 	protected final File		outputDir;
 	
 	public LoggedExperiment(File file, Map<String, String> envParams,
 			ResourceCreatorRepository creatorRepo) throws IOException {
 		super(file, envParams, creatorRepo);
 		
-		// TODO [yoav] Find a place to close the default log, if opened a
-		// stream for it
-		
-		// Output directory
+		// Output directory.
 		this.outputDir = globalParams.contains("outputDir") ? globalParams
 				.getAsFile("outputDir") : null;
 		Assert.ifNull(outputDir);
-		// Create the directory, just to be on the safe side
+		// Create the directory, just to be on the safe side.
 		outputDir.mkdir();
 		
-		// Init logging and output stream
+		// Init logging and output stream.
 		final File globalLogFile = globalParams.contains("globalLog") ? globalParams
 				.getAsFile("globalLog") : null;
 		if (globalLogFile == null) {
 			Logger.DEFAULT_LOG = new Log(System.err);
+			this.closeDefaultLog = false;
 		} else {
 			LOG.info("Logging to: %s", globalLogFile);
 			Logger.DEFAULT_LOG = new Log(globalLogFile);
+			this.closeDefaultLog = true;
 		}
 		Logger.setSkipPrefix(true);
 		LogLevel.setLogLevel(LogLevel.INFO);
 		
-		// Log global parameters
+		// Log global parameters.
 		LOG.info("Parameters:");
 		for (final Pair<String, String> param : globalParams) {
 			LOG.info("%s=%s", param.first(), param.second());
 		}
 		
+	}
+	
+	public void end() {
+		if (closeDefaultLog) {
+			Logger.DEFAULT_LOG.close();
+		}
 	}
 	
 }

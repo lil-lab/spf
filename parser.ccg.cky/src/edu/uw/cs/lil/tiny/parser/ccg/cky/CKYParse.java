@@ -91,8 +91,8 @@ public class CKYParse<MR> implements IGraphParse<MR> {
 	}
 	
 	@Override
-	public double getInsideScore() {
-		return cell.getInsideScore();
+	public double getLogInsideScore() {
+		return cell.getLogInsideScore();
 	}
 	
 	public LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries() {

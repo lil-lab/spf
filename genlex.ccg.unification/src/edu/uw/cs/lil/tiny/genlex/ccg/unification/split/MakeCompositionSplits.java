@@ -56,7 +56,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  */
 public class MakeCompositionSplits implements ILogicalExpressionVisitor {
 	
-	public static final ILogger						LOG		= LoggerFactory
+	public static final ILogger							LOG		= LoggerFactory
 																		.create(MakeCompositionSplits.class
 																				.getName());
 	
@@ -474,8 +474,7 @@ public class MakeCompositionSplits implements ILogicalExpressionVisitor {
 	}
 	
 	private Set<SplittingPair> doSplitsForRecursivePredicate(Literal literal) {
-		if (LogicLanguageServices
-				.isCollpasiblePredicate(literal.getPredicate())) {
+		if (literal.getPredicateType() instanceof RecursiveComplexType) {
 			if (literal.getPredicateType().isOrderSensitive()) {
 				// Case order sensitive predicates, such as do_seq:<a+,a>
 				return doSplitsForRecursiveOrderSensitivePredicate(literal);

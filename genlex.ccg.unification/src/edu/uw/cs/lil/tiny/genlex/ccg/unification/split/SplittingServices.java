@@ -87,10 +87,9 @@ public class SplittingServices {
 			return newVar;
 		}
 		
-		// TODO [yoav] ugly solution, this list is redundant
-		final List<LogicalExpression> args = new ArrayList<LogicalExpression>(
-				argVars);
-		return new Literal(newVar, args);
+		// Wrapping the list, so we can use it to create a literal. Ugly
+		// solution, but welcome to the wonderful world of Java generics.
+		return new Literal(newVar, new ArrayList<LogicalExpression>(argVars));
 	}
 	
 	/**

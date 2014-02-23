@@ -16,17 +16,30 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  ******************************************************************************/
-package edu.uw.cs.lil.tiny.parser.ccg.rules;
+package edu.uw.cs.lil.tiny.utils.hashvector;
 
-import java.util.Collection;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector.EntryFunction;
+import edu.uw.cs.utils.math.LogSumExp;
 
-import edu.uw.cs.lil.tiny.ccg.categories.Category;
-
-public interface IUnaryParseRule<MR> {
+public class HashVectorUtils {
 	
-	/*
-	 * Takes a single category and applies the unary rule to it.
-	 */
-	Collection<ParseRuleResult<MR>> apply(Category<MR> category);
+	public HashVectorUtils() {
+		// Service class. Not instantiatable.
+	}
+	
+	public static void logSumExpAdd(final double logWeight,
+			IHashVectorImmutable source, final IHashVector target) {
+		source.iterate(new EntryFunction() {
+			@Override
+			public void apply(KeyArgs key, double value) {
+				// Compute the log of the weight time each feature,
+				// and aggregate it into the target vector.
+				target.set(key, LogSumExp.of(
+						target.get(key, Double.NEGATIVE_INFINITY),
+						Math.log(value) + logWeight));
+			}
+		});
+		
+	}
 	
 }

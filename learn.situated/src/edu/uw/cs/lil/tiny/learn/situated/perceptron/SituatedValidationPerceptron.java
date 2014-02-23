@@ -195,7 +195,7 @@ public class SituatedValidationPerceptron<SAMPLE extends ISituatedDataItem<Sente
 		}
 		
 		// Prune small entries from the update
-		update.dropSmallEntries();
+		update.dropNoise();
 		
 		// Validate the update
 		if (!model.isValidWeightVector(update)) {

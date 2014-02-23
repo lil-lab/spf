@@ -152,7 +152,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 					final IHashVector diff = correctParse
 							.getAverageMaxFeatureVector().addTimes(-1.0,
 									parse.getAverageMaxFeatureVector());
-					diff.dropSmallEntries();
+					diff.dropNoise();
 					LOG.info("Diff: %s", model.getTheta().printValues(diff));
 				}
 			}

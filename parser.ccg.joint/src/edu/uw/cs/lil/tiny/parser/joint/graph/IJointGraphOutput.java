@@ -66,20 +66,6 @@ public interface IJointGraphOutput<MR, ERESULT> extends
 	public List<? extends IJointGraphDerivation<MR, ERESULT>> getMaxDerivations(
 			IFilter<ERESULT> filter);
 	
-	/**
-	 * Compute non-normalized expected features values over all derivations. To
-	 * normalize, simply divide the vector by the normalization constant (
-	 * {@link #norm()}).
-	 */
-	IHashVector expectedFeatures();
-	
-	/**
-	 * Compute non-normalized expected features values over all derivations that
-	 * pass the filter. To normalize, simply divide the vector by the
-	 * normalization constant ({@link #norm()}).
-	 */
-	IHashVector expectedFeatures(IFilter<ERESULT> filter);;
-	
 	@Override
 	List<? extends IJointGraphDerivation<MR, ERESULT>> getMaxDerivations();
 	
@@ -88,12 +74,25 @@ public interface IJointGraphOutput<MR, ERESULT> extends
 			boolean includeFails);
 	
 	/**
-	 * Normalization constant.
+	 * Compute non-normalized log expected features values over all derivations.
+	 * To normalize, use the log normalization constant ( {@link #logNorm()}).
 	 */
-	double norm();
+	IHashVector logExpectedFeatures();
 	
 	/**
-	 * Normalization constant using a filter.
+	 * Compute non-normalized log expected features values over all derivations
+	 * that pass the filter. To normalize, use the log normalization constant (
+	 * {@link #logNorm()}).
 	 */
-	double norm(IFilter<ERESULT> filter);
+	IHashVector logExpectedFeatures(IFilter<ERESULT> filter);
+	
+	/**
+	 * Log normalization constant.
+	 */
+	double logNorm();
+	
+	/**
+	 * Log normalization constant using a filter.
+	 */
+	double logNorm(IFilter<ERESULT> filter);
 }

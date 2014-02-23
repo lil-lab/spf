@@ -18,100 +18,136 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.utils.hashvector;
 
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector.EntryFunction;
 import edu.uw.cs.utils.composites.Pair;
 
+/**
+ * The immutable portion of {@link IHashVector}.
+ * 
+ * @author Yoav Artzi
+ */
 public interface IHashVectorImmutable extends Iterable<Pair<KeyArgs, Double>> {
+	
 	/**
 	 * Multiply 'other' by 'times' and adds add it to the current vector and
 	 * returns the result in a new one. Doesn't modify the current vector.
-	 * 
-	 * @param times
-	 * @param other
-	 * @return
 	 */
-	IHashVector addTimes(final double times, final IHashVectorImmutable other);
+	IHashVector addTimes(double times, IHashVectorImmutable other);
 	
 	/**
-	 * Add this vector 'times' times into p.
-	 * 
-	 * @param times
-	 * @param p
+	 * Add this vector 'times' times into 'other'.
 	 */
-	void addTimesInto(final double times, final IHashVector p);
+	void addTimesInto(double times, IHashVector other);
+	
+	boolean contains(KeyArgs key);
+	
+	boolean contains(String arg1);
+	
+	boolean contains(String arg1, String arg2);
+	
+	boolean contains(String arg1, String arg2, String arg3);
+	
+	boolean contains(String arg1, String arg2, String arg3, String arg4);
+	
+	boolean contains(String arg1, String arg2, String arg3, String arg4,
+			String arg5);
 	
 	boolean equals(Object obj);
 	
 	double get(KeyArgs key);
 	
+	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue.
+	 */
+	double get(KeyArgs key, double defaultReturn);
+	
 	double get(String arg1);
+	
+	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue. The key is composed of the given arg1 with
+	 * all positions being null.
+	 */
+	double get(String arg1, double defaultReturn);
 	
 	double get(String arg1, String arg2);
 	
+	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue. The key is composed of the given arg1 and
+	 * arg2 with all positions being null.
+	 */
+	double get(String arg1, String arg2, double defaultReturn);
+	
 	double get(String arg1, String arg2, String arg3);
 	
+	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue. The key is composed of the given arg1, arg2
+	 * and arg3 with all positions being null.
+	 */
+	double get(String arg1, String arg2, String arg3, double defaultReturn);
+	
 	double get(String arg1, String arg2, String arg3, String arg4);
+	
+	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue. The key is composed of the given arg1, arg2,
+	 * arg3 and arg4 with all positions being null.
+	 */
+	double get(String arg1, String arg2, String arg3, String arg4,
+			double defaultReturn);
 	
 	double get(String arg1, String arg2, String arg3, String arg4, String arg5);
 	
 	/**
+	 * Get the value for the given key. If the key is not contained in the
+	 * vector, return defaultValue. The key is composed of the given arg1, arg2,
+	 * arg3, arg4 and arg5.
+	 */
+	double get(String arg1, String arg2, String arg3, String arg4, String arg5,
+			double defaultReturn);
+	
+	/**
 	 * Get all features with the given arg1. Any of the arguments may be null.
-	 * 
-	 * @param arg1
-	 * @return
 	 */
 	IHashVector getAll(String arg1);
 	
 	/**
 	 * Get all features with the given arg1 and arg2. Any of the arguments may
 	 * be null.
-	 * 
-	 * @param arg1
-	 * @param arg2
-	 * @return
 	 */
 	IHashVector getAll(String arg1, String arg2);
 	
 	/**
 	 * Get all features with the given arg1, arg2 and arg3. Any of the arguments
 	 * may be null.
-	 * 
-	 * @param arg1
-	 * @param arg2
-	 * @param arg3
-	 * @return
 	 */
 	IHashVector getAll(String arg1, String arg2, String arg3);
 	
 	/**
 	 * Get all features with the given arg1, arg2, arg3, and arg4. Any of the
 	 * arguments may be null.
-	 * 
-	 * @param arg1
-	 * @param arg2
-	 * @param arg3
-	 * @param arg4
-	 * @return
 	 */
-	IHashVector getAll(final String arg1, final String arg2, final String arg3,
-			final String arg4);
+	IHashVector getAll(String arg1, String arg2, String arg3, String arg4);
 	
 	/**
 	 * Get all features with the given arg1, arg2, arg3, arg4 and arg5. Any of
 	 * the arguments may be null.
-	 * 
-	 * @param arg1
-	 * @param arg2
-	 * @param arg3
-	 * @param arg4
-	 * @param arg5
-	 * @return
 	 */
-	IHashVector getAll(final String arg1, final String arg2, final String arg3,
-			final String arg4, String arg5);
+	IHashVector getAll(String arg1, String arg2, String arg3, String arg4,
+			String arg5);
 	
 	int hashCode();
 	
 	boolean isBad();
+	
+	/**
+	 * Iterate over all members in the vector. For each execute the given
+	 * function. Doesn't modify the vector.
+	 */
+	void iterate(EntryFunction function);
 	
 	double l1Norm();
 	
@@ -122,21 +158,18 @@ public interface IHashVectorImmutable extends Iterable<Pair<KeyArgs, Double>> {
 	 * 
 	 * @return New hash vector.
 	 */
-	IHashVector pairWiseProduct(final IHashVectorImmutable other);
+	IHashVector pairWiseProduct(IHashVectorImmutable other);
 	
-	String printValues(final IHashVectorImmutable other);
+	String printValues(IHashVectorImmutable other);
 	
 	int size();
 	
 	String toString();
 	
-	boolean valuesInRange(final double min, final double max);
+	boolean valuesInRange(double min, double max);
 	
 	/**
 	 * Vector multiplication.
-	 * 
-	 * @param other
-	 * @return
 	 */
-	double vectorMultiply(final IHashVectorImmutable other);
+	double vectorMultiply(IHashVectorImmutable other);
 }

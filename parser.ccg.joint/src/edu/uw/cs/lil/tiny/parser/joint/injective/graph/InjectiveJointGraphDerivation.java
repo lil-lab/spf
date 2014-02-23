@@ -51,11 +51,11 @@ public class InjectiveJointGraphDerivation<MR, ERESULT> extends
 	}
 	
 	@Override
-	public double getInsideScore() {
-		// The inside score is a multiplicative combination of the exponentiated
-		// inside score of the base parse (already exponentiated) and the
+	public double getLogInsideScore() {
+		// The log inside score is a addition of the log
+		// inside score of the base parse and the
 		// evaluation score.
-		return baseParse.getInsideScore() * Math.exp(execResult.getScore());
+		return baseParse.getLogInsideScore() + execResult.getScore();
 	}
 	
 	protected IGraphParse<MR> getBaseParse() {

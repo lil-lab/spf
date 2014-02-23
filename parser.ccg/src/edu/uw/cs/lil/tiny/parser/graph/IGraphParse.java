@@ -23,11 +23,9 @@ import edu.uw.cs.lil.tiny.parser.IParse;
 public interface IGraphParse<MR> extends IParse<MR> {
 	
 	/**
-	 * Exponentiated inside score (marginalizes over all trees for the parse's
-	 * logical form).
-	 * 
-	 * @return
+	 * Log un-normalized inside score (marginalizes over all trees for the
+	 * parse's category).
 	 */
-	double getInsideScore();
+	double getLogInsideScore();
 	
 }

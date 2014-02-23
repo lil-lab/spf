@@ -33,9 +33,13 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.log.ILogger;
+import edu.uw.cs.utils.log.LoggerFactory;
+import edu.uw.cs.utils.math.LogSumExp;
 
 /**
  * A single {@link Chart} cell of a specific span with specific syntax and
@@ -46,6 +50,8 @@ import edu.uw.cs.utils.composites.Pair;
  * @author Tom Kwiatkowski
  */
 public class Cell<MR> {
+	public static final ILogger						LOG					= LoggerFactory
+																				.create(Cell.class);
 	
 	/** The starting index of the span of the input string covered by this cell. */
 	private final int								begin;
@@ -69,11 +75,6 @@ public class Cell<MR> {
 	private boolean									hashCodeCalculated	= false;
 	
 	/**
-	 * Inside score (exponentiated).
-	 */
-	private double									insideScore			= 0;
-	
-	/**
 	 * A flag that the {@link Chart) can set to indicate this cell spans the
 	 * entire sentence, even if it's not a full parse.
 	 */
@@ -86,10 +87,12 @@ public class Cell<MR> {
 	
 	private boolean									isMax;
 	
+	private double									logInsideScore		= Double.NEGATIVE_INFINITY;
+	
 	/**
-	 * Outside score
+	 * Log outside score.
 	 */
-	private double									outsideScore		= 0;
+	private double									logOutsideScore		= Double.NEGATIVE_INFINITY;
 	
 	/**
 	 * Lists of derivation steps that created this cell
@@ -116,7 +119,7 @@ public class Cell<MR> {
 		this.begin = start;
 		this.end = end;
 		this.steps.add(parseStep);
-		updateInsideScore(parseStep);
+		updateScores(parseStep);
 	}
 	
 	protected Cell(CKYParseStep<MR> parseStep, int start, int end,
@@ -127,7 +130,7 @@ public class Cell<MR> {
 		this.begin = start;
 		this.end = end;
 		this.steps.add(parseStep);
-		updateInsideScore(parseStep);
+		updateScores(parseStep);
 	}
 	
 	/**
@@ -145,7 +148,7 @@ public class Cell<MR> {
 		boolean addedToMaxChildren = false;
 		for (final AbstractCKYParseStep<MR> derivationStep : other.steps) {
 			if (steps.add(derivationStep)) {
-				addedToMaxChildren |= updateInsideScore(derivationStep);
+				addedToMaxChildren |= updateScores(derivationStep);
 			}
 		}
 		return addedToMaxChildren;
@@ -207,12 +210,12 @@ public class Cell<MR> {
 		return end;
 	}
 	
-	public double getInsideScore() {
-		return insideScore;
-	}
-	
 	public boolean getIsMax() {
 		return isMax;
+	}
+	
+	public double getLogInsideScore() {
+		return logInsideScore;
 	}
 	
 	/**
@@ -470,24 +473,22 @@ public class Cell<MR> {
 	}
 	
 	/**
-	 * Add the given derivation step to the inside score. If necessary, add to
-	 * the list of viterbi steps and/or update the viterbi score.
-	 * 
-	 * @param derivationStep
+	 * Update the cell scores (viterbi and inside scores) given a new derivation
+	 * step. If necessary, the list of viterbi steps is also updated.
 	 */
-	private boolean updateInsideScore(AbstractCKYParseStep<MR> derivationStep) {
+	private boolean updateScores(AbstractCKYParseStep<MR> derivationStep) {
 		// Given the cells participating in the parse step (as children),
 		// compute the viterbi score of the step, the number of parses it
 		// represents and the value to add to the cell's inside score
 		double stepViterbiScore = derivationStep.getLocalScore();
 		int numParsesInStep = 1;
-		double addToInsideScore = Math.exp(derivationStep.getLocalScore());
+		double logAddToInsideScore = derivationStep.getLocalScore();
 		for (final Cell<MR> child : derivationStep) {
-			addToInsideScore *= child.getInsideScore();
+			logAddToInsideScore += child.getLogInsideScore();
 			stepViterbiScore += child.getViterbiScore();
 			numParsesInStep *= child.numParses;
 		}
-		insideScore += addToInsideScore;
+		logInsideScore = LogSumExp.of(logInsideScore, logAddToInsideScore);
 		
 		if (stepViterbiScore == viterbiScore) {
 			if (viterbiSteps.add(derivationStep)) {
@@ -509,43 +510,37 @@ public class Cell<MR> {
 	}
 	
 	/**
-	 * Update the cell's expected feature values to the given hash vector.
+	 * Update the cell's log expected feature values to the given hash vector.
 	 * Assumes outside and inside scores computed.
-	 * 
-	 * @param expectedFeatures
 	 */
-	void collectExpectedFeatures(IHashVector expectedFeatures) {
+	void collectLogExpectedFeatures(final IHashVector expectedFeatures) {
 		// Iterate over all derivations steps (incl. both lexical and
 		// non-lexical steps)
-		if (outsideScore != 0.0) {
+		if (logOutsideScore != Double.NEGATIVE_INFINITY) {
 			for (final AbstractCKYParseStep<MR> step : steps) {
 				// Accumulate the weight for using this parse step: the outside
 				// of the root, the inside of each child and the local score
 				// associated with the current step.
-				double weight = outsideScore * Math.exp(step.getLocalScore());
+				double logWeight = logOutsideScore + step.getLocalScore();
 				for (final Cell<MR> child : step) {
-					weight *= child.insideScore;
+					logWeight += child.logInsideScore;
 				}
 				// Update the weighted values of the local features into the
-				// result vector
-				step.getLocalFeatures().addTimesInto(weight, expectedFeatures);
+				// result vector.
+				HashVectorUtils.logSumExpAdd(logWeight,
+						step.getLocalFeatures(), expectedFeatures);
 			}
 		}
 	}
 	
 	/**
-	 * Init outside probability with a constraining semantic filter. Outside
-	 * probability will be set to 1.0 for every full parse that results in the
-	 * given semantic category.
-	 * 
-	 * @param constrainingCategory
-	 *            If null, no constraint on output category will be enforced.
+	 * Init outside probability with a constraining semantic filter.
 	 */
-	void initializeOutsideProbabilities(IScorer<MR> initialScorer) {
+	void initializeLogOutsideProbabilities(IScorer<MR> initialScorer) {
 		if (isFullParse()) {
-			outsideScore = initialScorer.score(category.getSem());
+			logOutsideScore = initialScorer.score(category.getSem());
 		} else {
-			outsideScore = 0.0;
+			logOutsideScore = Double.NEGATIVE_INFINITY;
 		}
 	}
 	
@@ -583,49 +578,42 @@ public class Cell<MR> {
 		}
 	}
 	
-	// TODO [yoav] understand this warning and resolve it
-	// WARNING: this will not work correctly if you have type shifting rules...
-	void recomputeInsideScore() {
-		numParses = 0;
-		viterbiSteps.clear();
-		// now add in the parsing steps
-		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
-			updateInsideScore(derivationStep);
-		}
-		
-	}
-	
 	void setIsMax(boolean isMax) {
 		this.isMax = isMax;
 	}
 	
 	/**
-	 * Compute the contribution of the current cell to the outside score of its
-	 * children, in all binary production for which it's the root. Assumes
-	 * inside score computed.
+	 * Compute the contribution of the current cell to the log outside score of
+	 * its children, in all binary production for which it's the root.
 	 */
-	void updateBinaryChildrenOutsideScore() {
-		// Iterate through all derivation steps: all ways of producing this cell
-		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
-			// Only process binary derivations steps
-			if (derivationStep.numChildren() == 2) {
-				final double score = Math.exp(derivationStep.getLocalScore());
-				final Cell<MR> child1 = derivationStep.getChildCell(0);
-				final Cell<MR> child2 = derivationStep.getChildCell(1);
-				child1.outsideScore += outsideScore * child2.insideScore
-						* score;
-				child2.outsideScore += outsideScore * child1.insideScore
-						* score;
+	void updateBinaryChildrenLogOutsideScore() {
+		if (logOutsideScore != Double.NEGATIVE_INFINITY) {
+			// Iterate through all derivation steps: all ways of producing this
+			// cell
+			for (final AbstractCKYParseStep<MR> derivationStep : steps) {
+				// Only process binary derivations steps
+				if (derivationStep.numChildren() == 2) {
+					final double logScore = derivationStep.getLocalScore();
+					final Cell<MR> child1 = derivationStep.getChildCell(0);
+					final Cell<MR> child2 = derivationStep.getChildCell(1);
+					child1.logOutsideScore = LogSumExp.of(
+							child1.logOutsideScore,
+							logOutsideScore + child2.getLogInsideScore()
+									+ logScore);
+					child2.logOutsideScore = LogSumExp.of(
+							child2.logOutsideScore,
+							logOutsideScore + child1.getLogInsideScore()
+									+ logScore);
+				}
 			}
 		}
 	}
 	
 	/**
-	 * Compute the contribution of the current cell to the outside score of its
-	 * children, in all unary production for which it's the root. Assumes inside
-	 * score computed.
+	 * Compute the contribution of the current cell to the log outside score of
+	 * its children, in all unary production for which it's the root.
 	 */
-	void updateUnaryChildrenOutsideScore() {
+	void updateUnaryChildrenLogOutsideScore() {
 		// Iterate through all derivation steps: all ways of producing this cell
 		for (final AbstractCKYParseStep<MR> derivationStep : steps) {
 			// Only process unary steps
@@ -636,8 +624,9 @@ public class Cell<MR> {
 				// non-terminal for a given span. For the unary case, there are
 				// no siblings, so no need to take any inside score into
 				// account, unlike the binary case.
-				derivationStep.getChildCell(0).outsideScore += outsideScore
-						* Math.exp(derivationStep.getLocalScore());
+				derivationStep.getChildCell(0).logOutsideScore = LogSumExp.of(
+						derivationStep.getChildCell(0).logOutsideScore,
+						logOutsideScore + derivationStep.getLocalScore());
 			}
 		}
 	}

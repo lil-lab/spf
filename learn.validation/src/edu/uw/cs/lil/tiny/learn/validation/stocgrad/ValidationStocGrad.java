@@ -45,6 +45,7 @@ import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.test.ITester;
 import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector.ValueFunction;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -137,32 +138,49 @@ public class ValidationStocGrad<SAMPLE extends IDataItem<SAMPLE>, DI extends ILa
 				return validate(dataItem, e);
 			}
 		};
-		final double conditionedNorm = goodOutput.norm(filter);
-		if (conditionedNorm == 0.0) {
-			// No positive update, skip the update
+		final double logConditionedNorm = goodOutput.logNorm(filter);
+		if (logConditionedNorm == Double.NEGATIVE_INFINITY) {
+			// No positive update, skip the update.
 			LOG.info("No positive update");
 			return;
 		} else {
-			// Case have complete valid parses
+			// Case have complete valid parses.
 			final IHashVector expectedFeatures = goodOutput
-					.expectedFeatures(filter);
-			expectedFeatures.divideBy(conditionedNorm);
-			LOG.info("Positive update: %s", expectedFeatures);
+					.logExpectedFeatures(filter);
+			expectedFeatures.add(-logConditionedNorm);
+			expectedFeatures.applyFunction(new ValueFunction() {
+				
+				@Override
+				public double apply(double value) {
+					return Math.exp(value);
+				}
+			});
+			expectedFeatures.dropNoise();
 			expectedFeatures.addTimesInto(1.0, update);
 			stats.hasValidParse(itemCounter, epochNumber);
+			LOG.info("Positive update: %s", expectedFeatures);
 		}
 		
 		// Step B: Compute the negative half of the update: expectation under
 		// the current model
-		final double norm = realOutput.norm();
-		if (norm != 0.0) {
-			// Case have complete parses
-			final IHashVector expectedFeatures = realOutput.expectedFeatures();
-			expectedFeatures.divideBy(norm);
-			LOG.info("Negative update: %s", expectedFeatures);
-			expectedFeatures.addTimesInto(-1.0, update);
+		final double logNorm = realOutput.logNorm();
+		if (logNorm == Double.NEGATIVE_INFINITY) {
+			LOG.info("No negative update.");
 		} else {
-			LOG.info("No negative update");
+			// Case have complete parses.
+			final IHashVector expectedFeatures = realOutput
+					.logExpectedFeatures();
+			expectedFeatures.add(-logNorm);
+			expectedFeatures.applyFunction(new ValueFunction() {
+				
+				@Override
+				public double apply(double value) {
+					return Math.exp(value);
+				}
+			});
+			expectedFeatures.dropNoise();
+			expectedFeatures.addTimesInto(-1.0, update);
+			LOG.info("Negative update: %s", expectedFeatures);
 		}
 		
 		// Step C: Apply the update
@@ -175,7 +193,7 @@ public class ValidationStocGrad<SAMPLE extends IDataItem<SAMPLE>, DI extends ILa
 		// Scale the update
 		final double scale = alpha0 / (1.0 + c * stocGradientNumUpdates);
 		update.multiplyBy(scale);
-		update.dropSmallEntries();
+		update.dropNoise();
 		stocGradientNumUpdates++;
 		LOG.info("Scale: %f", scale);
 		if (update.size() == 0) {
@@ -187,8 +205,8 @@ public class ValidationStocGrad<SAMPLE extends IDataItem<SAMPLE>, DI extends ILa
 		
 		// Check for NaNs and super large updates
 		if (update.isBad()) {
-			LOG.error("Bad update: %s -- norm: %f.4f -- feats: %s", update,
-					norm, null);
+			LOG.error("Bad update: %s -- log-norm: %.4f -- features:", update,
+					logNorm);
 			LOG.error(model.getTheta().printValues(update));
 			throw new IllegalStateException("bad update");
 		} else {

@@ -43,28 +43,30 @@ import edu.uw.cs.utils.counter.Counter;
 public class SingleSentence implements
 		ILabeledDataItem<Sentence, LogicalExpression> {
 	private static final long					serialVersionUID	= 5434665811874050978L;
-	private final Map<String, Counter>			predArgCounts;
-	private final Map<LogicalConstant, Counter>	predCounts;
+	private final Map<LogicalConstant, Counter>	constCounts;
 	
+	private final Map<String, Counter>			predArgCounts;
 	private final LogicalExpression				semantics;
+	
 	private final Sentence						sentence;
 	
 	public SingleSentence(Sentence sentence, LogicalExpression semantics) {
 		this.sentence = sentence;
 		this.semantics = semantics;
 		
-		// Prepare pruning data
-		predCounts = GetConstCounts.of(semantics);
+		// Prepare pruning data.
+		constCounts = GetConstCounts.of(semantics);
 		predArgCounts = GetConstHeadPairCounts.of(semantics);
 		
 		// Removed special predicates that we can't enforce strict count for:
-		// array index and sub predicates
-		final Iterator<Entry<LogicalConstant, Counter>> iterator = predCounts
+		// constants that may be removed during simplification and the array
+		// index predicate.
+		final Iterator<Entry<LogicalConstant, Counter>> iterator = constCounts
 				.entrySet().iterator();
 		while (iterator.hasNext()) {
 			final LogicalConstant pred = iterator.next().getKey();
-			if (LogicLanguageServices.isArrayIndexPredicate(pred)
-					|| LogicLanguageServices.isArraySubPredicate(pred)) {
+			if (LogicLanguageServices.isCollpasibleConstant(pred)
+					|| LogicLanguageServices.isArrayIndexPredicate(pred)) {
 				iterator.remove();
 			}
 		}
@@ -97,18 +99,22 @@ public class SingleSentence implements
 	
 	@Override
 	public boolean prune(LogicalExpression y) {
-		final Map<LogicalConstant, Counter> currentPredCounts = GetConstCounts
+		final Map<LogicalConstant, Counter> currentConstCounts = GetConstCounts
 				.of(y);
-		for (final Map.Entry<LogicalConstant, Counter> entry : currentPredCounts
+		for (final Map.Entry<LogicalConstant, Counter> entry : currentConstCounts
 				.entrySet()) {
-			if (predCounts.containsKey(entry.getKey())
-					&& predCounts.get(entry.getKey()).value() < entry
-							.getValue().value()) {
-				// Prune because of too many predicates
-				return true;
-			}
-			if (!predCounts.containsKey(entry.getKey())) {
-				return true;
+			// Ignore constants that we can't track properly.
+			if (!LogicLanguageServices.isCollpasibleConstant(entry.getKey())
+					&& !LogicLanguageServices.isArrayIndexPredicate(entry
+							.getKey())) {
+				if (!constCounts.containsKey(entry.getKey())) {
+					// Case the constant is not present in the label.
+					return true;
+				} else if (constCounts.get(entry.getKey()).value() < entry
+						.getValue().value()) {
+					// Case constant appears too many times.
+					return true;
+				}
 			}
 		}
 		
@@ -116,13 +122,12 @@ public class SingleSentence implements
 				.of(y);
 		for (final Map.Entry<String, Counter> entry : currentPredArgCounts
 				.entrySet()) {
-			if (predArgCounts.containsKey(entry.getKey())
-					&& predArgCounts.get(entry.getKey()).value() < entry
-							.getValue().value()) { // Prune because of too many
-													// predicates
-				return true;
-			}
 			if (!predArgCounts.containsKey(entry.getKey())) {
+				// Prune for unexpected pairing.
+				return true;
+			} else if (predArgCounts.get(entry.getKey()).value() < entry
+					.getValue().value()) {
+				// Prune because of too many pairs.
 				return true;
 			}
 		}
@@ -176,25 +181,35 @@ public class SingleSentence implements
 			final LogicalExpression pred = literal.getPredicate();
 			pred.accept(this);
 			int i = 0;
-			final boolean counting = !LogicLanguageServices
-					.isArrayIndexPredicate(pred)
-					&& !LogicLanguageServices.isArraySubPredicate(pred)
-					&& !LogicLanguageServices.isCoordinationPredicate(pred);
+			// Don't count for predicates that may disappear later by
+			// simplifying the logical expression.
+			final boolean counting = pred instanceof LogicalConstant
+					&& !LogicLanguageServices.isArrayIndexPredicate(pred)
+					&& !LogicLanguageServices.isCollpasibleConstant(pred);
 			for (final LogicalExpression arg : literal.getArguments()) {
 				final LogicalConstant head = GetHeadConst.of(arg);
+				// Skip arguments that might disappear later by simplifying the
+				// logical expression, but do visit them to check their
+				// sub-expressions.
 				if (counting && head != null
 						&& !LogicLanguageServices.isArrayIndexPredicate(head)
-						&& !LogicLanguageServices.isArraySubPredicate(head)
-						&& !LogicLanguageServices.isCoordinationPredicate(head)) {
-					final String id = literal.getPredicate().toString() + i
-							+ head;
+						&& !LogicLanguageServices.isCollpasibleConstant(head)) {
+					final String id = new StringBuilder(pred.toString())
+							.append(i).append(head).toString();
 					if (!constants.containsKey(id)) {
+						// TODO [yoav] [ugly] Use something better than a
+						// stringed ID
+						// here.
 						constants.put(id, new Counter());
 					}
 					constants.get(id).inc();
 				}
 				arg.accept(this);
-				i++;
+				if (literal.getPredicateType().isOrderSensitive()) {
+					// Increase the index for the next argument.
+					++i;
+				}
+				
 			}
 		}
 		
@@ -259,7 +274,7 @@ public class SingleSentence implements
 		
 		@Override
 		public void visit(Variable variable) {
-			// nothing to do, don't want to return a variable
+			// Nothing to do, don't want to return a variable.
 		}
 	}
 }

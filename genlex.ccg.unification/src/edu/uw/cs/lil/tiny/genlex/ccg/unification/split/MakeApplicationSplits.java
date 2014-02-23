@@ -58,7 +58,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
 public class MakeApplicationSplits {
 	
 	public static final ILogger	LOG	= LoggerFactory
-												.create(MakeApplicationSplits.class);
+											.create(MakeApplicationSplits.class);
 	
 	private MakeApplicationSplits() {
 	}
@@ -509,9 +509,7 @@ public class MakeApplicationSplits {
 					// If the predicate is a variable, we completely skip
 					// processing it (we might still extract its arguments)
 					continue;
-				} else if (literal.getPredicateType() instanceof RecursiveComplexType
-						&& LogicLanguageServices.isCollpasiblePredicate(literal
-								.getPredicate())) {
+				} else if (literal.getPredicateType() instanceof RecursiveComplexType) {
 					// If this the predicate is a recursive predicate, handle it
 					// with respect to its order sensitivity. Here we handle
 					// with pulling out subsets of the arguments, but not the

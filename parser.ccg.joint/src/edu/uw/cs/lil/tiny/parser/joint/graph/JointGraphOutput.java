@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.graph;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,12 +29,14 @@ import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.AbstractJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
+import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
 import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.FilterUtils;
 import edu.uw.cs.utils.filter.IFilter;
+import edu.uw.cs.utils.math.LogSumExp;
 
 /**
  * Joint graph-based inference output. Doesn't support fancy dynamic programming
@@ -62,12 +65,17 @@ public class JointGraphOutput<MR, ERESULT> extends
 	}
 	
 	@Override
-	public IHashVector expectedFeatures() {
-		return expectedFeatures(FilterUtils.<ERESULT> stubTrue());
+	public IGraphParserOutput<MR> getBaseParserOutput() {
+		return baseOutput;
 	}
 	
 	@Override
-	public IHashVector expectedFeatures(IFilter<ERESULT> filter) {
+	public IHashVector logExpectedFeatures() {
+		return logExpectedFeatures(FilterUtils.<ERESULT> stubTrue());
+	}
+	
+	@Override
+	public IHashVector logExpectedFeatures(IFilter<ERESULT> filter) {
 		// Init derivations outside scores. In practice, prune the joint
 		// derivation using the filter and implicitly give each an outside score
 		// of 1.0.
@@ -122,47 +130,43 @@ public class JointGraphOutput<MR, ERESULT> extends
 		};
 		
 		// Get expected features from base parser output.
-		final IHashVector expectedFeatures = baseOutput
-				.expectedFeatures(scorer);
+		final IHashVector logExpectedFeatures = baseOutput
+				.logExpectedFeatures(scorer);
 		
 		// Add expected features from the execution result cells.
 		for (final JointGraphDerivation<MR, ERESULT> derivation : derivationsToUse) {
 			for (final Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair : derivation
 					.getInferencePairs()) {
-				// Explicitly multiplying by 1.0 here to account for the outside
-				// score of the evaluation, which is implicitly 1.0 (see above).
-				final double weight = Math.exp(pair.second().getScore())
-						* pair.first().getInsideScore() * 1.0;
-				pair.second().getFeatures()
-						.addTimesInto(weight, expectedFeatures);
+				// Explicitly adding 0.0 here to account for the outside
+				// score of the evaluation, which is implicitly log(1.0) = 0.0
+				// (see above).
+				final double logWeight = pair.second().getScore()
+						+ pair.first().getLogInsideScore() + 0.0;
+				HashVectorUtils.logSumExpAdd(logWeight, pair.second()
+						.getFeatures(), logExpectedFeatures);
 			}
 		}
 		
-		return expectedFeatures;
+		return logExpectedFeatures;
 	}
 	
 	@Override
-	public IGraphParserOutput<MR> getBaseParserOutput() {
-		return baseOutput;
+	public double logNorm() {
+		return logNorm(FilterUtils.<ERESULT> stubTrue());
 	}
 	
 	@Override
-	public double norm() {
-		return norm(FilterUtils.<ERESULT> stubTrue());
-	}
-	
-	@Override
-	public double norm(IFilter<ERESULT> filter) {
-		double norm = 0.0;
-		// Iterate over all result cells
+	public double logNorm(IFilter<ERESULT> filter) {
+		final List<Double> logInsideScores = new ArrayList<Double>(
+				derivations.size());
 		for (final JointGraphDerivation<MR, ERESULT> derivation : derivations) {
-			// Test the result with the filter
+			// Test the result with the filter.
 			if (filter.isValid(derivation.getResult())) {
-				// Sum inside score
-				norm += derivation.getInsideScore();
+				logInsideScores.add(derivation.getLogInsideScore());
 			}
 		}
-		return norm;
+		// Do the log-sum-exp trick and return the log of the sum.
+		return LogSumExp.of(logInsideScores);
 	}
 	
 	public static class Builder<MR, ERESULT> {

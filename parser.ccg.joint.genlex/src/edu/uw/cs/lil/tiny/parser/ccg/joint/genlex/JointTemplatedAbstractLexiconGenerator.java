@@ -74,7 +74,7 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * all GENLEX entries that participate in complete parses that score higher that
  * the best pre-generation valid parse are collected. Using their tokens and
  * templates, a new lexicon is generated using all possible constants (from the
- * ontology). This lexicon is returned. TODO Update javadoc
+ * ontology). This lexicon is returned. TODO [yoav] [update] javadoc
  * 
  * @author Yoav Artzi
  */

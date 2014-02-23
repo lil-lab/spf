@@ -124,7 +124,9 @@ public class UnificationGenlex<DI extends SingleSentence>
 		
 		final Chart<LogicalExpression> chart = parserOutput.getChart();
 		
-		// TODO [yoav] Should we support merge operations too?
+		// TODO [yoav] [feature] If we want to support merge operations, we
+		// should insert
+		// it here.
 		
 		// Iterate over each nonterminal in the highest scoring parse in the
 		// chart to collect potential splits
@@ -160,8 +162,12 @@ public class UnificationGenlex<DI extends SingleSentence>
 					entries.addAll(split.left.getViterbiLexicalEntries());
 				}
 				
-				// TODO [yoav] Should we remove the old root used for each
-				// split? Not really possible with an immutable model
+				// NOTE: In the original version of UBL the root of the new
+				// split was removed. However, this version doesn't support
+				// this. The root lexical entry remains in the model. It's not
+				// likely to be used, at least not immediately, since it's
+				// scored lower than the new entries (this is how they were
+				// selected).
 			}
 		} else {
 			LOG.debug("Skipped addings splits due to %d ties", splits.size());
@@ -211,7 +217,8 @@ public class UnificationGenlex<DI extends SingleSentence>
 			for (int splittingPoint = begin; splittingPoint < end; splittingPoint++) {
 				// Create new lexical entries
 				
-				// TODO [yoav] Factoring so templates and lexemes participating
+				// TODO [yoav] [limitation] Factoring so templates and lexemes
+				// participating
 				// can be scored by the relevant feature sets. However, this
 				// gives only the maximal factoring, which misses the option of
 				// adding non maximal ones.
@@ -238,7 +245,7 @@ public class UnificationGenlex<DI extends SingleSentence>
 				// because we will be doing lots of splits and evaluating how
 				// much each would help on the same chart, without actually
 				// adding each potential option (or rebuilding the chart each
-				// time, etc)
+				// time, etc).
 				
 				final IDataItemModel<LogicalExpression> dataItemModel = model
 						.createDataItemModel(dataItem.getSample());
@@ -333,12 +340,8 @@ public class UnificationGenlex<DI extends SingleSentence>
 				@SuppressWarnings("unchecked")
 				@Override
 				public boolean isValid(LogicalExpression e) {
-					if (dataItem instanceof ILossDataItem) {
-						return !((ILossDataItem<Sentence, LogicalExpression>) dataItem)
-								.prune(e);
-					} else {
-						return true;
-					}
+					return !((ILossDataItem<Sentence, LogicalExpression>) dataItem)
+							.prune(e);
 				}
 			};
 		} else {

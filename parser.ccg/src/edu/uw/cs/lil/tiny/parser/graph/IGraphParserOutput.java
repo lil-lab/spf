@@ -37,49 +37,46 @@ public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	@Override
 	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter);
 	
-	/**
-	 * Compute non-normalized expected features values over all complete parses.
-	 * To normalize, simply divide the vector by the normalization constant (
-	 * {@link #norm()}).
-	 */
-	IHashVector expectedFeatures();
-	
-	/**
-	 * Compute non-normalized expected features values over all complete parses
-	 * that pass the filter. To normalize, simply divide the vector by the
-	 * normalization constant ({@link #norm()}).
-	 */
-	IHashVector expectedFeatures(IFilter<MR> filter);
-	
-	/**
-	 * Computes expected feature values over all complete parses. Outside scores
-	 * of roots of complete parses are used using the gives scorer.
-	 * 
-	 * @param initialScorer
-	 * @return
-	 */
-	IHashVector expectedFeatures(IScorer<MR> initialScorer);
-	
+	@Override
 	List<? extends IGraphParse<MR>> getAllParses();
 	
+	@Override
 	List<? extends IGraphParse<MR>> getBestParses();
 	
 	@Override
 	List<? extends IGraphParse<MR>> getParses(IFilter<MR> filter);
 	
 	/**
-	 * Compute the normalization constant over all complete parses.
-	 * 
-	 * @return
+	 * Compute non-normalized log expected features values over all complete
+	 * parses. To normalize, use the log normalization constant (
+	 * {@link #logNorm()}).
 	 */
-	double norm();
+	IHashVector logExpectedFeatures();
 	
 	/**
-	 * Compute normalization constant over all complete parses that pass the
-	 * filter.
-	 * 
-	 * @param filter
-	 * @return
+	 * Compute non-normalized log expected features values over all complete
+	 * parses that pass the filter. To normalize, use the log normalization
+	 * constant ( {@link #logNorm()}).
 	 */
-	double norm(IFilter<MR> filter);
+	IHashVector logExpectedFeatures(IFilter<MR> filter);
+	
+	/**
+	 * Computes non-normalized log expected feature values over all complete
+	 * parses. Outside scores of roots of complete parses are used using the
+	 * gives scorer.To normalize, use the log normalization constant (
+	 * {@link #logNorm()}).
+	 */
+	IHashVector logExpectedFeatures(IScorer<MR> initialScorer);
+	
+	/**
+	 * Compute the log normalization constant over all complete parses.
+	 */
+	double logNorm();
+	
+	/**
+	 * Compute the log normalization constant over all complete parses that pass
+	 * the filter.
+	 */
+	double logNorm(IFilter<MR> filter);
+	
 }

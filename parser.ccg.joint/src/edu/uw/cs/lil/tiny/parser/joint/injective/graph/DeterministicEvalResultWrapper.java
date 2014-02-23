@@ -25,15 +25,15 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 /**
  * Very simple wrapper for an evaluation with a single step (i.e.,
- * deterministic). The evaluation step is simply the final evaluation result.
+ * deterministic). This means that all the information is present in the logical
+ * form and the final result, so the actual steps taken can be abstracted away.
+ * The evaluation step is simply the final evaluation result.
  * 
  * @author Yoav Artzi
- * @param <ESTEP>
- *            Semantics evaluation step.
  * @param <ERESULT>
  *            Semantics evaluation result.
  */
-public class DeterministicEvalResultWrapper<ESTEP, ERESULT> implements
+public class DeterministicEvalResultWrapper<ERESULT> implements
 		IEvaluation<ERESULT> {
 	
 	private IHashVectorImmutable					features	= null;
