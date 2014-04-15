@@ -18,9 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.lexical;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 /**
  * Lexical feature set that is independent of the data item.

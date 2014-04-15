@@ -22,5 +22,4 @@ import edu.uw.cs.lil.tiny.data.IDataItem;
 
 public interface IParseFeatureSet<DI extends IDataItem<?>, MR> extends
 		IParseFeatureSetImmutable<DI, MR> {
-	
 }

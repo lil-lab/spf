@@ -25,6 +25,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.concurrency.ITinyExecutor;
+import edu.uw.cs.lil.tiny.base.concurrency.TinyExecutorService;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory.Type;
+import edu.uw.cs.lil.tiny.base.string.StubStringFilter;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
@@ -51,6 +56,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.ccg.LogicalExpressionCategoryServices;
 import edu.uw.cs.lil.tiny.mr.lambda.ccg.SimpleFullParseFilter;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYUnaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.multi.MultiCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexemeFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexicalTemplateFeatureSet;
@@ -63,25 +69,19 @@ import edu.uw.cs.lil.tiny.parser.ccg.features.lambda.LogicalExpressionCoordinati
 import edu.uw.cs.lil.tiny.parser.ccg.model.LexiconModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.ModelLogger;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleSetBuilder;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.basic.PrepositionTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ForwardTypeRaisedComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.PluralExistentialTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ThatlessRelative;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.BackwardApplication;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.BackwardComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ForwardApplication;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ForwardComposition;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.PluralExistentialTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.ThatlessRelative;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeraising.ForwardTypeRaisedComposition;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.PrepositionTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.application.BackwardApplication;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.application.ForwardApplication;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.composition.BackwardComposition;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.composition.ForwardComposition;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.BackwardSkippingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.ForwardSkippingRule;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
-import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
-import edu.uw.cs.lil.tiny.utils.concurrency.TinyExecutorService;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory.Type;
-import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.ISerializableScorer;
 import edu.uw.cs.utils.collections.SetUtils;
 import edu.uw.cs.utils.log.ILogger;
@@ -162,8 +162,8 @@ public class GeoExpSimple {
 		// //////////////////////////////////////////////////
 		
 		final Set<LogicalConstant> unfactoredConstants = new HashSet<LogicalConstant>();
-		unfactoredConstants.add(LogicalConstant.parse("the:<<e,t>,e>"));
-		unfactoredConstants.add(LogicalConstant.parse("exists:<<e,t>,t>"));
+		unfactoredConstants.add(LogicalConstant.read("the:<<e,t>,e>"));
+		unfactoredConstants.add(LogicalConstant.read("exists:<<e,t>,t>"));
 		FactoredLexiconServices.set(unfactoredConstants);
 		
 		// //////////////////////////////////////////////////
@@ -211,38 +211,44 @@ public class GeoExpSimple {
 		final IGraphParser<Sentence, LogicalExpression> parser = new MultiCKYParser.Builder<LogicalExpression>(
 				categoryServices, executor, new SimpleFullParseFilter(
 						SetUtils.createSingleton((Syntax) Syntax.S)))
-				.addBinaryParseRule(
-						new CKYBinaryParsingRule<LogicalExpression>(
-								new RuleSetBuilder<LogicalExpression>()
-										.add(new ForwardComposition<LogicalExpression>(
-												categoryServices, false))
-										.add(new BackwardComposition<LogicalExpression>(
-												categoryServices, false))
-										.add(new ForwardApplication<LogicalExpression>(
-												categoryServices))
-										.add(new BackwardApplication<LogicalExpression>(
-												categoryServices))
-										.add(new PrepositionTypeShifting())
-										.build()))
 				.setPruneLexicalCells(true)
 				.setPreChartPruning(true)
 				.setMaxNumberOfCellsInSpan(50)
-				.addBinaryParseRule(
+				.addParseRule(
+						new CKYBinaryParsingRule<LogicalExpression>(
+								new ForwardComposition<LogicalExpression>(
+										categoryServices, 0)))
+				.addParseRule(
+						new CKYBinaryParsingRule<LogicalExpression>(
+								new BackwardComposition<LogicalExpression>(
+										categoryServices, 0)))
+				.addParseRule(
+						new CKYBinaryParsingRule<LogicalExpression>(
+								new ForwardApplication<LogicalExpression>(
+										categoryServices)))
+				.addParseRule(
+						new CKYBinaryParsingRule<LogicalExpression>(
+								new BackwardApplication<LogicalExpression>(
+										categoryServices)))
+				.addParseRule(
+						new CKYUnaryParsingRule<LogicalExpression>(
+								new PrepositionTypeShifting()))
+				.addParseRule(
 						new CKYBinaryParsingRule<LogicalExpression>(
 								new ForwardSkippingRule<LogicalExpression>(
 										categoryServices)))
-				.addBinaryParseRule(
+				.addParseRule(
 						new CKYBinaryParsingRule<LogicalExpression>(
 								new BackwardSkippingRule<LogicalExpression>(
 										categoryServices)))
-				.addBinaryParseRule(
+				.addParseRule(
 						new CKYBinaryParsingRule<LogicalExpression>(
 								new ForwardTypeRaisedComposition(
-										categoryServices, true)))
-				.addBinaryParseRule(
+										categoryServices)))
+				.addParseRule(
 						new CKYBinaryParsingRule<LogicalExpression>(
 								new ThatlessRelative(categoryServices)))
-				.addBinaryParseRule(
+				.addParseRule(
 						new CKYBinaryParsingRule<LogicalExpression>(
 								new PluralExistentialTypeShifting(
 										categoryServices))).build();

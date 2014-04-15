@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
@@ -32,8 +34,6 @@ import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 /**
  * Model for joint inference of parsing and logical form evaluation/execution.

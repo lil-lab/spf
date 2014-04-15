@@ -30,21 +30,32 @@ public interface ICategoryServices<MR> {
 	/**
 	 * Apply the function category to the argument category.
 	 * 
-	 * @param function
-	 * @param argument
 	 * @return null if the application fails.
 	 */
 	Category<MR> apply(ComplexCategory<MR> function, Category<MR> argument);
 	
 	/**
-	 * Compose the given categories, so the logical forms will compose to f(g).
+	 * Semantic application.
+	 */
+	MR apply(MR function, MR argument);
+	
+	/**
+	 * Compose the given categories, so the logical forms will compose to
+	 * primary(secondary).
 	 * 
-	 * @param fCategory
-	 * @param gCategory
 	 * @return null if the composition fails.
 	 */
-	Category<MR> compose(ComplexCategory<MR> fCategory,
-			ComplexCategory<MR> gCategory);
+	Category<MR> compose(ComplexCategory<MR> primary,
+			ComplexCategory<MR> secondary, int order);
+	
+	/**
+	 * Semantic composition.
+	 * 
+	 * @param order
+	 *            The order of the composition. Meaning, the depth of the shared
+	 *            variable in the secondary.
+	 */
+	MR compose(MR primary, MR secondary, int order);
 	
 	@Override
 	boolean equals(Object obj);
@@ -69,17 +80,12 @@ public interface ICategoryServices<MR> {
 	
 	/**
 	 * Given a string representation (single line) parse it into a category.
-	 * 
-	 * @param string
-	 * @return
 	 */
 	Category<MR> parse(String string);
 	
 	/**
 	 * Parse the semantics from the given string.
-	 * 
-	 * @param string
-	 * @return
 	 */
 	MR parseSemantics(String string);
+	
 }

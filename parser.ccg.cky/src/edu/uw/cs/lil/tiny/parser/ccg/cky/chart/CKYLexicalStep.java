@@ -18,72 +18,50 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
+import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.UnaryRuleName;
 
 public class CKYLexicalStep<MR> extends AbstractCKYParseStep<MR> implements
 		ILexicalParseStep<MR> {
 	
-	private final LexicalEntry<MR>	lexicalEntry;
-	private final IHashVector		localFeatures;
-	private final double			localScore;
+	public CKYLexicalStep(Category<MR> root, LexicalEntry<MR> lexicalEntry,
+			boolean isFullParse, IDataItemModel<MR> model) {
+		this(root, lexicalEntry, isFullParse, LEXICAL_DERIVATION_STEP_RULENAME,
+				model);
+	}
 	
 	public CKYLexicalStep(LexicalEntry<MR> lexicalEntry, boolean isFullParse,
 			IDataItemModel<MR> model) {
-		super(lexicalEntry.getCategory(), LEXICAL_DERIVATION_STEP_RULENAME,
-				isFullParse);
-		this.lexicalEntry = lexicalEntry;
-		this.localFeatures = model.computeFeatures(this);
-		this.localScore = model.score(this);
+		this(lexicalEntry.getCategory(), lexicalEntry, isFullParse,
+				LEXICAL_DERIVATION_STEP_RULENAME, model);
+	}
+	
+	private CKYLexicalStep(Category<MR> root, LexicalEntry<MR> lexicalEntry,
+			boolean isFullParse, RuleName ruleName, IDataItemModel<MR> model) {
+		super(root, lexicalEntry, ruleName, isFullParse, model);
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
+	public CKYLexicalStep<MR> cloneWithUnary(ParseRuleResult<MR> ruleResult,
+			IDataItemModel<MR> model) {
+		if (!(ruleResult.getRuleName() instanceof UnaryRuleName)) {
+			throw new IllegalStateException(
+					"Provided result is not from a unary rule: " + ruleResult);
 		}
-		if (!super.equals(obj)) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		@SuppressWarnings("unchecked")
-		final CKYLexicalStep<MR> other = (CKYLexicalStep<MR>) obj;
-		if (lexicalEntry == null) {
-			if (other.lexicalEntry != null) {
-				return false;
-			}
-		} else if (!lexicalEntry.equals(other.lexicalEntry)) {
-			return false;
-		}
-		return true;
+		return new CKYLexicalStep<MR>(ruleResult.getResultCategory(),
+				lexicalEntry, isFullParse,
+				ruleName.overload((UnaryRuleName) ruleResult.getRuleName()),
+				model);
 	}
 	
 	@Override
 	public LexicalEntry<MR> getLexicalEntry() {
 		return lexicalEntry;
-	}
-	
-	@Override
-	public IHashVector getLocalFeatures() {
-		return localFeatures;
-	}
-	
-	@Override
-	public double getLocalScore() {
-		return localScore;
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result
-				+ ((lexicalEntry == null) ? 0 : lexicalEntry.hashCode());
-		return result;
 	}
 	
 }

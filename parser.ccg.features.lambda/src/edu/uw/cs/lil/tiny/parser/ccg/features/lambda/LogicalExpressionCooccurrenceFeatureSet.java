@@ -22,6 +22,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.PowerSet;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
+import edu.uw.cs.lil.tiny.base.hashvector.KeyArgs;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
@@ -36,11 +41,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.visitor.GetHeadString;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.utils.PowerSet;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
-import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 

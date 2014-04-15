@@ -20,8 +20,8 @@ package edu.uw.cs.lil.tiny.parser.graph;
 
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.IFilter;
 
@@ -35,16 +35,16 @@ import edu.uw.cs.utils.filter.IFilter;
 public interface IGraphParserOutput<MR> extends IParserOutput<MR> {
 	
 	@Override
-	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter);
+	public List<? extends IGraphDerivation<MR>> getMaxParses(IFilter<MR> filter);
 	
 	@Override
-	List<? extends IGraphParse<MR>> getAllParses();
+	List<? extends IGraphDerivation<MR>> getAllParses();
 	
 	@Override
-	List<? extends IGraphParse<MR>> getBestParses();
+	List<? extends IGraphDerivation<MR>> getBestParses();
 	
 	@Override
-	List<? extends IGraphParse<MR>> getParses(IFilter<MR> filter);
+	List<? extends IGraphDerivation<MR>> getParses(IFilter<MR> filter);
 	
 	/**
 	 * Compute non-normalized log expected features values over all complete

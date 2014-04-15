@@ -19,8 +19,8 @@
 package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.exact;
 
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
+import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.IMarkedEntriesCounter;
@@ -36,17 +36,17 @@ public class ExactMarkedCell<MR> extends Cell<MR> implements
 	
 	private final int	numMarkedLexicalEntries;
 	
-	protected ExactMarkedCell(CKYLexicalStep<MR> parseStep, int start, int end,
-			boolean isCompleteSpan) {
+	@SuppressWarnings("rawtypes")
+	protected ExactMarkedCell(AbstractCKYParseStep<MR> parseStep, int start,
+			int end, boolean isCompleteSpan, int numMarkedLexicalEntries) {
 		super(parseStep, start, end, isCompleteSpan);
-		this.numMarkedLexicalEntries = parseStep.getLexicalEntry().getOrigin()
-				.equals(ILexiconGenerator.GENLEX_LEXICAL_ORIGIN) ? 1 : 0;
-	}
-	
-	protected ExactMarkedCell(CKYParseStep<MR> parseStep, int start, int end,
-			boolean isCompleteSpan, int numMarkedLexicalEntries) {
-		super(parseStep, start, end, isCompleteSpan);
-		this.numMarkedLexicalEntries = numMarkedLexicalEntries;
+		if (parseStep instanceof ILexicalParseStep) {
+			this.numMarkedLexicalEntries = ((ILexicalParseStep) parseStep)
+					.getLexicalEntry().getOrigin()
+					.equals(ILexiconGenerator.GENLEX_LEXICAL_ORIGIN) ? 1 : 0;
+		} else {
+			this.numMarkedLexicalEntries = numMarkedLexicalEntries;
+		}
 	}
 	
 	@Override

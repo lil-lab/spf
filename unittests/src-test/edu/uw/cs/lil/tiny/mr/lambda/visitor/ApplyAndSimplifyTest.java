@@ -35,22 +35,22 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test1() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:<e,t> (lambda $1:e (and:<t*,t> (boo:<e,t> $1) ($0 $1))))");
-		final LogicalExpression a1 = LogicalExpression.parse("doo:<e,t>");
+				.read("(lambda $0:<e,t> (lambda $1:e (and:<t*,t> (boo:<e,t> $1) ($0 $1))))");
+		final LogicalExpression a1 = LogicalExpression.read("doo:<e,t>");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected1 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (doo:<e,t> $0)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (doo:<e,t> $0)))");
 		assertTrue(String.format("%s != %s", r1, expected1),
 				expected1.equals(r1));
 	}
 	
 	@Test
 	public void test2() {
-		final LogicalExpression e1 = LogicalExpression.parse("goo:<<e,t>,t>");
-		final LogicalExpression a1 = LogicalExpression.parse("doo:<e,t>");
+		final LogicalExpression e1 = LogicalExpression.read("goo:<<e,t>,t>");
+		final LogicalExpression a1 = LogicalExpression.read("doo:<e,t>");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected1 = LogicalExpression
-				.parse("(goo:<<e,t>,t> doo:<e,t>)");
+				.read("(goo:<<e,t>,t> doo:<e,t>)");
 		assertTrue(String.format("%s != %s", r1, expected1),
 				expected1.equals(r1));
 	}
@@ -58,11 +58,11 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test3() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))");
-		final LogicalExpression a1 = LogicalExpression.parse("goo:e");
+				.read("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))");
+		final LogicalExpression a1 = LogicalExpression.read("goo:e");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected1 = LogicalExpression
-				.parse("(lambda $0:e (boo:<e,<e,t>> goo:e $0))");
+				.read("(lambda $0:e (boo:<e,<e,t>> goo:e $0))");
 		assertTrue(String.format("%s != %s", r1, expected1),
 				expected1.equals(r1));
 	}
@@ -70,11 +70,11 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test4() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(boo:<e,<e,t>> go:e)");
-		final LogicalExpression a1 = LogicalExpression.parse("bo:e");
+				.read("(boo:<e,<e,t>> go:e)");
+		final LogicalExpression a1 = LogicalExpression.read("bo:e");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected1 = LogicalExpression
-				.parse("(boo:<e,<e,t>> go:e bo:e)");
+				.read("(boo:<e,<e,t>> go:e bo:e)");
 		assertTrue(String.format("%s != %s", r1, expected1),
 				expected1.equals(r1));
 	}
@@ -82,11 +82,11 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test5() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(and:<t*,t> go:t)");
-		final LogicalExpression a1 = LogicalExpression.parse("do:t");
+				.read("(and:<t*,t> go:t)");
+		final LogicalExpression a1 = LogicalExpression.read("do:t");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected1 = LogicalExpression
-				.parse("(and:<t*,t> go:t do:t)");
+				.read("(and:<t*,t> go:t do:t)");
 		assertTrue(String.format("%s != %s", r1, expected1),
 				expected1.equals(r1));
 	}
@@ -94,8 +94,8 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test6() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(and:<t*,t> go:t do:t)");
-		final LogicalExpression a1 = LogicalExpression.parse("lo:t");
+				.read("(and:<t*,t> go:t do:t)");
+		final LogicalExpression a1 = LogicalExpression.read("lo:t");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		assertTrue(String.format("%s != %s", r1, null), r1 == null);
 	}
@@ -103,24 +103,24 @@ public class ApplyAndSimplifyTest {
 	@Test
 	public void test7() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:<e,<e,e>> ($0 "
+				.read("(lambda $0:<e,<e,e>> ($0 "
 						+ "(do_until:<e,<t,e>> (do:<e,e> turn:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> (front:<<e,t>,<e,t>> at:<e,t>)))) "
 						+ "(do_until:<e,<t,e>> (do:<e,e> travel:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> at:<e,t>)))))");
-		final LogicalExpression a1 = LogicalExpression.parse("do_seq:<e+,e>");
+		final LogicalExpression a1 = LogicalExpression.read("do_seq:<e+,e>");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		final LogicalExpression expected = LogicalExpression
-				.parse("(do_seq:<e+,e> (do_until:<e,<t,e>> (do:<e,e> turn:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> (front:<<e,t>,<e,t>> at:<e,t>)))) (do_until:<e,<t,e>> (do:<e,e> travel:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> at:<e,t>))))");
+				.read("(do_seq:<e+,e> (do_until:<e,<t,e>> (do:<e,e> turn:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> (front:<<e,t>,<e,t>> at:<e,t>)))) (do_until:<e,<t,e>> (do:<e,e> travel:e) (notempty:<<e,t>,t> (intersect:<<e,t>*,<e,t>> chair:<e,t> at:<e,t>))))");
 		assertTrue(String.format("%s != %s", r1, expected), r1.equals(expected));
 	}
 	
 	@Test
 	public void test8() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (p:<e,t> $0) (q:<e,t> $0)))");
+				.read("(lambda $0:e (and:<t*,t> (p:<e,t> $0) (q:<e,t> $0)))");
 		final LogicalExpression a1 = LogicalExpression
-				.parse("(a:<<e,t>,e> (lambda $0:e (r:<e,t> $0)))");
+				.read("(a:<<e,t>,e> (lambda $0:e (r:<e,t> $0)))");
 		final LogicalExpression expected = LogicalExpression
-				.parse("(and:<t*,t> (p:<e,t> (a:<<e,t>,e> (lambda $0:e (r:<e,t> $0)))) (q:<e,t> (a:<<e,t>,e> (lambda $1:e (r:<e,t> $1)))))");
+				.read("(and:<t*,t> (p:<e,t> (a:<<e,t>,e> (lambda $0:e (r:<e,t> $0)))) (q:<e,t> (a:<<e,t>,e> (lambda $1:e (r:<e,t> $1)))))");
 		final LogicalExpression r1 = ApplyAndSimplify.of(e1, a1);
 		assertTrue(String.format("%s != %s", r1, expected), r1.equals(expected));
 	}

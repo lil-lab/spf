@@ -47,17 +47,17 @@ public interface IParser<DI extends IDataItem<?>, MR> {
 			boolean allowWordSkipping, ILexicon<MR> tempLexicon,
 			Integer beamSize);
 	
-	IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+	IParserOutput<MR> parse(DI dataItem, IFilter<MR> filter,
 			IDataItemModel<MR> model);
 	
-	IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+	IParserOutput<MR> parse(DI dataItem, IFilter<MR> filter,
 			IDataItemModel<MR> model, boolean allowWordSkipping);
 	
-	IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+	IParserOutput<MR> parse(DI dataItem, IFilter<MR> filter,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon);
 	
-	IParserOutput<MR> parse(DI dataItem, IFilter<MR> pruningFilter,
+	IParserOutput<MR> parse(DI dataItem, IFilter<MR> filter,
 			IDataItemModel<MR> model, boolean allowWordSkipping,
 			ILexicon<MR> tempLexicon, Integer beamSize);
 	

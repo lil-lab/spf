@@ -21,7 +21,7 @@ package edu.uw.cs.lil.tiny.parser.joint.graph;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.AbstractJointDerivation;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
 import edu.uw.cs.utils.composites.Pair;
@@ -39,14 +39,14 @@ import edu.uw.cs.utils.math.LogSumExp;
  *            Semantics evaluation result.
  */
 public class JointGraphDerivation<MR, ERESULT> extends
-		AbstractJointDerivation<MR, ERESULT, IGraphParse<MR>> implements
+		AbstractJointDerivation<MR, ERESULT, IGraphDerivation<MR>> implements
 		IJointGraphDerivation<MR, ERESULT> {
 	
 	private final double	logInsideScore;
 	
 	public JointGraphDerivation(
-			List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>> maxPairs,
-			List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>> pairs,
+			List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>> maxPairs,
+			List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>> pairs,
 			ERESULT result, double viterbiScore, double logInsideScore) {
 		super(maxPairs, pairs, result, viterbiScore);
 		this.logInsideScore = logInsideScore;
@@ -58,7 +58,7 @@ public class JointGraphDerivation<MR, ERESULT> extends
 	}
 	
 	public static class Builder<MR, ERESULT> {
-		protected final List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>>();
+		protected final List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>>();
 		protected final ERESULT												result;
 		
 		public Builder(ERESULT result) {
@@ -66,7 +66,7 @@ public class JointGraphDerivation<MR, ERESULT> extends
 		}
 		
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair) {
+				Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair) {
 			// Verify the new pair leads to the same result as the rest.
 			if ((result != null || pair.second().getResult() != null)
 					&& !result.equals(pair.second().getResult())) {
@@ -80,8 +80,8 @@ public class JointGraphDerivation<MR, ERESULT> extends
 		public JointGraphDerivation<MR, ERESULT> build() {
 			double maxScore = -Double.MAX_VALUE;
 			double logInsideScore = Double.NEGATIVE_INFINITY;
-			final List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>>();
-			for (final Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
+			final List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>>();
+			for (final Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
 				// Viterbi score is for a linearly-weighted.
 				final double score = pair.first().getScore()
 						+ pair.second().getScore();

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.data.singlesentence;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -46,13 +47,20 @@ public class SingleSentence implements
 	private final Map<LogicalConstant, Counter>	constCounts;
 	
 	private final Map<String, Counter>			predArgCounts;
-	private final LogicalExpression				semantics;
+	private final Map<String, String>			properties;
 	
+	private final LogicalExpression				semantics;
 	private final Sentence						sentence;
 	
 	public SingleSentence(Sentence sentence, LogicalExpression semantics) {
+		this(sentence, semantics, new HashMap<String, String>());
+	}
+	
+	public SingleSentence(Sentence sentence, LogicalExpression semantics,
+			Map<String, String> properties) {
 		this.sentence = sentence;
 		this.semantics = semantics;
+		this.properties = Collections.unmodifiableMap(properties);
 		
 		// Prepare pruning data.
 		constCounts = GetConstCounts.of(semantics);
@@ -73,6 +81,11 @@ public class SingleSentence implements
 		
 	}
 	
+	private static boolean ignoreConstant(LogicalExpression pred) {
+		return LogicLanguageServices.isCollpasibleConstant(pred)
+				|| LogicLanguageServices.isArrayIndexPredicate(pred);
+	}
+	
 	@Override
 	public double calculateLoss(LogicalExpression label) {
 		if (label.equals(semantics)) {
@@ -87,6 +100,10 @@ public class SingleSentence implements
 		return semantics;
 	}
 	
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+	
 	@Override
 	public Sentence getSample() {
 		return sentence;
@@ -99,14 +116,13 @@ public class SingleSentence implements
 	
 	@Override
 	public boolean prune(LogicalExpression y) {
+		// Single constant counts.
 		final Map<LogicalConstant, Counter> currentConstCounts = GetConstCounts
 				.of(y);
 		for (final Map.Entry<LogicalConstant, Counter> entry : currentConstCounts
 				.entrySet()) {
 			// Ignore constants that we can't track properly.
-			if (!LogicLanguageServices.isCollpasibleConstant(entry.getKey())
-					&& !LogicLanguageServices.isArrayIndexPredicate(entry
-							.getKey())) {
+			if (!ignoreConstant(entry.getKey())) {
 				if (!constCounts.containsKey(entry.getKey())) {
 					// Case the constant is not present in the label.
 					return true;
@@ -118,6 +134,7 @@ public class SingleSentence implements
 			}
 		}
 		
+		// Constant pairs counts.
 		final Map<String, Counter> currentPredArgCounts = GetConstHeadPairCounts
 				.of(y);
 		for (final Map.Entry<String, Counter> entry : currentPredArgCounts
@@ -131,7 +148,6 @@ public class SingleSentence implements
 				return true;
 			}
 		}
-		
 		return false;
 	}
 	
@@ -184,16 +200,13 @@ public class SingleSentence implements
 			// Don't count for predicates that may disappear later by
 			// simplifying the logical expression.
 			final boolean counting = pred instanceof LogicalConstant
-					&& !LogicLanguageServices.isArrayIndexPredicate(pred)
-					&& !LogicLanguageServices.isCollpasibleConstant(pred);
+					&& !ignoreConstant(pred);
 			for (final LogicalExpression arg : literal.getArguments()) {
 				final LogicalConstant head = GetHeadConst.of(arg);
 				// Skip arguments that might disappear later by simplifying the
 				// logical expression, but do visit them to check their
 				// sub-expressions.
-				if (counting && head != null
-						&& !LogicLanguageServices.isArrayIndexPredicate(head)
-						&& !LogicLanguageServices.isCollpasibleConstant(head)) {
+				if (counting && head != null && !ignoreConstant(head)) {
 					final String id = new StringBuilder(pred.toString())
 							.append(i).append(head).toString();
 					if (!constants.containsKey(id)) {

@@ -21,13 +21,13 @@ package edu.uw.cs.lil.tiny.data.singlesentence.utils;
 import java.io.File;
 import java.io.IOException;
 
+import edu.uw.cs.lil.tiny.base.string.StubStringFilter;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentenceDataset;
 import edu.uw.cs.lil.tiny.mr.lambda.FlexibleTypeComparator;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.GetConstantsMultiSet;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.log.Log;
 import edu.uw.cs.utils.log.LogLevel;
@@ -60,7 +60,7 @@ public class CreateSentenceConstantsFile {
 		}
 		
 		// //////////////////////////////////////////
-		// Create output file.
+		// Print output file.
 		// //////////////////////////////////////////
 		
 		// Read input data.

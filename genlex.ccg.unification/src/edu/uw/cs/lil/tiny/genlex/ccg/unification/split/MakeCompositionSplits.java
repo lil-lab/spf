@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.PowerSet;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ComplexCategory;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
@@ -43,7 +44,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ReplaceExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType;
-import edu.uw.cs.lil.tiny.utils.PowerSet;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -121,7 +121,7 @@ public class MakeCompositionSplits implements ILogicalExpressionVisitor {
 		
 		// Test the split
 		final Category<LogicalExpression> newRoot = categoryServices.compose(
-				originalCategory, newCategory);
+				originalCategory, newCategory, 0);
 		if (!originalCategory.equals(newRoot)) {
 			LOG.error("ERROR: error in Cat composition split");
 			LOG.error("%s --> %s != $s", split, newRoot, originalCategory);
@@ -240,7 +240,7 @@ public class MakeCompositionSplits implements ILogicalExpressionVisitor {
 		
 		// Error checking
 		final Category<LogicalExpression> composed = categoryServices.compose(
-				fCategory, gCategory);
+				fCategory, gCategory, 0);
 		if (!originalCategory.equals(composed)) {
 			LOG.error("ERROR: bad Cat composition split");
 			LOG.error("%s ---> %s != %s", newSplit, composed, originalCategory);

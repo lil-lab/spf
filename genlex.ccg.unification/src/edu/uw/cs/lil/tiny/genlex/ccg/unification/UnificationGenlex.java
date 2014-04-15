@@ -44,7 +44,7 @@ import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.IUnificationSplitter;
 import edu.uw.cs.lil.tiny.genlex.ccg.unification.split.SplittingServices.SplittingPair;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
@@ -54,6 +54,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -99,7 +100,7 @@ public class UnificationGenlex<DI extends SingleSentence>
 		
 		// If no correct parses exist, create a new lexical entry for the
 		// complete sentence and return a lexicon contaning only it
-		final List<? extends IParse<LogicalExpression>> correctParses = parserOutput
+		final List<? extends IDerivation<LogicalExpression>> correctParses = parserOutput
 				.getMaxParses(new IFilter<LogicalExpression>() {
 					
 					@Override
@@ -300,8 +301,9 @@ public class UnificationGenlex<DI extends SingleSentence>
 				final Cell<LogicalExpression> newRootCell = cellFactory.create(
 						new CKYParseStep<LogicalExpression>(rootCategory,
 								leftCell, rightCell, cell.isFullParse(),
-								"splitMerge", dataItemModel), leftCell
-								.getStart(), rightCell.getEnd());
+								RuleName.create("splitMerge", null),
+								dataItemModel), leftCell.getStart(), rightCell
+								.getEnd());
 				
 				// Compute the score improvement
 				final double improvement = newRootCell.getViterbiScore()

@@ -30,7 +30,7 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
@@ -102,14 +102,14 @@ public class JointInferenceChartLogger<ESTEP, ERESULT> implements
 			}
 			
 			writer.write("\n\n");
-			for (final IParse<LogicalExpression> parse : CollectionUtils
+			for (final IDerivation<LogicalExpression> parse : CollectionUtils
 					.sorted(output.getBaseParserOutput().getAllParses(),
-							new Comparator<IParse<LogicalExpression>>() {
+							new Comparator<IDerivation<LogicalExpression>>() {
 								
 								@Override
 								public int compare(
-										IParse<LogicalExpression> o1,
-										IParse<LogicalExpression> o2) {
+										IDerivation<LogicalExpression> o1,
+										IDerivation<LogicalExpression> o2) {
 									final int comp = Double.compare(
 											o1.getScore(), o2.getScore());
 									return comp == 0 ? o1

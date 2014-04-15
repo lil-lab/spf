@@ -46,7 +46,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
@@ -141,7 +141,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 				final List<LogicalExpression> maxSemantics = parse
 						.getMaxSemantics();
 				for (final LogicalExpression semantics : maxSemantics) {
-					final List<? extends IParse<LogicalExpression>> maxParses = preModelParseOutput
+					final List<? extends IDerivation<LogicalExpression>> maxParses = preModelParseOutput
 							.getBaseParserOutput().getMaxParses(
 									new IFilter<LogicalExpression>() {
 										
@@ -151,7 +151,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 											return semantics.equals(e);
 										}
 									});
-					for (final IParse<LogicalExpression> baseParse : maxParses) {
+					for (final IDerivation<LogicalExpression> baseParse : maxParses) {
 						if (bestValidScore == null
 								|| baseParse.getScore() > bestValidScore) {
 							bestValidScore = baseParse.getScore();
@@ -196,14 +196,14 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		
 		// Remove parses with a score lower or equal to the best valid
 		// pre-generation parse
-		final LinkedList<IParse<LogicalExpression>> filteredParses = new LinkedList<IParse<LogicalExpression>>(
+		final LinkedList<IDerivation<LogicalExpression>> filteredParses = new LinkedList<IDerivation<LogicalExpression>>(
 				parserOutput.getAllParses());
 		if (thresholdScore != null && !filteredParses.isEmpty()) {
 			CollectionUtils.filterInPlace(filteredParses,
-					new IFilter<IParse<LogicalExpression>>() {
+					new IFilter<IDerivation<LogicalExpression>>() {
 						
 						@Override
-						public boolean isValid(IParse<LogicalExpression> e) {
+						public boolean isValid(IDerivation<LogicalExpression> e) {
 							LOG.debug(
 									"Abstract parse score: %f, threshold score: %f%s",
 									e.getScore(),
@@ -234,7 +234,7 @@ public class JointTemplatedAbstractLexiconGenerator<ESTEP, ERESULT, SAMPLE exten
 		// each template
 		final Map<List<Type>, Set<Pair<LexicalTemplate, List<String>>>> usedTemplatesAndTokens = new HashMap<List<Type>, Set<Pair<LexicalTemplate, List<String>>>>();
 		int counter = 0;
-		for (final IParse<LogicalExpression> parse : filteredParses) {
+		for (final IDerivation<LogicalExpression> parse : filteredParses) {
 			LOG.debug("Abstract parse: [%f] %s", parse.getScore(), parse);
 			for (final LexicalEntry<LogicalExpression> entry : parse
 					.getMaxLexicalEntries()) {

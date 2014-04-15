@@ -23,9 +23,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
+import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
 
 /**
  * A single CKY parse step.
@@ -36,19 +40,32 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 		IParseStep<MR> {
 	
-	private final List<Cell<MR>>	children;
-	private final boolean			isFullParse;
-	private final boolean			isUnary;
-	private final Category<MR>		root;
-	private final String			ruleName;
+	protected final List<Cell<MR>>		children;
+	protected final boolean				isFullParse;
+	protected final boolean				isUnary;
+	/**
+	 * If this is a lexical step, this is the entry that is responsible for it.
+	 * Otherwise, this is null. The lexical entry is included here to allow us
+	 * to initialize this member before we compute the local features and score.
+	 * Not an ideal solution. Better suggestions are welcome. It's only exposed
+	 * to the outside by the lexical step class, so it's a fairly isolated
+	 * issue.
+	 */
+	protected final LexicalEntry<MR>	lexicalEntry;
+	protected final IHashVector			localFeatures;
+	protected final double				localScore;
+	protected final Category<MR>		root;
+	
+	protected final RuleName			ruleName;
 	
 	public AbstractCKYParseStep(Category<MR> root, Cell<MR> child,
-			boolean isFulleParse, String ruleName) {
-		this(root, child, null, isFulleParse, ruleName);
+			boolean isFulleParse, RuleName ruleName, IDataItemModel<MR> model) {
+		this(root, child, null, isFulleParse, ruleName, model);
 	}
 	
 	public AbstractCKYParseStep(Category<MR> root, Cell<MR> leftChild,
-			Cell<MR> rightChild, boolean isFullParse, String ruleName) {
+			Cell<MR> rightChild, boolean isFullParse, RuleName ruleName,
+			IDataItemModel<MR> model) {
 		this.root = root;
 		this.isFullParse = isFullParse;
 		this.isUnary = rightChild == null;
@@ -63,16 +80,38 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 		}
 		this.children = Collections.unmodifiableList(list);
 		this.ruleName = ruleName;
+		this.lexicalEntry = null;
+		// Doing this in two separate steps due to the way lexical feature sets
+		// behave when scoring unknown lexical entries. Therefore, it's not
+		// possible to simply recycle the feature vector and multiply it by
+		// the model's weight vector (theta).
+		this.localFeatures = model.computeFeatures(this);
+		this.localScore = model.score(this);
 	}
 	
-	protected AbstractCKYParseStep(Category<MR> root, String ruleName,
-			boolean isFullParse) {
+	protected AbstractCKYParseStep(Category<MR> root,
+			LexicalEntry<MR> lexicalEntry, RuleName ruleName,
+			boolean isFullParse, IDataItemModel<MR> model) {
 		this.root = root;
+		this.lexicalEntry = lexicalEntry;
 		this.isFullParse = isFullParse;
 		this.isUnary = false;
 		this.ruleName = ruleName;
 		this.children = Collections.emptyList();
+		// Doing this in two separate steps due to the way lexical feature sets
+		// behave when scoring unknown lexical entries. Therefore, it's not
+		// possible to simply recycle the feature vector and multiply it by
+		// the model's weight vector (theta).
+		this.localFeatures = model.computeFeatures(this);
+		this.localScore = model.score(this);
 	}
+	
+	/**
+	 * Create a new step by replacing the root with the category of the result
+	 * and appending the result rule name to the step rule name.
+	 */
+	public abstract AbstractCKYParseStep<MR> cloneWithUnary(
+			ParseRuleResult<MR> ruleResult, IDataItemModel<MR> model);
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -85,8 +124,8 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		@SuppressWarnings("unchecked")
-		final AbstractCKYParseStep<MR> other = (AbstractCKYParseStep<MR>) obj;
+		@SuppressWarnings({ "rawtypes" })
+		final AbstractCKYParseStep other = (AbstractCKYParseStep) obj;
 		if (children == null) {
 			if (other.children != null) {
 				return false;
@@ -98,6 +137,13 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 			return false;
 		}
 		if (isUnary != other.isUnary) {
+			return false;
+		}
+		if (lexicalEntry == null) {
+			if (other.lexicalEntry != null) {
+				return false;
+			}
+		} else if (!lexicalEntry.equals(other.lexicalEntry)) {
 			return false;
 		}
 		if (root == null) {
@@ -126,9 +172,13 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 		return children.get(i);
 	}
 	
-	public abstract IHashVectorImmutable getLocalFeatures();
+	public IHashVector getLocalFeatures() {
+		return localFeatures;
+	}
 	
-	public abstract double getLocalScore();
+	public double getLocalScore() {
+		return localScore;
+	}
 	
 	@Override
 	public Category<MR> getRoot() {
@@ -136,7 +186,7 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 	}
 	
 	@Override
-	public String getRuleName() {
+	public RuleName getRuleName() {
 		return ruleName;
 	}
 	
@@ -148,6 +198,8 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 				+ ((children == null) ? 0 : children.hashCode());
 		result = prime * result + (isFullParse ? 1231 : 1237);
 		result = prime * result + (isUnary ? 1231 : 1237);
+		result = prime * result
+				+ ((lexicalEntry == null) ? 0 : lexicalEntry.hashCode());
 		result = prime * result + ((root == null) ? 0 : root.hashCode());
 		result = prime * result
 				+ ((ruleName == null) ? 0 : ruleName.hashCode());
@@ -192,6 +244,9 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 				ret.append(", ");
 			}
 		}
+		ret.append(" :: localFeatures=").append(localFeatures);
+		ret.append(":: localScore=").append(localScore);
+		ret.append("]");
 		
 		return ret.toString();
 	}

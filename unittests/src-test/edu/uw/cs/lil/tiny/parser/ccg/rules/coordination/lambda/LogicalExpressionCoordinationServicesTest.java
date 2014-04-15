@@ -18,8 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.rules.coordination.lambda;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.uw.cs.lil.tiny.TestServices;
@@ -40,6 +41,7 @@ public class LogicalExpressionCoordinationServicesTest {
 				TestServices.getCategoryServices());
 	}
 	
+	@Ignore
 	@Test
 	public void test() {
 		// cities or towns named springfield
@@ -58,6 +60,7 @@ public class LogicalExpressionCoordinationServicesTest {
 		Assert.assertEquals(expected, actual);
 	}
 	
+	@Ignore
 	@Test
 	public void test2() {
 		// states border colorado and border new mexico

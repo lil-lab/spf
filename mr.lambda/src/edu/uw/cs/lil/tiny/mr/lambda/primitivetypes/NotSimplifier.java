@@ -45,7 +45,7 @@ public class NotSimplifier implements IPredicateSimplifier {
 			if (literal.getArguments().size() == 1) {
 				if (literal.getArguments().get(0) instanceof Literal
 						&& ((Literal) literal.getArguments().get(0))
-								.getPredicate() == literal.getPredicate()) {
+								.getPredicate().equals(literal.getPredicate())) {
 					// Case the only argument is a 'not:t' literal, so return
 					// its
 					// single argument

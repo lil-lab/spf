@@ -37,7 +37,7 @@ import edu.uw.cs.lil.tiny.learn.OnlineLearningStats;
 import edu.uw.cs.lil.tiny.learn.validation.perceptron.ValidationPerceptron;
 import edu.uw.cs.lil.tiny.learn.validation.stocgrad.ValidationStocGrad;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
@@ -191,9 +191,9 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					stats.recordModelParsing(parserOutput.getParsingTime());
 					parserOutputLogger.log(parserOutput, dataItemModel);
 					
-					final List<? extends IParse<MR>> modelParses = parserOutput
+					final List<? extends IDerivation<MR>> modelParses = parserOutput
 							.getAllParses();
-					final List<? extends IParse<MR>> bestModelParses = parserOutput
+					final List<? extends IDerivation<MR>> bestModelParses = parserOutput
 							.getBestParses();
 					
 					LOG.info("Model parsing time: %.4fsec",
@@ -202,7 +202,7 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 							: "approximate");
 					LOG.info("Created %d model parses for training sample:",
 							modelParses.size());
-					for (final IParse<MR> parse : modelParses) {
+					for (final IDerivation<MR> parse : modelParses) {
 						logParse(dataItem, parse,
 								validate(dataItem, parse.getSemantics()), true,
 								dataItemModel);
@@ -217,7 +217,7 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					}
 					
 					// Create a list of all valid parses
-					final List<? extends IParse<MR>> validParses = getValidParses(
+					final List<? extends IDerivation<MR>> validParses = getValidParses(
 							parserOutput, dataItem);
 					
 					// If has a valid parse, call parameter update procedure
@@ -315,15 +315,15 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 		}
 	}
 	
-	private List<? extends IParse<MR>> getValidParses(PO parserOutput,
+	private List<? extends IDerivation<MR>> getValidParses(PO parserOutput,
 			final DI dataItem) {
-		final List<? extends IParse<MR>> parses = new LinkedList<IParse<MR>>(
+		final List<? extends IDerivation<MR>> parses = new LinkedList<IDerivation<MR>>(
 				parserOutput.getAllParses());
 		
 		// Use validation function to prune generation parses
-		CollectionUtils.filterInPlace(parses, new IFilter<IParse<MR>>() {
+		CollectionUtils.filterInPlace(parses, new IFilter<IDerivation<MR>>() {
 			@Override
-			public boolean isValid(IParse<MR> e) {
+			public boolean isValid(IDerivation<MR> e) {
 				return validate(dataItem, e.getSemantics());
 			}
 		});
@@ -363,15 +363,15 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 					parserOutput.getAllParses().size());
 			
 			// Get valid lexical generation parses
-			final List<? extends IParse<MR>> validParses = getValidParses(
+			final List<? extends IDerivation<MR>> validParses = getValidParses(
 					parserOutput, dataItem);
 			LOG.info("Removed %d invalid parses", parserOutput.getAllParses()
 					.size() - validParses.size());
 			
 			// Collect max scoring valid generation parses
-			final List<IParse<MR>> bestGenerationParses = new LinkedList<IParse<MR>>();
+			final List<IDerivation<MR>> bestGenerationParses = new LinkedList<IDerivation<MR>>();
 			double currentMaxModelScore = -Double.MAX_VALUE;
-			for (final IParse<MR> parse : validParses) {
+			for (final IDerivation<MR> parse : validParses) {
 				if (parse.getScore() > currentMaxModelScore) {
 					currentMaxModelScore = parse.getScore();
 					bestGenerationParses.clear();
@@ -382,7 +382,7 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 			}
 			LOG.info("%d valid best parses for lexical generation:",
 					bestGenerationParses.size());
-			for (final IParse<MR> parse : bestGenerationParses) {
+			for (final IDerivation<MR> parse : bestGenerationParses) {
 				logParse(dataItem, parse, true, true, dataItemModel);
 				LOG.info(
 						"Feature weights: %s",
@@ -393,7 +393,7 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 			// Update the model's lexicon with generated lexical
 			// entries from the max scoring valid generation parses
 			int newLexicalEntries = 0;
-			for (final IParse<MR> parse : bestGenerationParses) {
+			for (final IDerivation<MR> parse : bestGenerationParses) {
 				for (final LexicalEntry<MR> entry : parse
 						.getMaxLexicalEntries()) {
 					if (model.addLexEntry(entry
@@ -442,12 +442,12 @@ public abstract class AbstractLearner<SAMPLE extends IDataItem<?>, DI extends IL
 		}
 	}
 	
-	protected void logParse(DI dataItem, IParse<MR> parse, Boolean valid,
+	protected void logParse(DI dataItem, IDerivation<MR> parse, Boolean valid,
 			boolean verbose, IDataItemModel<MR> dataItemModel) {
 		logParse(dataItem, parse, valid, verbose, null, dataItemModel);
 	}
 	
-	protected void logParse(DI dataItem, IParse<MR> parse, Boolean valid,
+	protected void logParse(DI dataItem, IDerivation<MR> parse, Boolean valid,
 			boolean verbose, String tag, IDataItemModel<MR> dataItemModel) {
 		final boolean isGold;
 		if (isGoldDebugCorrect(dataItem, parse.getSemantics())) {

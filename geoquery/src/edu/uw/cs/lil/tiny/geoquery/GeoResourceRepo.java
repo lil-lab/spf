@@ -40,6 +40,7 @@ import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.LexicalTemplateFeature
 import edu.uw.cs.lil.tiny.parser.ccg.factoredlex.features.scorers.LexemeCooccurrenceScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.LexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.LexicalFeaturesInit;
+import edu.uw.cs.lil.tiny.parser.ccg.features.basic.RuleUsageFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.ExpLengthLexicalEntryScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.SkippingSensitiveLexicalEntryScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
@@ -47,20 +48,18 @@ import edu.uw.cs.lil.tiny.parser.ccg.features.lambda.LogicalExpressionCoordinati
 import edu.uw.cs.lil.tiny.parser.ccg.model.LexiconModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.ModelLogger;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.OverloadedRulesCreator;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.basic.PrepositionTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ForwardTypeRaisedComposition;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.PluralExistentialTypeShifting;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.templated.ThatlessRelative;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.ApplicationCreator;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.CompositionCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.PluralExistentialTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.ThatlessRelative;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeraising.ForwardTypeRaisedComposition;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.lambda.typeshifting.PrepositionTypeShifting;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.application.ApplicationCreator;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.primitivebinary.composition.CompositionCreator;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.skipping.SkippingRuleCreator;
 import edu.uw.cs.lil.tiny.test.Tester;
 
 public class GeoResourceRepo extends ResourceCreatorRepository {
 	public GeoResourceRepo() {
 		// Parser creators
-		registerResourceCreator(new OverloadedRulesCreator<LogicalExpression>());
 		registerResourceCreator(new ApplicationCreator<LogicalExpression>());
 		registerResourceCreator(new CompositionCreator<LogicalExpression>());
 		registerResourceCreator(new PrepositionTypeShifting.Creator());
@@ -97,5 +96,6 @@ public class GeoResourceRepo extends ResourceCreatorRepository {
 		registerResourceCreator(new UnificationModelInit.Creator());
 		registerResourceCreator(new LexemeCooccurrenceScorer.Creator());
 		registerResourceCreator(new SentenceLengthFilter.Creator<SingleSentence>());
+		registerResourceCreator(new RuleUsageFeatureSet.Creator<Sentence, LogicalExpression>());
 	}
 }

@@ -22,8 +22,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.string.IStringFilter;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 
 /**
  * Lexicon containing a collection of lexical entries that match textual tokens.

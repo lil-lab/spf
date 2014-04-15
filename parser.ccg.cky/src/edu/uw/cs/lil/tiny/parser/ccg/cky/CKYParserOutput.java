@@ -23,10 +23,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Chart;
-import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphDerivation;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.FilterUtils;
@@ -42,10 +42,10 @@ import edu.uw.cs.utils.filter.IFilter;
 public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	
 	/** All complete parses */
-	private final List<CKYParse<MR>>	allParses;
+	private final List<CKYDerivation<MR>>	allParses;
 	
 	/** Max scoring complete parses */
-	private final List<CKYParse<MR>>	bestParses;
+	private final List<CKYDerivation<MR>>	bestParses;
 	
 	/** The CKY chart */
 	private final Chart<MR>				chart;
@@ -61,15 +61,15 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 				.unmodifiableList(findBestParses(allParses));
 	}
 	
-	private static <MR> List<CKYParse<MR>> findBestParses(List<CKYParse<MR>> all) {
+	private static <MR> List<CKYDerivation<MR>> findBestParses(List<CKYDerivation<MR>> all) {
 		return findBestParses(all, null);
 	}
 	
-	private static <MR> List<CKYParse<MR>> findBestParses(
-			List<CKYParse<MR>> all, IFilter<MR> filter) {
-		final List<CKYParse<MR>> best = new LinkedList<CKYParse<MR>>();
+	private static <MR> List<CKYDerivation<MR>> findBestParses(
+			List<CKYDerivation<MR>> all, IFilter<MR> filter) {
+		final List<CKYDerivation<MR>> best = new LinkedList<CKYDerivation<MR>>();
 		double bestScore = -Double.MAX_VALUE;
-		for (final CKYParse<MR> p : all) {
+		for (final CKYDerivation<MR> p : all) {
 			if (filter == null || filter.isValid(p.getSemantics())) {
 				if (p.getScore() == bestScore) {
 					best.add(p);
@@ -85,11 +85,11 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	@Override
-	public List<CKYParse<MR>> getAllParses() {
+	public List<CKYDerivation<MR>> getAllParses() {
 		return allParses;
 	}
 	
-	public List<CKYParse<MR>> getBestParses() {
+	public List<CKYDerivation<MR>> getBestParses() {
 		return bestParses;
 	}
 	
@@ -98,18 +98,18 @@ public class CKYParserOutput<MR> implements IGraphParserOutput<MR> {
 	}
 	
 	@Override
-	public List<? extends IGraphParse<MR>> getMaxParses(IFilter<MR> filter) {
+	public List<? extends IGraphDerivation<MR>> getMaxParses(IFilter<MR> filter) {
 		return findBestParses(allParses, filter);
 	}
 	
 	@Override
-	public List<? extends IGraphParse<MR>> getParses(final IFilter<MR> filter) {
-		final List<? extends IGraphParse<MR>> parses = new ArrayList<IGraphParse<MR>>(
+	public List<? extends IGraphDerivation<MR>> getParses(final IFilter<MR> filter) {
+		final List<? extends IGraphDerivation<MR>> parses = new ArrayList<IGraphDerivation<MR>>(
 				allParses);
-		CollectionUtils.filterInPlace(parses, new IFilter<IGraphParse<MR>>() {
+		CollectionUtils.filterInPlace(parses, new IFilter<IGraphDerivation<MR>>() {
 			
 			@Override
-			public boolean isValid(IGraphParse<MR> e) {
+			public boolean isValid(IGraphDerivation<MR> e) {
 				return filter.isValid(e.getSemantics());
 			}
 		});

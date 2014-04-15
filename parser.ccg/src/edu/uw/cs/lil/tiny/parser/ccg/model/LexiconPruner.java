@@ -27,7 +27,7 @@ import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.utils.log.ILogger;
@@ -71,10 +71,10 @@ public class LexiconPruner<DI extends Sentence, MR> implements
 		for (final DI dataItem : data) {
 			final IParserOutput<MR> parserOutput = parser.parse(dataItem,
 					model.createDataItemModel(dataItem));
-			final List<? extends IParse<MR>> bestParses = parserOutput
+			final List<? extends IDerivation<MR>> bestParses = parserOutput
 					.getBestParses();
 			if (!bestParses.isEmpty()) {
-				for (final IParse<MR> parse : bestParses) {
+				for (final IDerivation<MR> parse : bestParses) {
 					final LinkedHashSet<LexicalEntry<MR>> parseLexicalEntries = parse
 							.getMaxLexicalEntries();
 					for (final LexicalEntry<MR> entry : parseLexicalEntries) {

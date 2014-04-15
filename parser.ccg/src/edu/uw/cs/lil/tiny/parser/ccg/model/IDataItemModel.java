@@ -18,11 +18,11 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 public interface IDataItemModel<MR> {
 	

@@ -21,6 +21,10 @@ package edu.uw.cs.lil.tiny.parser.ccg.features.basic;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
+import edu.uw.cs.lil.tiny.base.hashvector.KeyArgs;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
@@ -28,10 +32,8 @@ import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
-import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.UnaryRuleName;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.composites.Triplet;
 
@@ -52,8 +54,11 @@ public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 	private static final long	serialVersionUID	= -2924052883973590335L;
 	private final double		scale;
 	
-	public RuleUsageFeatureSet(double scale) {
+	private final boolean		unaryRulesOnly;
+	
+	public RuleUsageFeatureSet(double scale, boolean unaryRulesOnly) {
 		this.scale = scale;
+		this.unaryRulesOnly = unaryRulesOnly;
 	}
 	
 	@Override
@@ -86,10 +91,14 @@ public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 		
 	}
 	
-	private IHashVectorImmutable setFeats(String ruleName, IHashVector features) {
-		if (ruleName.startsWith("shift")) {
-			features.set(FEATURE_TAG, ruleName,
-					features.get(FEATURE_TAG, ruleName) + 1.0 * scale);
+	private IHashVectorImmutable setFeats(RuleName ruleName,
+			IHashVector features) {
+		if (!unaryRulesOnly || ruleName instanceof UnaryRuleName) {
+			for (final String ruleLabel : RuleName.splitRuleLabel(ruleName
+					.toString())) {
+				features.set(FEATURE_TAG, ruleLabel,
+						features.get(FEATURE_TAG, ruleLabel) + 1.0 * scale);
+			}
 		}
 		return features;
 	}
@@ -100,9 +109,8 @@ public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 		@Override
 		public RuleUsageFeatureSet<DI, MR> create(Parameters params,
 				IResourceRepository repo) {
-			return new RuleUsageFeatureSet<DI, MR>(
-					params.contains("scale") ? Double.valueOf(params
-							.get("scale")) : 1.0);
+			return new RuleUsageFeatureSet<DI, MR>(params.getAsDouble("scale",
+					1.0), params.getAsBoolean("unaryRulesOnly", false));
 		}
 		
 		@Override
@@ -114,7 +122,9 @@ public class RuleUsageFeatureSet<DI extends IDataItem<?>, MR> implements
 		public ResourceUsage usage() {
 			return new ResourceUsage.Builder(type(), RuleUsageFeatureSet.class)
 					.setDescription(
-							"Feature set that provides features that count the number of times type-shifting rules are used. Feature tag: RULE.")
+							"Count features for rule usage. Feature tag: RULE.")
+					.addParam("unaryRulesOnly", Boolean.class,
+							"Create features for unary rules only.")
 					.addParam("scale", "double",
 							"Scaling factor for scorer output").build();
 		}

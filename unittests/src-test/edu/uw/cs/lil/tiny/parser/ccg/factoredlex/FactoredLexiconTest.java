@@ -18,8 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.factoredlex;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.uw.cs.lil.tiny.TestServices;
@@ -30,6 +31,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 
 public class FactoredLexiconTest {
 	
+	@Ignore
 	@Test
 	public void test() {
 		final LexicalEntry<LogicalExpression> e1 = LexicalEntry

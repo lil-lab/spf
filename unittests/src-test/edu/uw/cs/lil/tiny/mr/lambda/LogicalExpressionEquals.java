@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 
@@ -33,54 +33,54 @@ public class LogicalExpressionEquals {
 	@Test
 	public void test() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (boo:<e,t> $0))");
+				.read("(lambda $0:e (boo:<e,t> $0))");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(lambda $0:e (boo:<e,t> $0))");
+				.read("(lambda $0:e (boo:<e,t> $0))");
 		Assert.assertTrue(e1.equals(e2));
 	}
 	
 	@Test
 	public void test2() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(boo:<e,t> $0:e)");
+				.read("(boo:<e,t> $0:e)");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(boo:<e,t> $0:e)");
+				.read("(boo:<e,t> $0:e)");
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
 	@Test
 	public void test3() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (boo:<e,t> $0))");
+				.read("(lambda $0:e (boo:<e,t> $0))");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(lambda $1:e (boo:<e,t> $0:e))");
+				.read("(lambda $1:e (boo:<e,t> $0:e))");
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
 	@Test
 	public void test4() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))");
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
 	@Test
 	public void test5() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $0)))");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $0) (foo:<e,t> $1:e)))");
 		Assert.assertFalse(e1.equals(e2));
 	}
 	
 	@Test
 	public void test6() {
 		final LogicalExpression e1 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $1)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $1)))");
 		final LogicalExpression e2 = LogicalExpression
-				.parse("(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $0)))");
+				.read("(lambda $0:e (and:<t*,t> (boo:<e,t> $1:e) (foo:<e,t> $0)))");
 		Assert.assertFalse(e1.equals(e2));
 	}
 	

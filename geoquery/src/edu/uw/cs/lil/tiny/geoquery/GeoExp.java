@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory.Type;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry.Origin;
@@ -52,8 +54,6 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.parser.ccg.model.ModelLogger;
 import edu.uw.cs.lil.tiny.test.Tester;
 import edu.uw.cs.lil.tiny.test.stats.ExactMatchTestingStatistics;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory.Type;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LogLevel;
@@ -132,8 +132,8 @@ public class GeoExp extends DistributedExperiment {
 		// //////////////////////////////////////////////////
 		
 		final Set<LogicalConstant> unfactoredConstants = new HashSet<LogicalConstant>();
-		unfactoredConstants.add(LogicalConstant.parse("the:<<e,t>,e>"));
-		unfactoredConstants.add(LogicalConstant.parse("exists:<<e,t>,t>"));
+		unfactoredConstants.add(LogicalConstant.read("the:<<e,t>,e>"));
+		unfactoredConstants.add(LogicalConstant.read("exists:<<e,t>,t>"));
 		FactoredLexiconServices.set(unfactoredConstants);
 		
 		// //////////////////////////////////////////////////

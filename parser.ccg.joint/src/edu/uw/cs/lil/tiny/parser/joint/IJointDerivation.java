@@ -21,9 +21,9 @@ package edu.uw.cs.lil.tiny.parser.joint;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 /**
  * Single joint inference derivation.

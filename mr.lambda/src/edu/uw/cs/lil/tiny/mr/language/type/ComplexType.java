@@ -30,7 +30,6 @@ public class ComplexType extends Type {
 	private static final long	serialVersionUID				= -4179088110249120938L;
 	
 	private final Type			domain;
-	
 	private final Type			range;
 	
 	ComplexType(String label, Type domain, Type range) {
@@ -94,7 +93,7 @@ public class ComplexType extends Type {
 	
 	@Override
 	public String toString() {
-		return composeString(getRange(), getDomain(), null);
+		return getName();
 	}
 	
 }

@@ -46,8 +46,8 @@ public class AndSimplifier implements IPredicateSimplifier {
 			final List<LogicalExpression> consolidatedArgs = new LinkedList<LogicalExpression>();
 			for (final LogicalExpression arg : literal.getArguments()) {
 				if (arg instanceof Literal
-						&& ((Literal) arg).getPredicate() == literal
-								.getPredicate()) {
+						&& ((Literal) arg).getPredicate().equals(
+								literal.getPredicate())) {
 					consolidatedArgs.addAll(((Literal) arg).getArguments());
 					expChanged = true;
 				} else {

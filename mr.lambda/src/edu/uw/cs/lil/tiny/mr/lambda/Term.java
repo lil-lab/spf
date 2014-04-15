@@ -18,10 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda;
 
-import java.util.Map;
-
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
 import edu.uw.cs.utils.assertion.Assert;
 
 /**
@@ -36,16 +33,6 @@ public abstract class Term extends LogicalExpression {
 	
 	public Term(Type type) {
 		this.type = Assert.ifNull(type);
-	}
-	
-	protected static Term doParse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator) {
-		if (string.startsWith(Variable.PREFIX)) {
-			return Variable.doParse(string, variables, typeRepository);
-		} else {
-			return LogicalConstant.doParse(string, typeRepository);
-		}
 	}
 	
 	@Override

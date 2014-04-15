@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda.visitor;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ public class HasFreeVariablesTest {
 	@Test
 	public void test() {
 		final LogicalExpression exp = LogicalExpression
-				.parse("(lambda $0:e (pred1:<e,<e,t>> $0 (a:<<e,t>,e> (lambda $1:e (pred2:<e,t> $1)))))");
+				.read("(lambda $0:e (pred1:<e,<e,t>> $0 (a:<<e,t>,e> (lambda $1:e (pred2:<e,t> $1)))))");
 		Assert.assertFalse(HasFreeVariables.of(exp));
 		Assert.assertTrue(HasFreeVariables.of(((Lambda) exp).getBody()));
 	}

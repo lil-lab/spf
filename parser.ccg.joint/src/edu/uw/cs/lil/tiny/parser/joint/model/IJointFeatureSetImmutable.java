@@ -18,9 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IFeatureSet;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 /**
  * Immutable joint inference feature set to compute features over execution

@@ -33,44 +33,44 @@ public class LambdaWrappedTest {
 	@Test
 	public void test() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:<e,t>"));
+				.read("boo:<e,t>"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:e (boo:<e,t> $0))");
+				.read("(lambda $0:e (boo:<e,t> $0))");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test2() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:<e,<e,t>>"));
+				.read("boo:<e,<e,t>>"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1))");
+				.read("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1))");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test3() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("boo:e"));
-		final LogicalExpression expected = LogicalExpression.parse("boo:e");
+				.read("boo:e"));
+		final LogicalExpression expected = LogicalExpression.read("boo:e");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test4() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("(lambda $0:<e,t> $0)"));
+				.read("(lambda $0:<e,t> $0)"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:<e,t> (lambda $1:e ($0 $1)))");
+				.read("(lambda $0:<e,t> (lambda $1:e ($0 $1)))");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test5() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("(lambda $0:e (boo:<e,<e,t>> $0))"));
+				.read("(lambda $0:e (boo:<e,<e,t>> $0))"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))");
+				.read("(lambda $0:e (lambda $1:e (boo:<e,<e,t>> $0 $1)))");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
@@ -78,18 +78,18 @@ public class LambdaWrappedTest {
 	public void test6() {
 		final LogicalExpression wrapped = LambdaWrapped
 				.of(LogicalExpression
-						.parse("(lambda $0:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0)))"));
+						.read("(lambda $0:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0)))"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:e (lambda $1:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0) $1)))");
+				.read("(lambda $0:e (lambda $1:e (intersect:<e,<e,t>> (orient:<e,<e,e>> x:e $0) $1)))");
 		Assert.assertEquals(expected, wrapped);
 	}
 	
 	@Test
 	public void test7() {
 		final LogicalExpression wrapped = LambdaWrapped.of(LogicalExpression
-				.parse("(lambda $0:<e,t> (f:<<e,t>,t> (g:<<e,t>,<e,t>> $0)))"));
+				.read("(lambda $0:<e,t> (f:<<e,t>,t> (g:<<e,t>,<e,t>> $0)))"));
 		final LogicalExpression expected = LogicalExpression
-				.parse("(lambda $0:<e,t> (f:<<e,t>,t> (lambda $1:e (g:<<e,t>,<e,t>> $0 $1))))");
+				.read("(lambda $0:<e,t> (f:<<e,t>,t> (lambda $1:e (g:<<e,t>,<e,t>> $0 $1))))");
 		Assert.assertEquals(expected, wrapped);
 	}
 }

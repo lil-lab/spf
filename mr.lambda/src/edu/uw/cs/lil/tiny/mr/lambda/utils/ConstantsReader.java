@@ -26,8 +26,8 @@ import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.LispReader;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
-import edu.uw.cs.lil.tiny.utils.LispReader;
 
 public class ConstantsReader {
 	private ConstantsReader() {
@@ -59,7 +59,7 @@ public class ConstantsReader {
 				strippedFile.toString()));
 		while (lispReader.hasNext()) {
 			final LogicalConstant exp = LogicalConstant
-					.parse(lispReader.next());
+					.read(lispReader.next());
 			constants.add(exp);
 		}
 		

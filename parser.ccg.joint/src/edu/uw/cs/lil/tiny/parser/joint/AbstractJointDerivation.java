@@ -22,12 +22,12 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 
@@ -44,7 +44,7 @@ import edu.uw.cs.utils.composites.Pair;
  * @param <PARSE>
  *            The base parse object.
  */
-public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IParse<MR>>
+public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDerivation<MR>>
 		implements IJointDerivation<MR, ERESULT> {
 	
 	private final List<Pair<PARSE, IEvaluation<ERESULT>>>	maxPairs;

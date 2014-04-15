@@ -18,12 +18,12 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint;
 
-import edu.uw.cs.lil.tiny.parser.IParse;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 
 /**
  * Wraps an evaluation result to abstract the model signature from the joint
- * output. This interface takes a similar role to {@link IParse}.
+ * output. This interface takes a similar role to {@link IDerivation}.
  * 
  * @author Yoav Artzi
  * @param <ERESULT>

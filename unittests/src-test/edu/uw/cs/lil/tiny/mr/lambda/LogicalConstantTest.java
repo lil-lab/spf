@@ -20,13 +20,14 @@ package edu.uw.cs.lil.tiny.mr.lambda;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import edu.uw.cs.lil.tiny.TestServices;
+import edu.uw.cs.utils.log.LogLevel;
 
 public class LogicalConstantTest {
 	
@@ -60,7 +61,9 @@ public class LogicalConstantTest {
 	
 	@Test(expected = LogicalExpressionRuntimeException.class)
 	public void test1() {
+		LogLevel.setLogLevel(LogLevel.NO_LOG);
 		TestServices.CATEGORY_SERVICES.parseSemantics("boo:e");
+		LogLevel.setLogLevel(LogLevel.INFO);
 	}
 	
 	@Test
@@ -78,6 +81,19 @@ public class LogicalConstantTest {
 				.parseSemantics("123456789:n");
 		Assert.assertEquals(123456789, LogicLanguageServices
 				.logicalExpressionToInteger(constant2).intValue());
+	}
+	
+	@Test
+	public void testBaseName1() {
+		Assert.assertEquals("boo",
+				((LogicalConstant) TestServices.CATEGORY_SERVICES
+						.parseSemantics("@boo:e")).getBaseName());
+	}
+	
+	@Test
+	public void testBaseName2() {
+		Assert.assertEquals("capital", LogicalConstant.read("capital:<c,t>")
+				.getBaseName());
 	}
 	
 }

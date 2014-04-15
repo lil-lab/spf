@@ -19,22 +19,42 @@
 package edu.uw.cs.lil.tiny.parser.ccg;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
 
 /**
  * A single parse step: holds a parent and its children, plus the rule that
  * created them and a full-parse flag.
  * 
+ * @author Yoav Artzi
  * @author Luke Zettlemoyer
  * @param <MR>
+ *            Meaning representation.
  */
 public interface IParseStep<MR> {
+	/**
+	 * Get child i of the parse step (usually, i=0..1).
+	 */
 	Category<MR> getChild(int i);
 	
+	/**
+	 * The category at the root of the parse step.
+	 */
 	Category<MR> getRoot();
 	
-	String getRuleName();
+	/**
+	 * {@link RuleName} for the rule generating this step.
+	 */
+	RuleName getRuleName();
 	
+	/**
+	 * Indicates if the root category represents a complete parse.
+	 * 
+	 * @return
+	 */
 	boolean isFullParse();
 	
+	/**
+	 * The number of children participating in this parse step.
+	 */
 	int numChildren();
 }

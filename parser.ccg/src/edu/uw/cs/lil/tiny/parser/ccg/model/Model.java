@@ -36,6 +36,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.ccg.lexicon.Lexicon;
@@ -49,9 +52,6 @@ import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.IIndependentLexicalFeatureSet
 import edu.uw.cs.lil.tiny.parser.ccg.model.lexical.ILexicalFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSet;
 import edu.uw.cs.lil.tiny.parser.ccg.model.parse.IParseFeatureSetImmutable;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -94,6 +94,12 @@ public class Model<DI extends IDataItem<?>, MR> implements
 		this.parseFeatures = Collections.unmodifiableList(parseFeatures);
 		this.lexicon = lexicon;
 		this.theta = theta;
+		LOG.info("Init %s :: lexicalFeatures=%s", Model.class.getSimpleName(),
+				lexicalFeatures);
+		LOG.info(".... %s :: parseFeatures=%s", Model.class.getSimpleName(),
+				parseFeatures);
+		LOG.info(".... %s :: lexiconClass=%s", Model.class.getSimpleName(),
+				lexicon.getClass().getSimpleName());
 	}
 	
 	/**

@@ -18,6 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.mr.lambda.ccg;
 
+import java.util.Stack;
+
 import edu.uw.cs.lil.tiny.ccg.categories.AbstractCategoryServices;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.SimpleCategory;
@@ -27,8 +29,8 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.Variable;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ApplyAndSimplify;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsValid;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsTypeConsistent;
+import edu.uw.cs.lil.tiny.mr.lambda.visitor.IsValid;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.utils.log.ILogger;
@@ -65,10 +67,23 @@ public class LogicalExpressionCategoryServices extends
 			boolean validateLogExps) {
 		this.doTypeChecking = doTypeChecking;
 		this.validateLogExps = validateLogExps;
+		LOG.info("Init :: %s: doTypeChecking=%s, validateLogExp=%s",
+				LogicalExpressionCategoryServices.class.getSimpleName(),
+				doTypeChecking, validateLogExps);
+	}
+	
+	public LogicalExpressionCategoryServices(boolean doTypeChecking,
+			boolean validateLogExps, boolean restrictCompositionDirection) {
+		super(restrictCompositionDirection);
+		this.doTypeChecking = doTypeChecking;
+		this.validateLogExps = validateLogExps;
+		LOG.info("Init :: %s: doTypeChecking=%s, validateLogExp=%s",
+				LogicalExpressionCategoryServices.class.getSimpleName(),
+				doTypeChecking, validateLogExps);
 	}
 	
 	@Override
-	public LogicalExpression doSemanticApplication(LogicalExpression function,
+	public LogicalExpression apply(LogicalExpression function,
 			LogicalExpression argument) {
 		final LogicalExpression result;
 		
@@ -97,23 +112,29 @@ public class LogicalExpressionCategoryServices extends
 	}
 	
 	/**
-	 * Function composition
-	 * 
-	 * @param f
-	 * @param g
-	 * @return \lambda x .f(g(x))
+	 * Generalized function composition given a specific order.
 	 */
 	@Override
-	public LogicalExpression doSemanticComposition(LogicalExpression f,
-			LogicalExpression g) {
+	public LogicalExpression compose(LogicalExpression f, LogicalExpression g,
+			int order) {
 		
-		if (!(f.getType().isComplex() && g.getType().isComplex())) {
+		final Stack<Variable> gVariableStack = new Stack<Variable>();
+		LogicalExpression currentG = g;
+		for (int i = 0; i < order; ++i) {
+			if (currentG instanceof Lambda) {
+				gVariableStack.push(((Lambda) currentG).getArgument());
+				currentG = ((Lambda) currentG).getBody();
+			}
+		}
+		
+		// Quick type checking.
+		if (!(f.getType().isComplex() && currentG.getType().isComplex())) {
 			return null;
 		}
 		
-		// Function composition
+		// Function composition.
 		final ComplexType fType = (ComplexType) f.getType();
-		final ComplexType gType = (ComplexType) g.getType();
+		final ComplexType gType = (ComplexType) currentG.getType();
 		
 		// Validate the types of the composed expressions.
 		if (!LogicLanguageServices.getTypeComparator().verifyArgType(
@@ -126,7 +147,8 @@ public class LogicalExpressionCategoryServices extends
 		final Variable x = new Variable(LogicLanguageServices
 				.getTypeRepository().generalizeType(gType.getDomain()));
 		
-		final LogicalExpression gBodyWithNewVar = ApplyAndSimplify.of(g, x);
+		final LogicalExpression gBodyWithNewVar = ApplyAndSimplify.of(currentG,
+				x);
 		if (gBodyWithNewVar != null) {
 			final LogicalExpression newbody = ApplyAndSimplify.of(f,
 					gBodyWithNewVar);
@@ -154,12 +176,21 @@ public class LogicalExpressionCategoryServices extends
 						LOG.error("Composition result invalid");
 						LOG.error("g=%s", g);
 						LOG.error("f=%s", f);
+						LOG.error("depth=%d", order);
 						LOG.error("result=%s", result);
 						throw new IllegalStateException(
 								"Invalid logical expression detected");
 					}
 					
-					return result;
+					// Wrap the result with all the variables previously
+					// stripped from G.
+					LogicalExpression wrappedResult = result;
+					while (!gVariableStack.isEmpty()) {
+						wrappedResult = new Lambda(gVariableStack.pop(),
+								wrappedResult);
+					}
+					
+					return wrappedResult;
 				}
 			}
 		}
@@ -211,7 +242,7 @@ public class LogicalExpressionCategoryServices extends
 	
 	@Override
 	public LogicalExpression parseSemantics(String string, boolean checkType) {
-		final LogicalExpression exp = LogicalExpression.parse(string);
+		final LogicalExpression exp = LogicalExpression.read(string);
 		if (checkType && !IsTypeConsistent.of(exp)) {
 			throw new IllegalStateException("Semantics not well typed: "
 					+ string);

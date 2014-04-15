@@ -24,11 +24,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionRuntimeException;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 
 public class Lexeme implements Serializable {
@@ -57,13 +54,9 @@ public class Lexeme implements Serializable {
 	}
 	
 	/**
-	 * Given a string, parse a lexeme from it.
-	 * 
-	 * @param line
-	 * @return
+	 * Given a string, read a lexeme from it.
 	 */
-	public static Lexeme parse(String line,
-			ICategoryServices<LogicalExpression> categoryServices, String origin) {
+	public static Lexeme read(String line, String origin) {
 		
 		final int equalsIndex = line.indexOf("=");
 		final String tokensString = line.substring(1, equalsIndex - 1);
@@ -78,15 +71,7 @@ public class Lexeme implements Serializable {
 		final List<LogicalConstant> constants = new LinkedList<LogicalConstant>();
 		if (!constantsString.equals("")) {
 			for (final String constant : constantsString.split(", ")) {
-				
-				final LogicalExpression exp = categoryServices
-						.parseSemantics(constant);
-				if (!(exp instanceof LogicalConstant)) {
-					throw new LogicalExpressionRuntimeException(
-							"Not a constant error: " + constant);
-				}
-				
-				constants.add((LogicalConstant) exp);
+				constants.add(LogicalConstant.read(constant));
 			}
 		}
 		return new Lexeme(tokens, constants, origin);

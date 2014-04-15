@@ -25,12 +25,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorUtils;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphDerivation;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.AbstractJointOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
@@ -78,7 +78,7 @@ public class JointGraphOutput<MR, ERESULT> extends
 	public IHashVector logExpectedFeatures(IFilter<ERESULT> filter) {
 		// Init derivations outside scores. In practice, prune the joint
 		// derivation using the filter and implicitly give each an outside score
-		// of 1.0.
+		// of log(1.0).
 		final List<JointGraphDerivation<MR, ERESULT>> derivationsToUse = new LinkedList<JointGraphDerivation<MR, ERESULT>>();
 		for (final JointGraphDerivation<MR, ERESULT> derivation : derivations) {
 			if (filter.isValid(derivation.getResult())) {
@@ -98,21 +98,20 @@ public class JointGraphOutput<MR, ERESULT> extends
 		// contribution.
 		final Map<MR, Double> initBaseParseOutsideScores = new HashMap<MR, Double>();
 		for (final JointGraphDerivation<MR, ERESULT> derivation : derivationsToUse) {
-			for (final Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair : derivation
+			for (final Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair : derivation
 					.getInferencePairs()) {
 				final MR semantics = pair.first().getSemantics();
-				// The outside contribution is the current outside score of the
-				// derivation (implicitly 1.0) times the exponentiated score of
-				// the evaluation. Explicitly multiplying by 1.0 for clarity.
-				final double outsideContribution = 1.0 * Math.exp(pair.second()
-						.getScore());
+				// The log outside contribution is the current outside score of
+				// the derivation (implicitly log(1.0) = 0.0) plus the log score
+				// of the evaluation.
+				final double logOutsideContribution = pair.second().getScore();
 				if (initBaseParseOutsideScores.containsKey(semantics)) {
-					initBaseParseOutsideScores.put(semantics,
-							initBaseParseOutsideScores.get(semantics)
-									+ outsideContribution);
+					initBaseParseOutsideScores.put(semantics, LogSumExp.of(
+							initBaseParseOutsideScores.get(semantics),
+							logOutsideContribution));
 				} else {
 					initBaseParseOutsideScores.put(semantics,
-							outsideContribution);
+							logOutsideContribution);
 				}
 			}
 		}
@@ -125,7 +124,7 @@ public class JointGraphOutput<MR, ERESULT> extends
 				// outside score, so use it, otherwise, consider as if the score
 				// of the execution is -\inf --> return 0.
 				return initBaseParseOutsideScores.containsKey(e) ? initBaseParseOutsideScores
-						.get(e) : 0.0;
+						.get(e) : Double.NEGATIVE_INFINITY;
 			}
 		};
 		
@@ -135,7 +134,7 @@ public class JointGraphOutput<MR, ERESULT> extends
 		
 		// Add expected features from the execution result cells.
 		for (final JointGraphDerivation<MR, ERESULT> derivation : derivationsToUse) {
-			for (final Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair : derivation
+			for (final Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair : derivation
 					.getInferencePairs()) {
 				// Explicitly adding 0.0 here to account for the outside
 				// score of the evaluation, which is implicitly log(1.0) = 0.0
@@ -173,7 +172,7 @@ public class JointGraphOutput<MR, ERESULT> extends
 		
 		private final IGraphParserOutput<MR>							baseOutput;
 		private boolean													exactEvaluation	= false;
-		private final List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>>();
+		private final List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>>();
 		private final long												inferenceTime;
 		
 		public Builder(IGraphParserOutput<MR> baseOutput, long inferenceTime) {
@@ -182,20 +181,20 @@ public class JointGraphOutput<MR, ERESULT> extends
 		}
 		
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair) {
+				Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair) {
 			inferencePairs.add(pair);
 			return this;
 		}
 		
 		public Builder<MR, ERESULT> addInferencePairs(
-				List<Pair<IGraphParse<MR>, IEvaluation<ERESULT>>> pairs) {
+				List<Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>>> pairs) {
 			inferencePairs.addAll(pairs);
 			return this;
 		}
 		
 		public JointGraphOutput<MR, ERESULT> build() {
 			final Map<ERESULT, JointGraphDerivation.Builder<MR, ERESULT>> builders = new HashMap<ERESULT, JointGraphDerivation.Builder<MR, ERESULT>>();
-			for (final Pair<IGraphParse<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
+			for (final Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
 				final ERESULT pairResult = pair.second().getResult();
 				if (!builders.containsKey(pairResult)) {
 					builders.put(pairResult,

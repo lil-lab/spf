@@ -25,6 +25,8 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName.Direction;
 import edu.uw.cs.utils.collections.ListUtils;
 
 /**
@@ -34,13 +36,15 @@ import edu.uw.cs.utils.collections.ListUtils;
  */
 public abstract class AbstractSkippingRule<MR> implements IBinaryParseRule<MR> {
 	
+	private static final String	RULE_LABEL	= "skip";
+	
 	private final Category<MR>	emptyCategory;
 	
-	private final String		ruleName;
+	private final RuleName		name;
 	
-	public AbstractSkippingRule(String ruleName,
+	public AbstractSkippingRule(Direction direction,
 			ICategoryServices<MR> categoryServices) {
-		this.ruleName = ruleName;
+		this.name = RuleName.create(RULE_LABEL, direction);
 		this.emptyCategory = categoryServices.getEmptyCategory();
 	}
 	
@@ -64,14 +68,19 @@ public abstract class AbstractSkippingRule<MR> implements IBinaryParseRule<MR> {
 		} else if (!emptyCategory.equals(other.emptyCategory)) {
 			return false;
 		}
-		if (ruleName == null) {
-			if (other.ruleName != null) {
+		if (name == null) {
+			if (other.name != null) {
 				return false;
 			}
-		} else if (!ruleName.equals(other.ruleName)) {
+		} else if (!name.equals(other.name)) {
 			return false;
 		}
 		return true;
+	}
+	
+	@Override
+	public RuleName getName() {
+		return name;
 	}
 	
 	@Override
@@ -80,14 +89,13 @@ public abstract class AbstractSkippingRule<MR> implements IBinaryParseRule<MR> {
 		int result = 1;
 		result = prime * result
 				+ ((emptyCategory == null) ? 0 : emptyCategory.hashCode());
-		result = prime * result
-				+ ((ruleName == null) ? 0 : ruleName.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
 	
 	@Override
-	public boolean isOverLoadable() {
-		return false;
+	public String toString() {
+		return name.toString();
 	}
 	
 	protected List<ParseRuleResult<MR>> attemptSkipping(Category<MR> left,
@@ -100,11 +108,11 @@ public abstract class AbstractSkippingRule<MR> implements IBinaryParseRule<MR> {
 			if (leftCategoryIsEmpty && backward) {
 				// Case left is empty
 				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
-						ruleName, right));
+						name, right));
 			} else if (rightCategoryIsEmpty && !backward) {
 				// Case right is empty
 				return ListUtils.createSingletonList(new ParseRuleResult<MR>(
-						ruleName, left));
+						name, left));
 			}
 		}
 		

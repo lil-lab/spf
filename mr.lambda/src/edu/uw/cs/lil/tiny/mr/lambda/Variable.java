@@ -20,6 +20,7 @@ package edu.uw.cs.lil.tiny.mr.lambda;
 
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionReader.IReader;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
@@ -41,42 +42,6 @@ public class Variable extends Term {
 		super(type);
 	}
 	
-	protected static Variable doParse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository) {
-		try {
-			final String[] split = string.split(Term.TYPE_SEPARATOR);
-			if (split.length == 2) {
-				// Case of variable definition
-				final Type type = typeRepository
-						.getTypeCreateIfNeeded(split[1]);
-				if (type == null) {
-					throw new LogicalExpressionRuntimeException(
-							"Invalid type for variable: " + string);
-				}
-				if (variables.containsKey(split[0])) {
-					throw new LogicalExpressionRuntimeException(
-							"Variable overwrite is not supported, please supply unique names: "
-									+ string);
-				}
-				final Variable variable = new Variable(type);
-				variables.put(split[0], variable);
-				return variable;
-			} else {
-				// Case variable reference
-				if (variables.containsKey(string)) {
-					return variables.get(string);
-				} else {
-					throw new LogicalExpressionRuntimeException(
-							"Undefined variable reference: " + string);
-				}
-			}
-		} catch (final RuntimeException e) {
-			LOG.error("Variable error: %s", string);
-			throw e;
-		}
-		
-	}
-	
 	@Override
 	public void accept(ILogicalExpressionVisitor visitor) {
 		visitor.visit(this);
@@ -95,12 +60,12 @@ public class Variable extends Term {
 	
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
-		if (variablesMapping.containsKey(this)) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
+		if (mapping.containsKey(this)) {
 			// Comparison through mapping of variables
-			return variablesMapping.get(this) == exp;
-		} else if (!variablesMapping.containsKey(this)
-				&& !variablesMapping.values().contains(exp)) {
+			return mapping.get(this) == exp;
+		} else if (!mapping.containsKey(this)
+				&& !mapping.values().contains(exp)) {
 			// Case both are not mapped, do instance comparison for free
 			// variables
 			return exp == this;
@@ -108,5 +73,54 @@ public class Variable extends Term {
 			// Not equal
 			return false;
 		}
+	}
+	
+	public static class Reader implements IReader<Variable> {
+		
+		@Override
+		public boolean isValid(String string) {
+			return string.startsWith(Variable.PREFIX);
+		}
+		
+		@Override
+		public Variable read(String string,
+				Map<String, LogicalExpression> mapping,
+				TypeRepository typeRepository, ITypeComparator typeComparator,
+				LogicalExpressionReader reader) {
+			
+			try {
+				final String[] split = string.split(Term.TYPE_SEPARATOR);
+				if (split.length == 2) {
+					// Case of variable definition
+					final Type type = typeRepository
+							.getTypeCreateIfNeeded(split[1]);
+					if (type == null) {
+						throw new LogicalExpressionRuntimeException(
+								"Invalid type for variable: " + string);
+					}
+					if (mapping.containsKey(split[0])) {
+						throw new LogicalExpressionRuntimeException(
+								"Variable overwrite is not supported, please supply unique names: "
+										+ string);
+					}
+					final Variable variable = new Variable(type);
+					mapping.put(split[0], variable);
+					return variable;
+				} else {
+					// Case variable reference
+					if (mapping.containsKey(string)) {
+						return (Variable) mapping.get(string);
+					} else {
+						throw new LogicalExpressionRuntimeException(
+								"Undefined variable reference: " + string);
+					}
+				}
+			} catch (final RuntimeException e) {
+				LOG.error("Variable error: %s", string);
+				throw e;
+			}
+			
+		}
+		
 	}
 }

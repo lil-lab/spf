@@ -20,6 +20,8 @@ package edu.uw.cs.lil.tiny.parser.ccg.features.basic;
 
 import java.util.Collection;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.KeyArgs;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
@@ -31,8 +33,6 @@ import edu.uw.cs.lil.tiny.parser.ccg.features.basic.scorer.UniformScorer;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelInit;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;

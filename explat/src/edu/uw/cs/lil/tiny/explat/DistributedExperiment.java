@@ -33,9 +33,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import edu.uw.cs.lil.tiny.base.concurrency.ITinyExecutor;
+import edu.uw.cs.lil.tiny.base.concurrency.TinyExecutorService;
 import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
-import edu.uw.cs.lil.tiny.utils.concurrency.ITinyExecutor;
-import edu.uw.cs.lil.tiny.utils.concurrency.TinyExecutorService;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 import edu.uw.cs.utils.log.thread.LoggingThreadFactory;

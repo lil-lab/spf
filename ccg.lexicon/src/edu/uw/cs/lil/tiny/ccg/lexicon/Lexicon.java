@@ -30,13 +30,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.string.IStringFilter;
+import edu.uw.cs.lil.tiny.base.string.StubStringFilter;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
-import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.SetUtils;
 
 /**

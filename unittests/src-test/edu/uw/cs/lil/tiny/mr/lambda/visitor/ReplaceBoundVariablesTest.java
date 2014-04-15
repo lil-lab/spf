@@ -35,7 +35,7 @@ public class ReplaceBoundVariablesTest {
 	@Test
 	public void test() {
 		final LogicalExpression exp = LogicalExpression
-				.parse("(lambda $0:e $0)");
+				.read("(lambda $0:e $0)");
 		final LogicalExpression result = ReplaceBoundVariables.of(exp);
 		Assert.assertEquals(exp, result);
 		Assert.assertNotSame(((Lambda) exp).getArgument(),

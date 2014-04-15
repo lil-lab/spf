@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import edu.uw.cs.lil.tiny.base.string.IStringFilter;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
 
 /**
  * A Lexical Entry associates a sequence of tokens with a category, which

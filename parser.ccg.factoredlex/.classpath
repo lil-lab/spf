@@ -5,7 +5,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg.features.basic"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tinybase"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry kind="src" path="/mr.lambda.ccg"/>

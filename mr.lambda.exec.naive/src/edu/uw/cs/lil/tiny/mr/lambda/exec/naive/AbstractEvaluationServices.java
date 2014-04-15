@@ -57,7 +57,7 @@ public abstract class AbstractEvaluationServices<S> implements
 	public Object evaluateConstant(LogicalConstant logicalConstant) {
 		
 		// Try to treat the constant as a number
-		final Integer num = LogicLanguageServices
+		final Long num = LogicLanguageServices
 				.logicalExpressionToInteger(logicalConstant);
 		if (num != null) {
 			return new Double(num);

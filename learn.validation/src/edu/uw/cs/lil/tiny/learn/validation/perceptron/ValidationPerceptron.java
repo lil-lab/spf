@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
 import edu.uw.cs.lil.tiny.data.IDataItem;
@@ -39,15 +41,13 @@ import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.genlex.ccg.ILexiconGenerator;
 import edu.uw.cs.lil.tiny.learn.validation.AbstractLearner;
 import edu.uw.cs.lil.tiny.parser.IOutputLogger;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
 import edu.uw.cs.lil.tiny.test.ITester;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -117,7 +117,7 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 				errorDriven ? "true" : "false");
 	}
 	
-	public static <MR, P extends IParse<MR>, MODEL extends IModelImmutable<?, MR>> IHashVector constructUpdate(
+	public static <MR, P extends IDerivation<MR>, MODEL extends IModelImmutable<?, MR>> IHashVector constructUpdate(
 			List<P> violatingValidParses, List<P> violatingInvalidParses,
 			MODEL model) {
 		// Create the parameter update
@@ -146,7 +146,7 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		return update;
 	}
 	
-	public static <LF, P extends IParse<LF>, MODEL extends IModelImmutable<?, LF>> Pair<List<P>, List<P>> marginViolatingSets(
+	public static <LF, P extends IDerivation<LF>, MODEL extends IModelImmutable<?, LF>> Pair<List<P>, List<P>> marginViolatingSets(
 			MODEL model, double margin, List<P> validParses,
 			List<P> invalidParses) {
 		// Construct margin violating sets
@@ -220,19 +220,19 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 	 * @param goodOutput
 	 * @return
 	 */
-	private Pair<List<IParse<MR>>, List<IParse<MR>>> createValidInvalidSets(
+	private Pair<List<IDerivation<MR>>, List<IDerivation<MR>>> createValidInvalidSets(
 			DI dataItem, IParserOutput<MR> realOutput,
 			IParserOutput<MR> goodOutput) {
 		
-		final List<IParse<MR>> validParses = new LinkedList<IParse<MR>>();
-		final List<IParse<MR>> invalidParses = new LinkedList<IParse<MR>>();
+		final List<IDerivation<MR>> validParses = new LinkedList<IDerivation<MR>>();
+		final List<IDerivation<MR>> invalidParses = new LinkedList<IDerivation<MR>>();
 		
 		// Track invalid parses, so we won't aggregate a parse more than once --
 		// this is an approximation, but it's a best effort
-		final Set<IParse<MR>> invalidSemantics = new HashSet<IParse<MR>>();
+		final Set<IDerivation<MR>> invalidSemantics = new HashSet<IDerivation<MR>>();
 		
 		// Collect invalid parses from readlOutput
-		for (final IParse<MR> parse : realOutput.getAllParses()) {
+		for (final IDerivation<MR> parse : realOutput.getAllParses()) {
 			if (!validate(dataItem, parse.getSemantics())) {
 				invalidParses.add(parse);
 				invalidSemantics.add(parse);
@@ -241,7 +241,7 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		
 		// Collect valid and invalid parses from goodOutput
 		double validScore = -Double.MAX_VALUE;
-		for (final IParse<MR> parse : goodOutput.getAllParses()) {
+		for (final IDerivation<MR> parse : goodOutput.getAllParses()) {
 			if (validate(dataItem, parse.getSemantics())) {
 				if (hardUpdates) {
 					// Case using hard updates, only keep the highest scored
@@ -272,14 +272,14 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 				.createDataItemModel(dataItem.getSample());
 		
 		// Split all parses to valid and invalid sets
-		final Pair<List<IParse<MR>>, List<IParse<MR>>> validInvalidSetsPair = createValidInvalidSets(
+		final Pair<List<IDerivation<MR>>, List<IDerivation<MR>>> validInvalidSetsPair = createValidInvalidSets(
 				dataItem, realOutput, goodOutput);
-		final List<IParse<MR>> validParses = validInvalidSetsPair.first();
-		final List<IParse<MR>> invalidParses = validInvalidSetsPair.second();
+		final List<IDerivation<MR>> validParses = validInvalidSetsPair.first();
+		final List<IDerivation<MR>> invalidParses = validInvalidSetsPair.second();
 		LOG.info("%d valid parses, %d invalid parses", validParses.size(),
 				invalidParses.size());
 		LOG.info("Valid parses:");
-		for (final IParse<MR> parse : validParses) {
+		for (final IDerivation<MR> parse : validParses) {
 			logParse(dataItem, parse, true, true, dataItemModel);
 		}
 		
@@ -295,11 +295,11 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 		}
 		
 		// Construct margin violating sets
-		final Pair<List<IParse<MR>>, List<IParse<MR>>> marginViolatingSets = marginViolatingSets(
+		final Pair<List<IDerivation<MR>>, List<IDerivation<MR>>> marginViolatingSets = marginViolatingSets(
 				model, margin, validParses, invalidParses);
-		final List<IParse<MR>> violatingValidParses = marginViolatingSets
+		final List<IDerivation<MR>> violatingValidParses = marginViolatingSets
 				.first();
-		final List<IParse<MR>> violatingInvalidParses = marginViolatingSets
+		final List<IDerivation<MR>> violatingInvalidParses = marginViolatingSets
 				.second();
 		LOG.info("%d violating valid parses, %d violating invalid parses",
 				violatingValidParses.size(), violatingInvalidParses.size());
@@ -308,11 +308,11 @@ public class ValidationPerceptron<SAMPLE extends IDataItem<?>, DI extends ILabel
 			return;
 		}
 		LOG.info("Violating valid parses: ");
-		for (final IParse<MR> pair : violatingValidParses) {
+		for (final IDerivation<MR> pair : violatingValidParses) {
 			logParse(dataItem, pair, true, true, dataItemModel);
 		}
 		LOG.info("Violating invalid parses: ");
-		for (final IParse<MR> parse : violatingInvalidParses) {
+		for (final IDerivation<MR> parse : violatingInvalidParses) {
 			logParse(dataItem, parse, false, true, dataItemModel);
 		}
 		

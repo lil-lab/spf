@@ -19,7 +19,9 @@
 package edu.uw.cs.lil.tiny.explat;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
@@ -44,7 +46,15 @@ public abstract class LoggedExperiment extends ParameterizedExperiment {
 	
 	public LoggedExperiment(File file, Map<String, String> envParams,
 			ResourceCreatorRepository creatorRepo) throws IOException {
-		super(file, envParams, creatorRepo);
+		this(new FileReader(file), envParams, creatorRepo,
+				file.getParentFile() == null ? new File(".") : file
+						.getParentFile());
+	}
+	
+	public LoggedExperiment(Reader reader, Map<String, String> envParams,
+			ResourceCreatorRepository creatorRepo, File rootDir)
+			throws IOException {
+		super(reader, envParams, creatorRepo, rootDir);
 		
 		// Output directory.
 		this.outputDir = globalParams.contains("outputDir") ? globalParams

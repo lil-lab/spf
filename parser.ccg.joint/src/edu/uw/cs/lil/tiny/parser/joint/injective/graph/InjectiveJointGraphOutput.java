@@ -24,12 +24,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorUtils;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphOutput;
 import edu.uw.cs.lil.tiny.parser.joint.injective.AbstractInjectiveJointOutput;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.math.LogSumExp;

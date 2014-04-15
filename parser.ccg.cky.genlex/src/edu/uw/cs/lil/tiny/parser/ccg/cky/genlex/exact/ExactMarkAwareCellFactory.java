@@ -18,8 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.genlex.exact;
 
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYLexicalStep;
-import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CKYParseStep;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCKYParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.CellFactory;
 
@@ -35,14 +34,8 @@ public class ExactMarkAwareCellFactory<MR> extends CellFactory<MR> {
 	}
 	
 	@Override
-	protected Cell<MR> doCreate(CKYLexicalStep<MR> parseStep, int start,
+	protected Cell<MR> doCreate(AbstractCKYParseStep<MR> parseStep, int start,
 			int end, boolean isCompleteSpan) {
-		return new ExactMarkedCell<MR>(parseStep, start, end, isCompleteSpan);
-	}
-	
-	@Override
-	protected Cell<MR> doCreate(CKYParseStep<MR> parseStep, int start, int end,
-			boolean isCompleteSpan) {
 		final int leftGeneratedLexicalEntries = parseStep.numChildren() > 0
 				&& (parseStep.getChildCell(0) instanceof ExactMarkedCell) ? ((ExactMarkedCell<MR>) parseStep
 				.getChildCell(0)).getNumMarkedLexicalEntries() : 0;

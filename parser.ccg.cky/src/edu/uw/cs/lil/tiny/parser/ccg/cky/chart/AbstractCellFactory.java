@@ -18,7 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
-
 /**
  * Factory for {@link Chart} cells.
  * 
@@ -32,12 +31,8 @@ public abstract class AbstractCellFactory<MR> {
 		this.sentenceSize = sentenceSize;
 	}
 	
-	public final Cell<MR> create(CKYLexicalStep<MR> parseStep, int start,
+	public final Cell<MR> create(AbstractCKYParseStep<MR> parseStep, int start,
 			int end) {
-		return doCreate(parseStep, start, end, isCompleteSpan(start, end));
-	}
-	
-	public final Cell<MR> create(CKYParseStep<MR> parseStep, int start, int end) {
 		return doCreate(parseStep, start, end, isCompleteSpan(start, end));
 	}
 	
@@ -45,9 +40,6 @@ public abstract class AbstractCellFactory<MR> {
 		return begin == 0 && end == sentenceSize - 1;
 	}
 	
-	protected abstract Cell<MR> doCreate(CKYLexicalStep<MR> parseStep,
+	protected abstract Cell<MR> doCreate(AbstractCKYParseStep<MR> parseStep,
 			int start, int end, boolean isCompleteSpan);
-	
-	protected abstract Cell<MR> doCreate(CKYParseStep<MR> parseStep, int start,
-			int end, boolean isCompleteSpan);
 }

@@ -25,10 +25,10 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
 
 public class CKYBinaryParsingRule<MR> {
-	private final IBinaryParseRule<MR>	ccgParseRule;
+	private final IBinaryParseRule<MR>	rule;
 	
-	public CKYBinaryParsingRule(IBinaryParseRule<MR> ccgParseRule) {
-		this.ccgParseRule = ccgParseRule;
+	public CKYBinaryParsingRule(IBinaryParseRule<MR> rule) {
+		this.rule = rule;
 	}
 	
 	@Override
@@ -44,11 +44,11 @@ public class CKYBinaryParsingRule<MR> {
 		}
 		@SuppressWarnings("rawtypes")
 		final CKYBinaryParsingRule other = (CKYBinaryParsingRule) obj;
-		if (ccgParseRule == null) {
-			if (other.ccgParseRule != null) {
+		if (rule == null) {
+			if (other.rule != null) {
 				return false;
 			}
-		} else if (!ccgParseRule.equals(other.ccgParseRule)) {
+		} else if (!rule.equals(other.rule)) {
 			return false;
 		}
 		return true;
@@ -58,18 +58,22 @@ public class CKYBinaryParsingRule<MR> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((ccgParseRule == null) ? 0 : ccgParseRule.hashCode());
+		result = prime * result + ((rule == null) ? 0 : rule.hashCode());
 		return result;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s[%s]",
+				CKYBinaryParsingRule.class.getSimpleName(), rule);
 	}
 	
 	/**
 	 * Takes two cell, left and right, as input. Assumes these cells are
 	 * adjacent.
 	 */
-	protected Collection<ParseRuleResult<MR>> apply(Cell<MR> left, Cell<MR> right,
-			boolean isCompleteSentence) {
-		return ccgParseRule.apply(left.getCategory(), right.getCategory(),
-				isCompleteSentence);
+	protected Collection<ParseRuleResult<MR>> apply(Cell<MR> left,
+			Cell<MR> right) {
+		return rule.apply(left.getCategory(), right.getCategory());
 	}
 }

@@ -20,10 +20,10 @@ package edu.uw.cs.lil.tiny.parser.joint.graph;
 
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParserOutput;
 import edu.uw.cs.lil.tiny.parser.joint.IJointOutput;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.filter.IFilter;
 
 /**

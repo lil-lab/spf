@@ -28,9 +28,9 @@ import edu.uw.cs.lil.tiny.ccg.categories.Category;
  */
 public class ParseRuleResult<MR> {
 	private final Category<MR>	resultCategory;
-	private final String		ruleName;
+	private final RuleName		ruleName;
 	
-	public ParseRuleResult(String ruleName, Category<MR> resultCategory) {
+	public ParseRuleResult(RuleName ruleName, Category<MR> resultCategory) {
 		this.ruleName = ruleName;
 		this.resultCategory = resultCategory;
 	}
@@ -39,7 +39,7 @@ public class ParseRuleResult<MR> {
 		return resultCategory;
 	}
 	
-	public String getRuleName() {
+	public RuleName getRuleName() {
 		return ruleName;
 	}
 	

@@ -6,6 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/data.singlesentence"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/test"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/tinyutils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tinybase"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -30,17 +30,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.uw.cs.lil.tiny.base.LispReader;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.AndSimplifier;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.ArrayIndexAccessSimplifier;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.IPredicateSimplifier;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.IncSimplifier;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.NotSimplifier;
 import edu.uw.cs.lil.tiny.mr.lambda.primitivetypes.OrSimplifier;
+import edu.uw.cs.lil.tiny.mr.lambda.printers.ILogicalExpressionPrinter;
+import edu.uw.cs.lil.tiny.mr.lambda.printers.LogicalExpressionToString;
 import edu.uw.cs.lil.tiny.mr.language.type.ArrayType;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.lil.tiny.utils.LispReader;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
@@ -72,6 +74,8 @@ public class LogicLanguageServices {
 	 * {@link #isCollpasibleConstant(LogicalConstant)}.
 	 */
 	private final Set<LogicalConstant>							collapsibleConstants				= new HashSet<LogicalConstant>();
+	
+	private final ILogicalExpressionComparator					comparator							= new LogicalExpressionComparator();
 	private final LogicalConstant								conjunctionPredicate;
 	private final LogicalConstant								disjunctionPredicate;
 	private final LogicalConstant								falseConstant;
@@ -87,6 +91,8 @@ public class LogicLanguageServices {
 	private final Type											numeralType;
 	
 	private final Ontology										ontology;
+	
+	private final ILogicalExpressionPrinter						printer;
 	
 	private final Map<LogicalConstant, IPredicateSimplifier>	simplifiers							= new ConcurrentHashMap<LogicalConstant, IPredicateSimplifier>();
 	
@@ -106,9 +112,11 @@ public class LogicLanguageServices {
 			LogicalConstant disjunctionPredicate,
 			LogicalConstant negationPredicate,
 			LogicalConstant indexIncreasePredicate,
-			LogicalConstant trueConstant, LogicalConstant falseConstant) {
+			LogicalConstant trueConstant, LogicalConstant falseConstant,
+			ILogicalExpressionPrinter printer) {
 		this.typeRepository = typeRepository;
 		this.ontology = ontology;
+		this.printer = printer;
 		this.numeralType = numeralTypeName == null ? null : typeRepository
 				.getType(numeralTypeName);
 		this.typeComparator = typeComparator;
@@ -157,6 +165,10 @@ public class LogicLanguageServices {
 						return obj.getType();
 					}
 				}), INSTANCE.typeComparator, INSTANCE.typeRepository);
+	}
+	
+	public static ILogicalExpressionComparator getComparator() {
+		return INSTANCE.comparator;
 	}
 	
 	public static LogicalConstant getConjunctionPredicate() {
@@ -240,7 +252,7 @@ public class LogicLanguageServices {
 	static public int indexConstantToInt(LogicalConstant constant) {
 		if (constant.getType() == LogicLanguageServices.getTypeRepository()
 				.getIndexType()) {
-			return Integer.valueOf(constant.getBaseName());
+			return Integer.parseInt(constant.getBaseName());
 		} else {
 			throw new LogicalExpressionRuntimeException(
 					"Constant must be of index type: " + constant);
@@ -262,7 +274,7 @@ public class LogicLanguageServices {
 		}
 	}
 	
-	static public LogicalConstant intToLogicalExpression(int num) {
+	static public LogicalConstant intToLogicalExpression(long num) {
 		final String name = String.valueOf(num) + ":"
 				+ INSTANCE.numeralType.getName();
 		if (INSTANCE.ontology != null && INSTANCE.ontology.contains(name)) {
@@ -307,16 +319,21 @@ public class LogicLanguageServices {
 				|| pred.equals(INSTANCE.disjunctionPredicate);
 	}
 	
+	public static boolean isEqual(LogicalExpression logicalExpression,
+			LogicalExpression obj) {
+		return INSTANCE.comparator.compare(logicalExpression, obj);
+	}
+	
 	public static boolean isOntologyClosed() {
 		return INSTANCE.ontology != null && INSTANCE.ontology.isClosed();
 	}
 	
-	static public Integer logicalExpressionToInteger(LogicalExpression exp) {
+	static public Long logicalExpressionToInteger(LogicalExpression exp) {
 		if (exp instanceof LogicalConstant
 				&& exp.getType().isExtending(INSTANCE.numeralType)) {
 			final LogicalConstant constant = (LogicalConstant) exp;
 			try {
-				return Integer.valueOf(constant.getBaseName());
+				return Long.valueOf(constant.getBaseName());
 			} catch (final NumberFormatException e) {
 				// Ignore, just return null
 			}
@@ -326,6 +343,10 @@ public class LogicLanguageServices {
 	
 	public static void setInstance(LogicLanguageServices logicLanguageServices) {
 		INSTANCE = logicLanguageServices;
+	}
+	
+	public static String toString(LogicalExpression logicalExpression) {
+		return INSTANCE.printer.toString(logicalExpression);
 	}
 	
 	public void setSimplifier(LogicalConstant predicate,
@@ -340,12 +361,14 @@ public class LogicLanguageServices {
 	
 	public static class Builder {
 		
-		private final List<File>		constantsFiles	= new LinkedList<File>();
-		private String					numeralTypeName	= null;
-		private boolean					ontologyClosed	= false;
-		private final ITypeComparator	typeComparator;
+		private final List<File>			constantsFiles	= new LinkedList<File>();
+		private String						numeralTypeName	= null;
+		private boolean						ontologyClosed	= false;
+		private ILogicalExpressionPrinter	printer			= new LogicalExpressionToString.Printer();
 		
-		private final TypeRepository	typeRepository;
+		private final ITypeComparator		typeComparator;
+		
+		private final TypeRepository		typeRepository;
 		
 		/**
 		 * @param typeRepository
@@ -394,7 +417,7 @@ public class LogicLanguageServices {
 			final LispReader lispReader = new LispReader(new StringReader(
 					strippedFile.toString()));
 			while (lispReader.hasNext()) {
-				final LogicalConstant exp = LogicalConstant.doParse(
+				final LogicalConstant exp = LogicalConstant.read(
 						lispReader.next(), typeRepository);
 				constants.add(exp);
 			}
@@ -433,14 +456,14 @@ public class LogicLanguageServices {
 		
 		public LogicLanguageServices build() throws IOException {
 			// Basic predicates
-			final LogicalConstant conjunctionPredicate = LogicalConstant.parse(
+			final LogicalConstant conjunctionPredicate = LogicalConstant.read(
 					"and:<t*,t>", typeRepository);
-			final LogicalConstant disjunctionPredicate = LogicalConstant.parse(
+			final LogicalConstant disjunctionPredicate = LogicalConstant.read(
 					"or:<t*,t>", typeRepository);
-			final LogicalConstant negationPredicate = LogicalConstant.parse(
+			final LogicalConstant negationPredicate = LogicalConstant.read(
 					"not:<t,t>", typeRepository);
 			final LogicalConstant indexIncreasePredicate = LogicalConstant
-					.parse("inc:<" + typeRepository.getIndexType().getName()
+					.read("inc:<" + typeRepository.getIndexType().getName()
 							+ "," + typeRepository.getIndexType().getName()
 							+ ">", typeRepository);
 			
@@ -474,7 +497,8 @@ public class LogicLanguageServices {
 			return new LogicLanguageServices(typeRepository, numeralTypeName,
 					typeComparator, ontology, conjunctionPredicate,
 					disjunctionPredicate, negationPredicate,
-					indexIncreasePredicate, trueConstant, falseConstant);
+					indexIncreasePredicate, trueConstant, falseConstant,
+					printer);
 		}
 		
 		/**
@@ -496,6 +520,11 @@ public class LogicLanguageServices {
 		 */
 		public Builder setNumeralTypeName(String numeralTypeName) {
 			this.numeralTypeName = numeralTypeName;
+			return this;
+		}
+		
+		public Builder setPrinter(ILogicalExpressionPrinter printer) {
+			this.printer = printer;
 			return this;
 		}
 	}

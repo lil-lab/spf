@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.uw.cs.lil.tiny.base.hashvector.KeyArgs;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.utils.hashvector.KeyArgs;
 import edu.uw.cs.utils.composites.Pair;
 
 public class ModelLogger {

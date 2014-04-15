@@ -21,7 +21,7 @@ package edu.uw.cs.lil.tiny.parser.joint;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
@@ -36,17 +36,17 @@ import edu.uw.cs.utils.composites.Pair;
  *            Semantics evaluation result.
  */
 public class JointDerivation<MR, ERESULT> extends
-		AbstractJointDerivation<MR, ERESULT, IParse<MR>> {
+		AbstractJointDerivation<MR, ERESULT, IDerivation<MR>> {
 	
 	public JointDerivation(
-			List<Pair<IParse<MR>, IEvaluation<ERESULT>>> maxPairs,
-			List<Pair<IParse<MR>, IEvaluation<ERESULT>>> pairs, ERESULT result,
+			List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>> maxPairs,
+			List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>> pairs, ERESULT result,
 			double viterbiScore) {
 		super(maxPairs, pairs, result, viterbiScore);
 	}
 	
 	public static class Builder<MR, ERESULT> {
-		protected final List<Pair<IParse<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IParse<MR>, IEvaluation<ERESULT>>>();
+		protected final List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>();
 		protected final ERESULT											result;
 		
 		public Builder(ERESULT result) {
@@ -54,7 +54,7 @@ public class JointDerivation<MR, ERESULT> extends
 		}
 		
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IParse<MR>, IEvaluation<ERESULT>> pair) {
+				Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair) {
 			// Verify the new pair leads to the same result as the rest.
 			if ((result != null || pair.second().getResult() != null)
 					&& !result.equals(pair.second().getResult())) {
@@ -66,15 +66,15 @@ public class JointDerivation<MR, ERESULT> extends
 		}
 		
 		public JointDerivation<MR, ERESULT> build() {
-			final Pair<List<Pair<IParse<MR>, IEvaluation<ERESULT>>>, Double> maxPair = createMaxPairs();
+			final Pair<List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>, Double> maxPair = createMaxPairs();
 			return new JointDerivation<MR, ERESULT>(maxPair.first(),
 					inferencePairs, result, maxPair.second());
 		}
 		
-		protected Pair<List<Pair<IParse<MR>, IEvaluation<ERESULT>>>, Double> createMaxPairs() {
+		protected Pair<List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>, Double> createMaxPairs() {
 			double maxScore = -Double.MAX_VALUE;
-			final List<Pair<IParse<MR>, IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IParse<MR>, IEvaluation<ERESULT>>>();
-			for (final Pair<IParse<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
+			final List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>();
+			for (final Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
 				// Viterbi score is for a linearly-weighted.
 				final double score = pair.first().getScore()
 						+ pair.second().getScore();

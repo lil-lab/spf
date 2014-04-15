@@ -21,10 +21,10 @@ package edu.uw.cs.lil.tiny.parser.ccg.rules.coordination;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRuleSet;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 
-public class CoordinationRule<MR> extends BinaryRulesSet<MR> {
+public class CoordinationRule<MR> extends BinaryRuleSet<MR> {
 	
 	private CoordinationRule(List<IBinaryParseRule<MR>> rules) {
 		super(rules);

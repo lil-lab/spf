@@ -23,11 +23,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.uw.cs.lil.tiny.base.LispReader;
+import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionReader.IReader;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.lil.tiny.utils.LispReader;
 import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -72,84 +73,6 @@ public class Lambda extends LogicalExpression {
 		}
 	}
 	
-	/**
-	 * @see LogicalExpression#parse(String)
-	 * @param string
-	 * @return
-	 */
-	protected static Lambda doParse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator) {
-		try {
-			final LispReader lispReader = new LispReader(new StringReader(
-					string));
-			
-			// The first argument is the 'lambda' keyword. We just ignore it.
-			lispReader.next();
-			
-			// Remember the size of our variable mapping table, to verify we
-			// added
-			// one later
-			final int variablesOrgSize = variables.size();
-			
-			// The second argument is the name of the variable introduces
-			final LogicalExpression varExpression = LogicalExpression.doParse(
-					lispReader.next(), variables, typeRepository,
-					typeComparator);
-			
-			if (!(varExpression instanceof Variable)) {
-				throw new LogicalExpressionRuntimeException(
-						"Invalid lambda argument: " + string);
-			}
-			
-			final Variable variable = (Variable) varExpression;
-			
-			// To verify the creation of a variable, we just compare the
-			// size of variables mapping table before and after. We can do that
-			// because we don't allow overwrite.
-			if (variablesOrgSize + 1 != variables.size()) {
-				throw new LogicalExpressionRuntimeException(
-						"Lambda expression must introduce a new variable: "
-								+ string);
-			}
-			
-			// The next argument is the body expression
-			final LogicalExpression lambdaBody = LogicalExpression.doParse(
-					lispReader.next(), variables, typeRepository,
-					typeComparator);
-			
-			// Verify that we don't have any more elements
-			if (lispReader.hasNext()) {
-				throw new LogicalExpressionRuntimeException(String.format(
-						"Invalid lambda expression: %s", string));
-			}
-			
-			// Need to remove the variable from the table. Since we keep them in
-			// a map, this is going to be ugly, but we will tolerate it since
-			// it's not really going to be a large map.
-			final Iterator<Entry<String, Variable>> variablesIterator = variables
-					.entrySet().iterator();
-			boolean removed = false;
-			while (variablesIterator.hasNext() && !removed) {
-				if (variablesIterator.next().getValue() == variable) {
-					variablesIterator.remove();
-					removed = true;
-				}
-			}
-			if (!removed) {
-				throw new LogicalExpressionRuntimeException(
-						"Failed to remove variable from mapping. Something werid is happening: "
-								+ string);
-			}
-			
-			return new Lambda(variable, lambdaBody);
-		} catch (final RuntimeException e) {
-			LOG.error("Lambda syntax error: %s", string);
-			throw e;
-		}
-		
-	}
-	
 	@Override
 	public void accept(ILogicalExpressionVisitor visitor) {
 		visitor.visit(this);
@@ -185,7 +108,7 @@ public class Lambda extends LogicalExpression {
 	
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
 		if (this == exp) {
 			return true;
 		}
@@ -208,7 +131,7 @@ public class Lambda extends LogicalExpression {
 		} else if (other.argument != null) {
 			// If the types are equal and both are not null, add the mapping for
 			// the comparison of the body
-			variablesMapping.put(argument, other.argument);
+			mapping.put(argument, other.argument);
 		}
 		
 		boolean ret = true;
@@ -218,12 +141,101 @@ public class Lambda extends LogicalExpression {
 				ret = false;
 			}
 		} else {
-			ret = body.equals(other.body, variablesMapping);
+			ret = body.equals(other.body, mapping);
 		}
 		
 		// Remove mapping
-		variablesMapping.remove(argument);
+		mapping.remove(argument);
 		
 		return ret;
+	}
+	
+	public static class Reader implements IReader<Lambda> {
+		
+		@Override
+		public boolean isValid(String string) {
+			return string.startsWith(Lambda.PREFIX);
+		}
+		
+		@Override
+		public Lambda read(String string,
+				Map<String, LogicalExpression> mapping,
+				TypeRepository typeRepository, ITypeComparator typeComparator,
+				LogicalExpressionReader reader) {
+			
+			try {
+				final LispReader lispReader = new LispReader(new StringReader(
+						string));
+				
+				// The first argument is the 'lambda' keyword. We just ignore
+				// it.
+				lispReader.next();
+				
+				// Remember the size of our variable mapping table, to verify we
+				// added
+				// one later
+				final int variablesOrgSize = mapping.size();
+				
+				// The second argument is the name of the variable introduces
+				final LogicalExpression varExpression = reader.read(
+						lispReader.next(), mapping, typeRepository,
+						typeComparator);
+				
+				if (!(varExpression instanceof Variable)) {
+					throw new LogicalExpressionRuntimeException(
+							"Invalid lambda argument: " + string);
+				}
+				
+				final Variable variable = (Variable) varExpression;
+				
+				// To verify the creation of a variable, we just compare the
+				// size of variables mapping table before and after. We can do
+				// that
+				// because we don't allow overwrite.
+				if (variablesOrgSize + 1 != mapping.size()) {
+					throw new LogicalExpressionRuntimeException(
+							"Lambda expression must introduce a new variable: "
+									+ string);
+				}
+				
+				// The next argument is the body expression
+				final LogicalExpression lambdaBody = reader.read(
+						lispReader.next(), mapping, typeRepository,
+						typeComparator);
+				
+				// Verify that we don't have any more elements
+				if (lispReader.hasNext()) {
+					throw new LogicalExpressionRuntimeException(String.format(
+							"Invalid lambda expression: %s", string));
+				}
+				
+				// Need to remove the variable from the table. Since we keep
+				// them in
+				// a map, this is going to be ugly, but we will tolerate it
+				// since
+				// it's not really going to be a large map.
+				final Iterator<Entry<String, LogicalExpression>> variablesIterator = mapping
+						.entrySet().iterator();
+				boolean removed = false;
+				while (variablesIterator.hasNext() && !removed) {
+					if (variablesIterator.next().getValue() == variable) {
+						variablesIterator.remove();
+						removed = true;
+					}
+				}
+				if (!removed) {
+					throw new LogicalExpressionRuntimeException(
+							"Failed to remove variable from mapping. Something werid is happening: "
+									+ string);
+				}
+				
+				return new Lambda(variable, lambdaBody);
+			} catch (final RuntimeException e) {
+				LOG.error("Lambda syntax error: %s", string);
+				throw e;
+			}
+			
+		}
+		
 	}
 }

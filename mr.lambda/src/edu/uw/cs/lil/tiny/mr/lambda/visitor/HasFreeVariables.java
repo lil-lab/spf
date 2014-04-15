@@ -75,5 +75,4 @@ public class HasFreeVariables implements ILogicalExpressionVisitor {
 	public void visit(Variable variable) {
 		result |= !bindedVariable.contains(variable);
 	}
-	
 }

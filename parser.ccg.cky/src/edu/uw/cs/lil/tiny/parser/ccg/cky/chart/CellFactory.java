@@ -18,7 +18,6 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
-
 /**
  * Factory for {@link Cell} objects.
  * 
@@ -31,14 +30,8 @@ public class CellFactory<MR> extends AbstractCellFactory<MR> {
 	}
 	
 	@Override
-	protected Cell<MR> doCreate(CKYLexicalStep<MR> parseStep, int start,
+	protected Cell<MR> doCreate(AbstractCKYParseStep<MR> parseStep, int start,
 			int end, boolean isCompleteSpan) {
-		return new Cell<MR>(parseStep, start, end, isCompleteSpan);
-	}
-	
-	@Override
-	protected Cell<MR> doCreate(CKYParseStep<MR> parseStep, int start, int end,
-			boolean isCompleteSpan) {
 		return new Cell<MR>(parseStep, start, end, isCompleteSpan);
 	}
 	

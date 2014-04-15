@@ -1,0 +1,18 @@
+types=geo.types
+numeral=i
+skolemType=id
+sloppy=true
+
+# Parsing rules
+type=rule.composition id=ruleComp
+type=rule.shifting.generic.application id=detP name=det_p function=S/S\ :\ (lambda\ $0:<e,t>\ (a:<id,<<e,t>,e>>\ na:id\ $0))
+type=rule.application id=ruleApp
+type=rule.shifting.pp id=shiftPP
+type=rule.skipping id=ruleSkipping
+type=rule.typeraise.composition.forward id=ruleRaiseComp
+type=rule.thatless id=ruleThatless
+type=rule.shift.pluralexists id=rulePluralExists
+# Parse filter
+type=parsefilter.lambda.simple id=parseFilter syntax=S
+# CKY Parser
+type=parser.cky.multi id=parser parseFilter=parseFilter beam=1000 preChartPruning=true pruneLexicalCells=true rules=ruleSkipping,ruleRaiseComp,ruleThatless,rulePluralExists,ruleComp,ruleApp,shiftPP,detP executor=executor

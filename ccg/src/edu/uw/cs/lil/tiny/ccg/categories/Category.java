@@ -50,7 +50,7 @@ public abstract class Category<MR> implements Serializable {
 	/**
 	 * Category semantics
 	 */
-	private final MR				semantics;
+	private final MR			semantics;
 	
 	public Category(MR semantics) {
 		this.semantics = semantics;

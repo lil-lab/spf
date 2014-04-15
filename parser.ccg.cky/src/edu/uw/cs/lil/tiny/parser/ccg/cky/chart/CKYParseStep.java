@@ -20,7 +20,9 @@ package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.UnaryRuleName;
 
 /**
  * A single CKY parse step.
@@ -30,40 +32,27 @@ import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
  */
 public class CKYParseStep<MR> extends AbstractCKYParseStep<MR> {
 	
-	private final IHashVector	localFeatures;
-	
-	private final double		localScore;
-	
 	public CKYParseStep(Category<MR> root, Cell<MR> child,
-			boolean isFulleParse, String ruleName, IDataItemModel<MR> model) {
+			boolean isFulleParse, RuleName ruleName, IDataItemModel<MR> model) {
 		this(root, child, null, isFulleParse, ruleName, model);
 	}
 	
 	public CKYParseStep(Category<MR> root, Cell<MR> leftChild,
-			Cell<MR> rightChild, boolean isFullParse, String ruleName,
+			Cell<MR> rightChild, boolean isFullParse, RuleName ruleName,
 			IDataItemModel<MR> model) {
-		super(root, leftChild, rightChild, isFullParse, ruleName);
-		// Doing this in two separate steps due to the way lexical feature sets
-		// behave when scoring unknown lexical entries. Therefore, it's not
-		// possible to simply recycle the feature vector and multiply it by
-		// the model's theta (weight vector).
-		this.localFeatures = model.computeFeatures(this);
-		this.localScore = model.score(this);
+		super(root, leftChild, rightChild, isFullParse, ruleName, model);
 	}
 	
 	@Override
-	public IHashVector getLocalFeatures() {
-		return localFeatures;
-	}
-	
-	@Override
-	public double getLocalScore() {
-		return localScore;
-	}
-	
-	@Override
-	public String toString() {
-		return super.toString() + " :: localFeatures=" + localFeatures
-				+ ":: localScore=" + localScore;
+	public CKYParseStep<MR> cloneWithUnary(ParseRuleResult<MR> ruleResult,
+			IDataItemModel<MR> model) {
+		if (!(ruleResult.getRuleName() instanceof UnaryRuleName)) {
+			throw new IllegalStateException(
+					"Provided result is not from a unary rule: " + ruleResult);
+		}
+		return new CKYParseStep<MR>(ruleResult.getResultCategory(),
+				children.get(0), isUnary ? null : children.get(1), isFullParse,
+				ruleName.overload((UnaryRuleName) ruleResult.getRuleName()),
+				model);
 	}
 }

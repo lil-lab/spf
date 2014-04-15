@@ -34,22 +34,14 @@ public interface IBinaryParseRule<MR> {
 	/**
 	 * Takes two categories, left and right, as input. Assumes these categories
 	 * are adjacent.
-	 * 
-	 * @param isCompleteSentence
-	 *            Boolean indicating if the span covered by the two categories
-	 *            provided is the complete sentence.
 	 */
-	Collection<ParseRuleResult<MR>> apply(Category<MR> left, Category<MR> right,
-			boolean isCompleteSentence);
+	Collection<ParseRuleResult<MR>> apply(Category<MR> left, Category<MR> right);
 	
+	@Override
 	boolean equals(Object obj);
 	
-	int hashCode();
+	RuleName getName();
 	
-	/**
-	 * Indicates if this rule can be used to overload a type shifting function.
-	 * 
-	 * @return
-	 */
-	boolean isOverLoadable();
+	@Override
+	int hashCode();
 }

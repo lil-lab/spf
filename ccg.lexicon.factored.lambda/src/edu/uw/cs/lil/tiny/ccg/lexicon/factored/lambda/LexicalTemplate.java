@@ -116,24 +116,16 @@ public class LexicalTemplate implements Serializable {
 	}
 	
 	/**
-	 * Given a string, parse a lexical template from it.
-	 * 
-	 * @param line
-	 * @return
+	 * Given a string, read a lexical template from it.
 	 */
-	public static LexicalTemplate parse(String line,
+	public static LexicalTemplate read(String line,
 			ICategoryServices<LogicalExpression> categoryServices, String origin) {
 		final int index = line.indexOf("-->");
 		final String constantsString = line.substring(1, index - 1);
 		final List<LogicalConstant> constants = new LinkedList<LogicalConstant>();
 		if (!constantsString.equals("")) {
 			for (final String constant : constantsString.split(", ")) {
-				final LogicalExpression exp = categoryServices
-						.parseSemantics(constant);
-				if (!(exp instanceof LogicalConstant)) {
-					return null;
-				}
-				constants.add((LogicalConstant) exp);
+				constants.add(LogicalConstant.read(constant));
 			}
 		}
 		

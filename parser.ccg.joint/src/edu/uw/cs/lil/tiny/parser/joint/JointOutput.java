@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
@@ -60,7 +60,7 @@ public class JointOutput<MR, ERESULT> extends
 		
 		private final IParserOutput<MR>								baseOutput;
 		private boolean												exactEvaluation	= false;
-		private final List<Pair<IParse<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IParse<MR>, IEvaluation<ERESULT>>>();
+		private final List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>();
 		private final long											inferenceTime;
 		
 		public Builder(IParserOutput<MR> baseOutput, long inferenceTime) {
@@ -69,20 +69,20 @@ public class JointOutput<MR, ERESULT> extends
 		}
 		
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IParse<MR>, IEvaluation<ERESULT>> pair) {
+				Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair) {
 			inferencePairs.add(pair);
 			return this;
 		}
 		
 		public Builder<MR, ERESULT> addInferencePairs(
-				List<Pair<IParse<MR>, IEvaluation<ERESULT>>> pairs) {
+				List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>> pairs) {
 			inferencePairs.addAll(pairs);
 			return this;
 		}
 		
 		public JointOutput<MR, ERESULT> build() {
 			final Map<ERESULT, JointDerivation.Builder<MR, ERESULT>> builders = new HashMap<ERESULT, JointDerivation.Builder<MR, ERESULT>>();
-			for (final Pair<IParse<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
+			for (final Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
 				final ERESULT pairResult = pair.second().getResult();
 				if (!builders.containsKey(pairResult)) {
 					builders.put(

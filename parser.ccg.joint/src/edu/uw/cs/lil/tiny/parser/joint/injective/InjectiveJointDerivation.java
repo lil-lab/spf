@@ -21,14 +21,14 @@ package edu.uw.cs.lil.tiny.parser.joint.injective;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
 import edu.uw.cs.lil.tiny.parser.joint.IJointDerivation;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 import edu.uw.cs.utils.collections.ListUtils;
 
 /**
@@ -45,13 +45,13 @@ import edu.uw.cs.utils.collections.ListUtils;
 public class InjectiveJointDerivation<MR, ERESULT> implements
 		IJointDerivation<MR, ERESULT> {
 	
-	private final IParse<MR>			baseParse;
+	private final IDerivation<MR>			baseParse;
 	private final IEvaluation<ERESULT>	evalResult;
 	
 	private final double				score;
 	private IHashVectorImmutable		viterbiFeatures;
 	
-	public InjectiveJointDerivation(IParse<MR> innerParse,
+	public InjectiveJointDerivation(IDerivation<MR> innerParse,
 			IEvaluation<ERESULT> execResult) {
 		this.baseParse = innerParse;
 		this.evalResult = execResult;

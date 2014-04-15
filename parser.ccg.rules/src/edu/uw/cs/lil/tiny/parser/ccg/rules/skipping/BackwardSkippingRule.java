@@ -23,6 +23,7 @@ import java.util.Collection;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName.Direction;
 
 /**
  * This is used to skip words tagged with an empty category:
@@ -37,15 +38,14 @@ import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
  * @author Yoav Artzi
  */
 public class BackwardSkippingRule<MR> extends AbstractSkippingRule<MR> {
-	private static final String	RULE_NAME	= "bskip";
 	
 	public BackwardSkippingRule(ICategoryServices<MR> categoryServices) {
-		super(RULE_NAME, categoryServices);
+		super(Direction.BACKWARD, categoryServices);
 	}
 	
 	@Override
 	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
-			Category<MR> right, boolean isCompleteSentence) {
+			Category<MR> right) {
 		return attemptSkipping(left, right, true);
 	}
 	

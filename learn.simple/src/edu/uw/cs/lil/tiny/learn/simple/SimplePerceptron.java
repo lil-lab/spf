@@ -21,18 +21,18 @@ package edu.uw.cs.lil.tiny.learn.simple;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
 import edu.uw.cs.lil.tiny.data.sentence.Sentence;
 import edu.uw.cs.lil.tiny.data.singlesentence.SingleSentence;
 import edu.uw.cs.lil.tiny.learn.ILearner;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
 import edu.uw.cs.lil.tiny.parser.ccg.model.Model;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -82,11 +82,11 @@ public class SimplePerceptron implements
 						.createDataItemModel(dataItem.getSample());
 				final IParserOutput<LogicalExpression> parserOutput = parser
 						.parse(dataItem.getSample(), dataItemModel);
-				final List<? extends IParse<LogicalExpression>> bestParses = parserOutput
+				final List<? extends IDerivation<LogicalExpression>> bestParses = parserOutput
 						.getBestParses();
 				
 				// Correct parse
-				final List<? extends IParse<LogicalExpression>> correctParses = parserOutput
+				final List<? extends IDerivation<LogicalExpression>> correctParses = parserOutput
 						.getMaxParses(new IFilter<LogicalExpression>() {
 							
 							@Override
@@ -96,8 +96,8 @@ public class SimplePerceptron implements
 						});
 				
 				// Violating parses
-				final List<IParse<LogicalExpression>> violatingBadParses = new LinkedList<IParse<LogicalExpression>>();
-				for (final IParse<LogicalExpression> parse : bestParses) {
+				final List<IDerivation<LogicalExpression>> violatingBadParses = new LinkedList<IDerivation<LogicalExpression>>();
+				for (final IDerivation<LogicalExpression> parse : bestParses) {
 					if (!dataItem.isCorrect(parse.getSemantics())) {
 						violatingBadParses.add(parse);
 						LOG.info("Bad parse: %s", parse.getSemantics());
@@ -112,13 +112,13 @@ public class SimplePerceptron implements
 					final IHashVector update = HashVectorFactory.create();
 					
 					// Positive update
-					for (final IParse<LogicalExpression> parse : correctParses) {
+					for (final IDerivation<LogicalExpression> parse : correctParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								(1.0 / correctParses.size()), update);
 					}
 					
 					// Negative update
-					for (final IParse<LogicalExpression> parse : violatingBadParses) {
+					for (final IDerivation<LogicalExpression> parse : violatingBadParses) {
 						parse.getAverageMaxFeatureVector().addTimesInto(
 								-1.0 * (1.0 / violatingBadParses.size()),
 								update);

@@ -18,10 +18,10 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.injective.graph;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVectorImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVectorImmutable;
 
 /**
  * Very simple wrapper for an evaluation with a single step (i.e.,

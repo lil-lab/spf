@@ -22,6 +22,13 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax.SimpleSyntax;
 import edu.uw.cs.utils.assertion.Assert;
 
+/**
+ * A CCG category with a primitive syntactic category.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ *            Meaning representation.
+ */
 public class SimpleCategory<MR> extends Category<MR> {
 	
 	private static final long	serialVersionUID	= -5684681598851371506L;

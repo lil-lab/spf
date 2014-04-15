@@ -49,11 +49,7 @@ public class ComplexSyntax extends Syntax {
 	private static String computeSyntaxString(Syntax left, Syntax right,
 			Slash slash) {
 		final StringBuilder ret = new StringBuilder();
-		if (left instanceof ComplexSyntax) {
-			ret.append("(").append(left).append(")");
-		} else {
-			ret.append(left);
-		}
+		ret.append(left);
 		ret.append(slash);
 		if (right instanceof ComplexSyntax) {
 			ret.append("(").append(right).append(")");

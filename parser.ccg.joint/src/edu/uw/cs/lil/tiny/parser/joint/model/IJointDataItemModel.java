@@ -18,8 +18,8 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 public interface IJointDataItemModel<MR, ESTEP> extends IDataItemModel<MR> {
 	

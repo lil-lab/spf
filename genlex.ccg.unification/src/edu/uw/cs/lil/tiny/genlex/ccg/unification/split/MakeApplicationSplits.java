@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.PowerSet;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ComplexCategory;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
@@ -43,7 +44,6 @@ import edu.uw.cs.lil.tiny.mr.lambda.visitor.ReplaceExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ReplaceNthExpression;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.Simplify;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType;
-import edu.uw.cs.lil.tiny.utils.PowerSet;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.counter.Counter;
 import edu.uw.cs.utils.log.ILogger;

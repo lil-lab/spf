@@ -39,15 +39,13 @@ public class TestServices {
 	}
 	
 	static {
-		DEFAULT_TYPES_FILE = new File("resources-test/geo-lambda.types");
+		DEFAULT_TYPES_FILE = new File("resources-test/geo.types");
 		DEFAULT_ONTOLOGY_FILES = new LinkedList<File>();
-		DEFAULT_ONTOLOGY_FILES.add(new File(
-				"resources-test/geo-lambda.consts.ont"));
-		DEFAULT_ONTOLOGY_FILES.add(new File(
-				"resources-test/geo-lambda.preds.ont"));
+		DEFAULT_ONTOLOGY_FILES.add(new File("resources-test/geo.consts.ont"));
+		DEFAULT_ONTOLOGY_FILES.add(new File("resources-test/geo.preds.ont"));
 		
 		// //////////////////////////////////////////
-		// Init typing system
+		// Init typing system.
 		// //////////////////////////////////////////
 		
 		// Init the logical expression type system
@@ -55,15 +53,15 @@ public class TestServices {
 			LogicLanguageServices
 					.setInstance(new LogicLanguageServices.Builder(
 							new TypeRepository(DEFAULT_TYPES_FILE),
-							new FlexibleTypeComparator())
+							new FlexibleTypeComparator()).closeOntology(false)
 							.addConstantsToOntology(DEFAULT_ONTOLOGY_FILES)
-							.setNumeralTypeName("n").build());
+							.setNumeralTypeName("i").build());
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 		
 		// //////////////////////////////////////////////////
-		// Category services for logical expressions
+		// Category services for logical expressions.
 		// //////////////////////////////////////////////////
 		
 		// CCG LogicalExpression category services for handling categories

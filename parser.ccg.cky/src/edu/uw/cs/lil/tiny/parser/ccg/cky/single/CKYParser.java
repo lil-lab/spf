@@ -18,16 +18,19 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.cky.single;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.common.base.Function;
+
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
-import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexiconImmutable;
 import edu.uw.cs.lil.tiny.parser.ISentenceLexiconGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.AbstractCKYParser;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYBinaryParsingRule;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYUnaryParsingRule;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.SimpleWordSkippingLexicalGenerator;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.AbstractCellFactory;
 import edu.uw.cs.lil.tiny.parser.ccg.cky.chart.Cell;
@@ -48,57 +51,74 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 	public static final ILogger	LOG	= LoggerFactory.create(CKYParser.class);
 	
 	private CKYParser(int maxNumberOfCellsInSpan,
-			List<CKYBinaryParsingRule<MR>> binaryParseRules,
+			List<CKYBinaryParsingRule<MR>> binaryRules,
 			List<ISentenceLexiconGenerator<MR>> sentenceLexiconGenerators,
 			ISentenceLexiconGenerator<MR> wordSkippingLexicalGenerator,
 			ICategoryServices<MR> categoryServices, boolean pruneLexicalCells,
-			IFilter<Category<MR>> completeParseFilter) {
-		super(maxNumberOfCellsInSpan, binaryParseRules,
-				sentenceLexiconGenerators, wordSkippingLexicalGenerator,
-				categoryServices, pruneLexicalCells, completeParseFilter);
+			IFilter<Category<MR>> completeParseFilter,
+			List<CKYUnaryParsingRule<MR>> unaryRules,
+			Function<Category<MR>, Category<MR>> categoryTransformation) {
+		super(maxNumberOfCellsInSpan, binaryRules, sentenceLexiconGenerators,
+				wordSkippingLexicalGenerator, categoryServices,
+				pruneLexicalCells, completeParseFilter, unaryRules,
+				categoryTransformation);
 	}
 	
 	/**
 	 * Add all the cells to the chart.
 	 * 
 	 * @param newCells
-	 *            list of new cells
+	 *            list of new cells.
 	 * @param chart
-	 *            Chart to add the cells to
+	 *            Chart to add the cells to.
 	 */
-	private static <MR> void addAllToChart(List<Cell<MR>> newCells,
-			Chart<MR> chart, IDataItemModel<MR> model) {
+	protected static <MR> void addAllToChart(List<Cell<MR>> newCells,
+			Chart<MR> chart) {
 		for (final Cell<MR> newCell : newCells) {
-			chart.add(newCell, model);
+			chart.add(newCell);
 		}
 	}
 	
 	@Override
-	protected Chart<MR> doParse(IFilter<MR> pruningFilter,
+	protected Chart<MR> doParse(final IFilter<MR> pruningFilter,
 			IDataItemModel<MR> model, Chart<MR> chart, int numTokens,
 			AbstractCellFactory<MR> cellFactory,
 			List<ILexiconImmutable<MR>> lexicons) {
 		
+		final int sentenceLength = chart.getSentenceLength();
+		
 		// Add lexical entries from all active lexicons
-		for (int i = 0; i < numTokens; i++) {
-			for (int j = i; j < numTokens; j++) {
-				final List<Cell<MR>> newCells = generateLexicalCells(i, j,
-						chart, lexicons, model);
+		for (int start = 0; start < numTokens; start++) {
+			for (int end = start; end < numTokens; end++) {
+				final List<Cell<MR>> newCells = generateLexicalCells(start,
+						end, chart, lexicons, model);
 				
 				// Filter cells, only keep cells that have semantics and pass
 				// pruning (if there's a pruning filter)
-				CollectionUtils.filterInPlace(newCells,
+				if (CollectionUtils.filterInPlace(newCells,
 						new IFilter<Cell<MR>>() {
 							@Override
 							public boolean isValid(Cell<MR> e) {
-								return e.getCategory().getSyntax()
-										.equals(Syntax.EMPTY)
-										|| e.getCategory().getSem() != null;
+								return !prune(pruningFilter, e.getCategory(),
+										e.getStart(), e.getEnd(),
+										sentenceLength, true);
 							}
-						});
+						})) {
+					chart.externalPruning(start, end);
+				}
 				
 				for (final Cell<MR> newCell : newCells) {
-					chart.add(newCell, model);
+					chart.add(newCell);
+				}
+				// Apply unary rules to cells added by lexical entries.
+				final Pair<List<Cell<MR>>, Boolean> unaryProcessingResult = unaryProcessSpan(
+						start, end, sentenceLength, chart, cellFactory,
+						pruningFilter, model);
+				if (unaryProcessingResult.second()) {
+					chart.externalPruning(start, end);
+				}
+				for (final Cell<MR> cell : unaryProcessingResult.first()) {
+					chart.add(cell);
 				}
 			}
 		}
@@ -108,12 +128,19 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 			for (int begin = 0; begin < numTokens - len; begin++) {
 				for (int split = 0; split < len; split++) {
 					final Pair<List<Cell<MR>>, Boolean> processingPair = processSplit(
-							begin, begin + len, split, chart, cellFactory,
-							numTokens, pruningFilter, model);
-					addAllToChart(processingPair.first(), chart, model);
+							begin, begin + len, split, sentenceLength, chart,
+							cellFactory, pruningFilter, model);
+					addAllToChart(processingPair.first(), chart);
 					if (processingPair.second()) {
 						chart.externalPruning(begin, begin + len);
 					}
+				}
+				final Pair<List<Cell<MR>>, Boolean> processingPair = unaryProcessSpan(
+						begin, begin + len, sentenceLength, chart, cellFactory,
+						pruningFilter, model);
+				addAllToChart(processingPair.first(), chart);
+				if (processingPair.second()) {
+					chart.externalPruning(begin, begin + len);
 				}
 			}
 		}
@@ -128,9 +155,18 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 	 */
 	public static class Builder<MR> {
 		
-		private final List<CKYBinaryParsingRule<MR>>		binaryParseRules			= new LinkedList<CKYBinaryParsingRule<MR>>();
+		private final List<CKYBinaryParsingRule<MR>>		binaryRules					= new ArrayList<CKYBinaryParsingRule<MR>>();
 		
 		private final ICategoryServices<MR>					categoryServices;
+		
+		private Function<Category<MR>, Category<MR>>		categoryTransformation		= new Function<Category<MR>, Category<MR>>() {
+																							
+																							@Override
+																							public Category<MR> apply(
+																									Category<MR> input) {
+																								return input;
+																							}
+																						};
 		
 		private final IFilter<Category<MR>>					completeParseFilter;
 		
@@ -140,6 +176,8 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 		private boolean										pruneLexicalCells			= false;
 		
 		private final List<ISentenceLexiconGenerator<MR>>	sentenceLexicalGenerators	= new LinkedList<ISentenceLexiconGenerator<MR>>();
+		
+		private final List<CKYUnaryParsingRule<MR>>			unaryRules					= new ArrayList<CKYUnaryParsingRule<MR>>();
 		
 		private ISentenceLexiconGenerator<MR>				wordSkippingLexicalGenerator;
 		
@@ -152,7 +190,12 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 		}
 		
 		public Builder<MR> addBinaryParseRule(CKYBinaryParsingRule<MR> rule) {
-			binaryParseRules.add(rule);
+			binaryRules.add(rule);
+			return this;
+		}
+		
+		public Builder<MR> addBinaryParseRule(CKYUnaryParsingRule<MR> rule) {
+			unaryRules.add(rule);
 			return this;
 		}
 		
@@ -163,9 +206,16 @@ public class CKYParser<MR> extends AbstractCKYParser<MR> {
 		}
 		
 		public CKYParser<MR> build() {
-			return new CKYParser<MR>(maxNumberOfCellsInSpan, binaryParseRules,
+			return new CKYParser<MR>(maxNumberOfCellsInSpan, binaryRules,
 					sentenceLexicalGenerators, wordSkippingLexicalGenerator,
-					categoryServices, pruneLexicalCells, completeParseFilter);
+					categoryServices, pruneLexicalCells, completeParseFilter,
+					unaryRules, categoryTransformation);
+		}
+		
+		public Builder<MR> setCategoryTransformation(
+				Function<Category<MR>, Category<MR>> categoryTransformation) {
+			this.categoryTransformation = categoryTransformation;
+			return this;
 		}
 		
 		public Builder<MR> setMaxNumberOfCellsInSpan(int maxNumberOfCellsInSpan) {

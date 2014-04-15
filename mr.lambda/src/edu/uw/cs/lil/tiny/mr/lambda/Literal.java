@@ -25,15 +25,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.base.LispReader;
+import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionReader.IReader;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.language.type.ComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType;
 import edu.uw.cs.lil.tiny.mr.language.type.RecursiveComplexType.Option;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
-import edu.uw.cs.lil.tiny.utils.LispReader;
 import edu.uw.cs.utils.assertion.Assert;
 import edu.uw.cs.utils.collections.ListUtils;
+import edu.uw.cs.utils.collections.MapOverlay;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
@@ -44,18 +46,31 @@ import edu.uw.cs.utils.log.LoggerFactory;
  * @author Yoav Artzi
  */
 public class Literal extends LogicalExpression {
-	public static final ILogger				LOG					= LoggerFactory
-																		.create(Literal.class);
+	public static final ILogger									LOG					= LoggerFactory
+																							.create(Literal.class);
 	
-	public static final String				PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
+	public static final String									PREFIX				= String.valueOf(LogicalExpression.PARENTHESIS_OPEN);
 	
-	private static final long				serialVersionUID	= -4209330309716600396L;
+	/** Mapper used in constructor. */
+	private static ListUtils.Mapper<LogicalExpression, Type>	ARG_TO_TYPE_MAPPER	= new ListUtils.Mapper<LogicalExpression, Type>() {
+																						
+																						@Override
+																						public Type process(
+																								LogicalExpression obj) {
+																							return Assert
+																									.ifNull(obj,
+																											"Null argument to literal.")
+																									.getType();
+																						}
+																					};
 	
-	private final List<LogicalExpression>	arguments;
+	private static final long									serialVersionUID	= -4209330309716600396L;
 	
-	private final LogicalExpression			predicate;
+	private final List<LogicalExpression>						arguments;
 	
-	private final Type						type;
+	private final LogicalExpression								predicate;
+	
+	private final Type											type;
 	
 	public Literal(LogicalExpression predicate,
 			List<LogicalExpression> arguments) {
@@ -74,36 +89,26 @@ public class Literal extends LogicalExpression {
 	private Literal(LogicalExpression predicate,
 			List<LogicalExpression> arguments, ITypeComparator typeComparator,
 			TypeRepository typeRepository) {
-		// Verify predicate and all arguments are not null -- safety measure
-		for (final LogicalExpression arg : arguments) {
-			Assert.ifNull(arg);
-		}
 		this.predicate = Assert.ifNull(predicate);
 		this.arguments = Collections.unmodifiableList(arguments);
 		
 		// Verify that the predicate has a complex type, so it will be able to
 		// take arguments
-		if (!(predicate.getType().isComplex())) {
+		if (!predicate.getType().isComplex()) {
 			throw new LogicalExpressionRuntimeException(String.format(
 					"Predicate must have a complex type, not %s",
 					predicate.getType()));
 		}
 		
 		// Compute the type. If the computed type is null, throw an exception.
+		// Also check against null arguments.
 		final Pair<Type, List<Type>> literalTyping = computeLiteralTyping(
-				(ComplexType) predicate.getType(), ListUtils.map(arguments,
-						new ListUtils.Mapper<LogicalExpression, Type>() {
-							
-							@Override
-							public Type process(LogicalExpression obj) {
-								return obj.getType();
-							}
-						}), typeComparator, typeRepository);
-		this.type = Assert
-				.ifNull(literalTyping == null ? null : literalTyping.first(),
-						String.format(
-								"Failed to compute literal type for predicate=%s, arguments=%s",
-								predicate, arguments));
+				(ComplexType) predicate.getType(),
+				ListUtils.map(arguments, ARG_TO_TYPE_MAPPER), typeComparator,
+				typeRepository);
+		this.type = Assert.ifNull(
+				literalTyping == null ? null : literalTyping.first(),
+				"Failed to compute literal type.");
 	}
 	
 	public static Pair<Type, List<Type>> computeLiteralTyping(
@@ -194,38 +199,6 @@ public class Literal extends LogicalExpression {
 		
 	}
 	
-	protected static Literal doParse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator) {
-		try {
-			final LispReader lispReader = new LispReader(new StringReader(
-					string));
-			
-			// First is the literal predicate. Get its signature and verify it
-			// exists
-			final String predicateString = lispReader.next();
-			final LogicalExpression predicate = LogicalExpression.doParse(
-					predicateString, variables, typeRepository, typeComparator);
-			
-			// The rest of the elements are the arguments
-			final List<LogicalExpression> arguments = new ArrayList<LogicalExpression>();
-			while (lispReader.hasNext()) {
-				final String stringElement = lispReader.next();
-				final LogicalExpression argument = LogicalExpression.doParse(
-						stringElement, variables, typeRepository,
-						typeComparator);
-				arguments.add(argument);
-			}
-			
-			// Create the literal, all checks are done within the constructor
-			return new Literal(predicate, arguments, typeComparator,
-					typeRepository);
-		} catch (final RuntimeException e) {
-			LOG.error("Literal syntax error: %s", string);
-			throw e;
-		}
-	}
-	
 	@Override
 	public void accept(ILogicalExpressionVisitor visitor) {
 		visitor.visit(this);
@@ -280,7 +253,7 @@ public class Literal extends LogicalExpression {
 	
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
 		if (this == exp) {
 			return true;
 		}
@@ -292,7 +265,7 @@ public class Literal extends LogicalExpression {
 			if (other.predicate != null) {
 				return false;
 			}
-		} else if (!predicate.equals(other.predicate, variablesMapping)) {
+		} else if (!predicate.equals(other.predicate, mapping)) {
 			return false;
 		}
 		if (arguments == null) {
@@ -309,8 +282,7 @@ public class Literal extends LogicalExpression {
 			final Iterator<? extends LogicalExpression> otherIterator = other.arguments
 					.iterator();
 			while (thisIterator.hasNext()) {
-				if (!thisIterator.next().equals(otherIterator.next(),
-						variablesMapping)) {
+				if (!thisIterator.next().equals(otherIterator.next(), mapping)) {
 					return false;
 				}
 			}
@@ -321,9 +293,12 @@ public class Literal extends LogicalExpression {
 				final int length = otherArgsCopy.size();
 				boolean found = false;
 				for (int i = 0; i < length; ++i) {
-					if (argThis.equals(otherArgsCopy.get(i), variablesMapping)) {
+					final MapOverlay<LogicalExpression, LogicalExpression> tempMapping = new MapOverlay<LogicalExpression, LogicalExpression>(
+							mapping);
+					if (argThis.equals(otherArgsCopy.get(i), tempMapping)) {
 						found = true;
 						otherArgsCopy.remove(i);
+						mapping.putAll(tempMapping.getOverlayMap());
 						break;
 					}
 				}
@@ -336,6 +311,53 @@ public class Literal extends LogicalExpression {
 		}
 		
 		return true;
+	}
+	
+	public static class Reader implements IReader<Literal> {
+		
+		@Override
+		public boolean isValid(String string) {
+			return string.startsWith(Literal.PREFIX)
+					&& !string.startsWith(Lambda.PREFIX);
+		}
+		
+		@Override
+		public Literal read(String string,
+				Map<String, LogicalExpression> mapping,
+				TypeRepository typeRepository, ITypeComparator typeComparator,
+				LogicalExpressionReader reader) {
+			try {
+				final LispReader lispReader = new LispReader(new StringReader(
+						string));
+				
+				// First is the literal predicate. Get its signature and verify
+				// it
+				// exists
+				final String predicateString = lispReader.next();
+				final LogicalExpression predicate = reader.read(
+						predicateString, mapping, typeRepository,
+						typeComparator);
+				
+				// The rest of the elements are the arguments
+				final List<LogicalExpression> arguments = new ArrayList<LogicalExpression>();
+				while (lispReader.hasNext()) {
+					final String stringElement = lispReader.next();
+					final LogicalExpression argument = reader.read(
+							stringElement, mapping, typeRepository,
+							typeComparator);
+					arguments.add(argument);
+				}
+				
+				// Create the literal, all checks are done within the
+				// constructor
+				return new Literal(predicate, arguments, typeComparator,
+						typeRepository);
+			} catch (final RuntimeException e) {
+				LOG.error("Literal syntax error: %s", string);
+				throw e;
+			}
+		}
+		
 	}
 	
 }

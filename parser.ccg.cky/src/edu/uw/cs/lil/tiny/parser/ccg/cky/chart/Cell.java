@@ -19,6 +19,7 @@
 package edu.uw.cs.lil.tiny.parser.ccg.cky.chart;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,13 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorUtils;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.parser.RuleUsageTriplet;
 import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorUtils;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
 import edu.uw.cs.utils.collections.IScorer;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
@@ -60,6 +62,8 @@ public class Cell<MR> {
 	
 	/** The end index of the span of the input string covered by this cell. */
 	private final int								end;
+	
+	private final Set<RuleName>						generatingRules		= new HashSet<RuleName>();
 	
 	/**
 	 * Mutable cache for the hashing code. This field is for internal use only!
@@ -104,14 +108,22 @@ public class Cell<MR> {
 	 */
 	private double									viterbiScore		= -Double.MAX_VALUE;
 	
-	protected int									numParses			= 0;
+	/**
+	 * Number of (partial) parses with this cell at their root.
+	 */
+	protected long									numParses			= 0;
+	
+	/**
+	 * Number of (partial) viterbi parses with this cell at their root.
+	 */
+	protected long									numViterbiParses	= 0;
 	
 	/**
 	 * Derivation steps that have the {@link #viterbiScore}.
 	 */
 	protected final Set<AbstractCKYParseStep<MR>>	viterbiSteps		= new HashSet<AbstractCKYParseStep<MR>>();
 	
-	protected Cell(CKYLexicalStep<MR> parseStep, int start, int end,
+	protected Cell(AbstractCKYParseStep<MR> parseStep, int start, int end,
 			boolean isCompleteSpan) {
 		this.isCompleteSpan = isCompleteSpan;
 		this.isFullParse = parseStep.isFullParse();
@@ -119,17 +131,7 @@ public class Cell<MR> {
 		this.begin = start;
 		this.end = end;
 		this.steps.add(parseStep);
-		updateScores(parseStep);
-	}
-	
-	protected Cell(CKYParseStep<MR> parseStep, int start, int end,
-			boolean isCompleteSpan) {
-		this.isCompleteSpan = isCompleteSpan;
-		this.isFullParse = parseStep.isFullParse();
-		this.category = parseStep.getRoot();
-		this.begin = start;
-		this.end = end;
-		this.steps.add(parseStep);
+		this.generatingRules.add(parseStep.getRuleName());
 		updateScores(parseStep);
 	}
 	
@@ -148,6 +150,7 @@ public class Cell<MR> {
 		boolean addedToMaxChildren = false;
 		for (final AbstractCKYParseStep<MR> derivationStep : other.steps) {
 			if (steps.add(derivationStep)) {
+				generatingRules.add(derivationStep.getRuleName());
 				addedToMaxChildren |= updateScores(derivationStep);
 			}
 		}
@@ -210,6 +213,10 @@ public class Cell<MR> {
 		return end;
 	}
 	
+	public Set<RuleName> getGeneratingRules() {
+		return Collections.unmodifiableSet(generatingRules);
+	}
+	
 	public boolean getIsMax() {
 		return isMax;
 	}
@@ -237,8 +244,12 @@ public class Cell<MR> {
 		return result;
 	}
 	
-	public int getNumParses() {
+	public long getNumParses() {
 		return numParses;
+	}
+	
+	public long getNumViterbiParses() {
+		return numViterbiParses;
 	}
 	
 	public double getPruneScore() {
@@ -251,6 +262,10 @@ public class Cell<MR> {
 	
 	public int getStart() {
 		return begin;
+	}
+	
+	public Set<AbstractCKYParseStep<MR>> getSteps() {
+		return Collections.unmodifiableSet(steps);
 	}
 	
 	/**
@@ -277,6 +292,10 @@ public class Cell<MR> {
 	 */
 	public double getViterbiScore() {
 		return viterbiScore;
+	}
+	
+	public Set<AbstractCKYParseStep<MR>> getViterbiSteps() {
+		return Collections.unmodifiableSet(viterbiSteps);
 	}
 	
 	@Override
@@ -314,6 +333,13 @@ public class Cell<MR> {
 		return isFullParse;
 	}
 	
+	/**
+	 * The number of parsing steps leading to this cell.
+	 */
+	public int numSteps() {
+		return steps.size();
+	}
+	
 	@Override
 	public String toString() {
 		return toString(false, null);
@@ -326,9 +352,11 @@ public class Cell<MR> {
 				.append(tokens == null ? "" : tokens)
 				.append(tokens == null ? "" : " :- ").append(category)
 				.append(" : ").append("prune=").append(getPruneScore())
-				.append(" : ").append("hash=").append(hashCode()).append(" : ")
-				.append(steps.size()).append(" : ").append(viterbiScore)
-				.append(" : ");
+				.append(" : ").append("numParses=").append(numParses)
+				.append(" : ").append("numViterbiParses=")
+				.append(numViterbiParses).append(" : ").append("hash=")
+				.append(hashCode()).append(" : ").append(steps.size())
+				.append(" : ").append(viterbiScore).append(" : ");
 		
 		final Iterator<AbstractCKYParseStep<MR>> iterator = viterbiSteps
 				.iterator();
@@ -457,16 +485,13 @@ public class Cell<MR> {
 			return;
 		} else {
 			for (final AbstractCKYParseStep<MR> derivationStep : viterbiSteps) {
-				if (!(derivationStep instanceof CKYLexicalStep)) {
-					final List<Pair<Integer, Integer>> children = new ArrayList<Pair<Integer, Integer>>(
-							2);
-					for (final Cell<MR> child : derivationStep) {
-						child.recursiveGetMaxRulesUsed(result, visited);
-						children.add(Pair.of(child.getStart(), child.getEnd()));
-					}
-					result.add(new RuleUsageTriplet(derivationStep
-							.getRuleName(), children));
+				final List<Pair<Integer, Integer>> children = new ArrayList<Pair<Integer, Integer>>();
+				for (final Cell<MR> child : derivationStep) {
+					child.recursiveGetMaxRulesUsed(result, visited);
+					children.add(Pair.of(child.getStart(), child.getEnd()));
 				}
+				result.add(new RuleUsageTriplet(derivationStep.getRuleName(),
+						children));
 			}
 			visited.add(this);
 		}
@@ -481,7 +506,7 @@ public class Cell<MR> {
 		// compute the viterbi score of the step, the number of parses it
 		// represents and the value to add to the cell's inside score
 		double stepViterbiScore = derivationStep.getLocalScore();
-		int numParsesInStep = 1;
+		long numParsesInStep = 1;
 		double logAddToInsideScore = derivationStep.getLocalScore();
 		for (final Cell<MR> child : derivationStep) {
 			logAddToInsideScore += child.getLogInsideScore();
@@ -490,9 +515,12 @@ public class Cell<MR> {
 		}
 		logInsideScore = LogSumExp.of(logInsideScore, logAddToInsideScore);
 		
+		// Update the total number of parses.
+		numParses += numParsesInStep;
+		
 		if (stepViterbiScore == viterbiScore) {
 			if (viterbiSteps.add(derivationStep)) {
-				numParses += numParsesInStep;
+				numViterbiParses += numParsesInStep;
 				return true;
 			} else {
 				return false;
@@ -501,11 +529,11 @@ public class Cell<MR> {
 			viterbiScore = stepViterbiScore;
 			viterbiSteps.clear();
 			viterbiSteps.add(derivationStep);
-			numParses = numParsesInStep;
+			numViterbiParses = numParsesInStep;
 			return true;
 		}
 		
-		// Case step not added to max children
+		// Case step not added to max children.
 		return false;
 	}
 	

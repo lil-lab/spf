@@ -48,7 +48,7 @@ import edu.uw.cs.lil.tiny.mr.lambda.LogicLanguageServices;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
@@ -146,7 +146,7 @@ public class TemplateCoarseGenlex<DI extends Sentence>
 		// each template
 		final Map<List<Type>, Set<Pair<LexicalTemplate, List<String>>>> usedTemplatesAndTokens = new HashMap<List<Type>, Set<Pair<LexicalTemplate, List<String>>>>();
 		int counter = 0;
-		for (final IParse<LogicalExpression> parse : parserOutput
+		for (final IDerivation<LogicalExpression> parse : parserOutput
 				.getAllParses()) {
 			for (final LexicalEntry<LogicalExpression> entry : parse
 					.getMaxLexicalEntries()) {

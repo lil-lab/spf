@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.string.IStringFilter;
+import edu.uw.cs.lil.tiny.base.string.StubStringFilter;
 import edu.uw.cs.lil.tiny.ccg.categories.Category;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.ccg.lexicon.ILexicon;
@@ -44,8 +46,6 @@ import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalConstant;
 import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpression;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.utils.string.IStringFilter;
-import edu.uw.cs.lil.tiny.utils.string.StubStringFilter;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;

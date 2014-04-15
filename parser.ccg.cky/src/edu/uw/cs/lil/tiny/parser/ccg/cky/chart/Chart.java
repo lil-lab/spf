@@ -28,10 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYParse;
-import edu.uw.cs.lil.tiny.parser.ccg.model.IDataItemModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
+import edu.uw.cs.lil.tiny.parser.ccg.cky.CKYDerivation;
 import edu.uw.cs.utils.collections.CollectionUtils;
 import edu.uw.cs.utils.collections.CompositeIterator;
 import edu.uw.cs.utils.collections.IScorer;
@@ -95,14 +94,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * span. Otherwise, it won't be added. Adding might cause pruning of a
 	 * previously added cell.
 	 */
-	public void add(Cell<MR> cell, IDataItemModel<MR> model) {
-		
-		if (cell.isCompleteSpan() && !cell.isFullParse()) {
-			// Case the complete span, but not a complete parse, don't add to
-			// the chart
-			return;
-		}
-		
+	public void add(Cell<MR> cell) {
 		final AbstractSpan<MR> span = chart[cell.getStart()][cell.getEnd()];
 		final Cell<MR> existingCell = span.get(cell);
 		if (existingCell == null) {
@@ -114,7 +106,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			// Adding to existing is done through a special model. In some cases
 			// it requires special operations on the queue, due to the potential
 			// of changing the score of the original cell.
-			span.addToExisting(existingCell, cell, model);
+			span.addToExisting(existingCell, cell);
 			LOG.debug("Added to cell: %s", existingCell);
 		}
 	}
@@ -139,20 +131,20 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		return cellFactory;
 	}
 	
-	public List<CKYParse<MR>> getParseResults() {
+	public List<CKYDerivation<MR>> getParseResults() {
 		// Need a bounded queue here to make sure we don't return more than the
 		// beam, because lexical cells might exist outside of the beam.
-		final OrderInvariantBoundedPriorityQueue<CKYParse<MR>> ret = new OrderInvariantBoundedPriorityQueue<CKYParse<MR>>(
-				beamSize, new Comparator<CKYParse<MR>>() {
+		final OrderInvariantBoundedPriorityQueue<CKYDerivation<MR>> ret = new OrderInvariantBoundedPriorityQueue<CKYDerivation<MR>>(
+				beamSize, new Comparator<CKYDerivation<MR>>() {
 					@Override
-					public int compare(CKYParse<MR> o1, CKYParse<MR> o2) {
+					public int compare(CKYDerivation<MR> o1, CKYDerivation<MR> o2) {
 						return Double.compare(o1.getScore(), o2.getScore());
 					}
 				});
 		for (final Cell<MR> cell : fullparses()) {
-			ret.offer(new CKYParse<MR>(cell));
+			ret.offer(new CKYDerivation<MR>(cell));
 		}
-		return new ArrayList<CKYParse<MR>>(ret);
+		return new ArrayList<CKYDerivation<MR>>(ret);
 	}
 	
 	/**
@@ -330,7 +322,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 											cell.getEnd() + 1), " "))).append(
 					"\n");
 		}
-		
+		result.append("Spans pruned: ").append(getPrunedSpans());
 		return result.toString();
 	}
 	
@@ -483,7 +475,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		protected boolean	externallyPruned	= false;
 		
 		public abstract void addToExisting(Cell<MR> existingCell,
-				Cell<MR> newCell, IDataItemModel<MR> model);
+				Cell<MR> newCell);
 		
 		public abstract Cell<MR> get(Cell<MR> cell);
 		
@@ -571,8 +563,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		}
 		
 		@Override
-		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell,
-				IDataItemModel<MR> model) {
+		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell) {
 			// Adding the cell into an existing one, may change the score of the
 			// cell, so we have to remove it from the queue and re-insert it, if
 			// its max-children changed. The score can only increase, so this
@@ -631,8 +622,7 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		}
 		
 		@Override
-		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell,
-				IDataItemModel<MR> model) {
+		public void addToExisting(Cell<MR> existingCell, Cell<MR> newCell) {
 			if (existingCell.hasLexicalStep()) {
 				// No need to remove and re-insert since the lexical map
 				// maintains no ordering.

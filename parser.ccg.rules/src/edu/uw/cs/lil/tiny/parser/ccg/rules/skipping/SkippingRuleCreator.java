@@ -27,11 +27,11 @@ import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRulesSet;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.BinaryRuleSet;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 
 public class SkippingRuleCreator<MR> implements
-		IResourceObjectCreator<IBinaryParseRule<MR>> {
+		IResourceObjectCreator<BinaryRuleSet<MR>> {
 	
 	private String	type;
 	
@@ -45,8 +45,7 @@ public class SkippingRuleCreator<MR> implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public IBinaryParseRule<MR> create(Parameters params,
-			IResourceRepository repo) {
+	public BinaryRuleSet<MR> create(Parameters params, IResourceRepository repo) {
 		final List<IBinaryParseRule<MR>> rules = new ArrayList<IBinaryParseRule<MR>>(
 				2);
 		rules.add(new ForwardSkippingRule<MR>(
@@ -55,7 +54,7 @@ public class SkippingRuleCreator<MR> implements
 		rules.add(new BackwardSkippingRule<MR>(
 				(ICategoryServices<MR>) repo
 						.getResource(ParameterizedExperiment.CATEGORY_SERVICES_RESOURCE)));
-		return new BinaryRulesSet<MR>(rules);
+		return new BinaryRuleSet<MR>(rules);
 	}
 	
 	@Override

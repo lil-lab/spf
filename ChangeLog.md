@@ -1,3 +1,11 @@
+# v1.5.4
+- Introduce a readers system to read logical expressions from text. Also, make logical expression equality more flexible. Makes it easier to add new logical expression objects to hierarchy. 
+- Various minor (but important) optimizations. 
+- Add labeled single sentence data item with lexical entries. 
+- Utility to parse a single sentence with a lexicon.
+- Support for generalized function composition.
+- Rewrite how the parser handles unary rules: more correct and better re-use of computations.
+
 # v1.5.3
 - Fix pruning in SingleSentence.
 - Fixes and cleaning in LogicLanguageServices. Mostly relevant when working without a close ontology. 

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
 import edu.uw.cs.utils.composites.Pair;
 
 /**
@@ -33,15 +34,16 @@ import edu.uw.cs.utils.composites.Pair;
 public class RuleUsageTriplet {
 	/** (start,end) pair for all children of this parsing step */
 	private final List<Pair<Integer, Integer>>	children;
-	private final String						ruleName;
+	private final RuleName						ruleName;
 	
-	public RuleUsageTriplet(String ruleName,
+	public RuleUsageTriplet(RuleName ruleName,
 			List<Pair<Integer, Integer>> children) {
 		this.children = Collections.unmodifiableList(children);
 		this.ruleName = ruleName;
 	}
 	
-	public RuleUsageTriplet(String ruleName, Pair<Integer, Integer>... children) {
+	public RuleUsageTriplet(RuleName ruleName,
+			Pair<Integer, Integer>... children) {
 		this(ruleName, Arrays.asList(children));
 	}
 	
@@ -87,7 +89,8 @@ public class RuleUsageTriplet {
 	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder(ruleName).append("[");
+		final StringBuilder sb = new StringBuilder(ruleName.toString())
+				.append("[");
 		final Iterator<Pair<Integer, Integer>> iterator = children.iterator();
 		while (iterator.hasNext()) {
 			final Pair<Integer, Integer> child = iterator.next();

@@ -19,15 +19,11 @@
 package edu.uw.cs.lil.tiny.mr.lambda;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 import edu.uw.cs.lil.tiny.mr.IMeaningRepresentation;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LambdaWrapped;
-import edu.uw.cs.lil.tiny.mr.lambda.visitor.LogicalExpressionToString;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
-import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
@@ -57,68 +53,23 @@ public abstract class LogicalExpression implements
 	 */
 	private boolean				hashCodeCalculated	= false;
 	
-	/**
-	 * Parse a logical expression from a string.
-	 * 
-	 * @param string
-	 *            LISP formatted.
-	 */
-	public static LogicalExpression parse(String string) {
-		return parse(string, LogicLanguageServices.getTypeRepository(),
-				LogicLanguageServices.getTypeComparator());
-	}
-	
-	protected static LogicalExpression doParse(String string,
-			Map<String, Variable> variables, TypeRepository typeRepository,
-			ITypeComparator typeComparator) {
-		if (string.startsWith(Lambda.PREFIX)) {
-			return Lambda.doParse(string, variables, typeRepository,
-					typeComparator);
-		} else if (string.startsWith(Literal.PREFIX)) {
-			return Literal.doParse(string, variables, typeRepository,
-					typeComparator);
-		} else {
-			return Term.doParse(string, variables, typeRepository,
-					typeComparator);
-		}
-	}
-	
-	/**
-	 * Parse a logical expression from a string.
-	 * 
-	 * @param string
-	 *            LISP formatted
-	 * @param typeRepository
-	 *            Typing system
-	 * @return logical expression
-	 */
-	protected static LogicalExpression parse(String string,
-			TypeRepository typeRepository, ITypeComparator typeComparator) {
-		try {
-			return LambdaWrapped.of(doParse(string,
-					new HashMap<String, Variable>(), typeRepository,
-					typeComparator));
-		} catch (final RuntimeException e) {
-			LOG.error("Logical expression syntax error: %s", string);
-			throw e;
-		}
+	public static LogicalExpression read(String string) {
+		return LogicalExpressionReader.from(string);
 	}
 	
 	public abstract void accept(ILogicalExpressionVisitor visitor);
 	
 	/**
-	 * Logical expression equals() creates an empty mapping of variables and
-	 * then compares to the given object, while tracking variables. Before
-	 * allocating the variable map, tries to fail quickly by comparing the hash
-	 * codes, which are cached.
+	 * Logical expression equals() creates an empty mapping and then compares to
+	 * the given object, while tracking variables. Before allocating the
+	 * mapping, tries to fail quickly by comparing the hash codes, which are
+	 * cached.
 	 */
 	@Override
 	public boolean equals(Object obj) {
 		// Try to use the hash code to quickly fail on most non-equal objects.
-		return obj instanceof LogicalExpression
-				&& obj.hashCode() == hashCode()
-				&& doEquals((LogicalExpression) obj,
-						new HashMap<Variable, Variable>());
+		return obj instanceof LogicalExpression && obj.hashCode() == hashCode()
+				&& LogicLanguageServices.isEqual(this, (LogicalExpression) obj);
 	}
 	
 	abstract public Type getType();
@@ -134,35 +85,34 @@ public abstract class LogicalExpression implements
 	
 	@Override
 	final public String toString() {
-		return LogicalExpressionToString.of(this);
+		return LogicLanguageServices.toString(this);
 	}
 	
 	protected abstract int calcHashCode();
 	
 	/**
-	 * Comparison with variable tracking.
+	 * Comparison with mapping.
 	 * 
 	 * @param exp
 	 *            Compared object.
-	 * @param variablesMapping
-	 *            Map of variables from source expression to target.
+	 * @param mapping
+	 *            Map of logical expressions from source expression to target.
 	 */
 	protected abstract boolean doEquals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping);
+			Map<LogicalExpression, LogicalExpression> mapping);
 	
 	/**
-	 * Comparison with existing variable mapping and a hashcode
-	 * short-circuiting.
+	 * Comparison with existing mapping and a hashcode short-circuiting.
 	 * 
 	 * @param exp
 	 *            Compared object.
-	 * @param variablesMapping
-	 *            Existing variable mapping between this logical expression and
-	 *            the target.
+	 * @param mapping
+	 *            Existing logical expression mapping between this logical
+	 *            expression and the target.
 	 */
 	protected boolean equals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
 		return exp != null && exp.hashCode() == hashCode()
-				&& doEquals(exp, variablesMapping);
+				&& doEquals(exp, mapping);
 	}
 }

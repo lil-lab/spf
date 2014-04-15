@@ -21,6 +21,8 @@ package edu.uw.cs.lil.tiny.mr.lambda;
 import java.io.ObjectStreamException;
 import java.util.Map;
 
+import jregex.Pattern;
+import edu.uw.cs.lil.tiny.mr.lambda.LogicalExpressionReader.IReader;
 import edu.uw.cs.lil.tiny.mr.lambda.visitor.ILogicalExpressionVisitor;
 import edu.uw.cs.lil.tiny.mr.language.type.Type;
 import edu.uw.cs.lil.tiny.mr.language.type.TypeRepository;
@@ -28,26 +30,34 @@ import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;
 
 /**
- * Lambda calculus constant. A predicate is also a constant, even the primitive
- * ones, such as 'and:t' and 'not:t'. A constant must have a unique name. The
- * name space is across types as well. Since constants are being re-used, their
- * unique identifier is their name.
+ * Lambda calculus constant. A constant must have a unique name that matches the
+ * regular expression [a-z0-9A-Z_]+:type_name. The marker "@" can be used as a
+ * prefix to denote a dynamic constant.
  * 
  * @author Yoav Artzi
  */
 public class LogicalConstant extends Term {
-	public static final ILogger	LOG					= LoggerFactory
-															.create(LogicalConstant.class);
+	public static final ILogger	LOG						= LoggerFactory
+																.create(LogicalConstant.class);
 	
-	private static final String	DYNAMIC_MARKER		= "@";
+	public static final Pattern	REGEXP_NAME_PATTERN;
+	private static final String	DYNAMIC_MARKER			= "@";
+	private static final String	ILLEGAL_CHARS			= "(),:#";
+	private static final String	ILLEGAL_PREFIX_CHARS	= ILLEGAL_CHARS + "!$@";
 	
-	private static final long	serialVersionUID	= 4418490882304760062L;
+	private static final long	serialVersionUID		= 4418490882304760062L;
 	
 	private final String		name;
 	
 	protected LogicalConstant(String name, Type type) {
 		super(type);
 		this.name = name;
+	}
+	
+	static {
+		REGEXP_NAME_PATTERN = new Pattern("(?:" + DYNAMIC_MARKER + "[^"
+				+ ILLEGAL_CHARS + "]+)|(?:[^" + ILLEGAL_PREFIX_CHARS + "][^"
+				+ ILLEGAL_CHARS + "]*)");
 	}
 	
 	public static LogicalConstant create(String name, Type type) {
@@ -73,6 +83,37 @@ public class LogicalConstant extends Term {
 		return create(name, type, true);
 	}
 	
+	public static String escapeString(String string) {
+		final StringBuilder output = new StringBuilder();
+		boolean first = true;
+		for (final char c : string.toCharArray()) {
+			if (DYNAMIC_MARKER.indexOf(c) >= 0) {
+				if ((first && string.length() > 1) || !first) {
+					output.append(c);
+				} else {
+					output.append("_I" + (int) c + "_");
+				}
+			} else if (first && ILLEGAL_PREFIX_CHARS.indexOf(c) >= 0) {
+				output.append("_I" + (int) c + "_");
+			} else if (ILLEGAL_CHARS.indexOf(c) >= 0) {
+				output.append("_I" + (int) c + "_");
+			} else if (Character.isWhitespace(c)) {
+				output.append("_I" + (int) c + "_");
+			} else {
+				output.append(c);
+			}
+			first = false;
+		}
+		return output.toString();
+	}
+	
+	public static boolean isValidName(String name) {
+		final String[] split = name.split(":", 2);
+		return REGEXP_NAME_PATTERN.matches(split[0])
+				&& LogicLanguageServices.getTypeRepository()
+						.getTypeCreateIfNeeded(split[1]) != null;
+	}
+	
 	/**
 	 * Given the constant's short name (the part before the type) and the type,
 	 * will generate a complete and valid constant name.
@@ -85,11 +126,11 @@ public class LogicalConstant extends Term {
 		return name + Term.TYPE_SEPARATOR + type;
 	}
 	
-	public static LogicalConstant parse(String string) {
-		return parse(string, LogicLanguageServices.getTypeRepository());
+	public static LogicalConstant read(String string) {
+		return read(string, LogicLanguageServices.getTypeRepository());
 	}
 	
-	protected static LogicalConstant doParse(String string,
+	protected static LogicalConstant read(String string,
 			TypeRepository typeRepository) {
 		try {
 			final String[] split = string.split(Term.TYPE_SEPARATOR);
@@ -118,16 +159,6 @@ public class LogicalConstant extends Term {
 			LOG.error("Logical constant syntax error: %s", string);
 			throw e;
 		}
-	}
-	
-	protected static LogicalConstant parse(String string,
-			TypeRepository typeRepository) {
-		return doParse(string, typeRepository);
-	}
-	
-	protected static LogicalExpression parse(String string,
-			TypeRepository typeRepository, ITypeComparator typeComparator) {
-		return parse(string, typeRepository);
 	}
 	
 	@Override
@@ -165,7 +196,8 @@ public class LogicalConstant extends Term {
 	 * the base name without the typing suffix or the decoration prefix.
 	 */
 	public String getBaseName() {
-		return name.split(Term.TYPE_SEPARATOR)[0];
+		return name.substring(0, name.length() - getType().getName().length()
+				- TYPE_SEPARATOR.length());
 	}
 	
 	public String getName() {
@@ -198,14 +230,14 @@ public class LogicalConstant extends Term {
 	
 	@Override
 	protected boolean doEquals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
 		// Variable mapping is irrelevant for constants mapping.
 		return equals(exp);
 	}
 	
 	@Override
 	protected boolean equals(LogicalExpression exp,
-			Map<Variable, Variable> variablesMapping) {
+			Map<LogicalExpression, LogicalExpression> mapping) {
 		// Variable mapping is irrelevant for constants mapping.
 		return equals(exp);
 	}
@@ -217,6 +249,23 @@ public class LogicalConstant extends Term {
 	 */
 	protected Object readResolve() throws ObjectStreamException {
 		return create(getName(), getType());
+	}
+	
+	public static class Reader implements IReader<LogicalConstant> {
+		
+		@Override
+		public boolean isValid(String string) {
+			return isValidName(string);
+		}
+		
+		@Override
+		public LogicalConstant read(String string,
+				Map<String, LogicalExpression> mapping,
+				TypeRepository typeRepository, ITypeComparator typeComparator,
+				LogicalExpressionReader reader) {
+			return LogicalConstant.read(string, typeRepository);
+		}
+		
 	}
 	
 }

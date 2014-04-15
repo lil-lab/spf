@@ -26,7 +26,7 @@ import java.io.StringReader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import edu.uw.cs.lil.tiny.utils.LispReader;
+import edu.uw.cs.lil.tiny.base.LispReader;
 import edu.uw.cs.utils.composites.Pair;
 
 /**

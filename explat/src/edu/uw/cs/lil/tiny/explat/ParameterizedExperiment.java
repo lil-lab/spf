@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,10 +38,12 @@ import jregex.Pattern;
 import jregex.Replacer;
 import jregex.Substitution;
 import jregex.TextBuffer;
+import edu.uw.cs.lil.tiny.base.exceptions.FileReadingException;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.ResourceCreatorRepository;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.composites.Pair;
+import edu.uw.cs.utils.counter.Counter;
 
 public abstract class ParameterizedExperiment implements IResourceRepository {
 	
@@ -53,30 +56,47 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 	private static final String				INCLUDE_DIRECTIVE			= "include";
 	private static final Pattern			LINE_REPEAT_PATTERN			= new Pattern(
 																				"\\[({var}\\w+)=({start}\\d+)-({end}\\d+)\\]\\s+({rest}.+)$");
+	private static final Pattern			PARAM_SPLIT_PATTERN			= new Pattern(
+																				"(?<!\\\\)\\s");
 	private static final Pattern			VAR_REF						= new Pattern(
 																				"%\\{({var}[\\w@]+)\\}");
 	private final ResourceCreatorRepository	creatorRepo;
 	private final Map<String, Object>		resources					= new HashMap<String, Object>();
 	private final File						rootDir;
-	protected final Parameters				globalParams;
 	
+	protected final Parameters				globalParams;
 	protected final List<Parameters>		jobParams;
+	
 	protected final List<Parameters>		resourceParams;
 	
 	public ParameterizedExperiment(File file, Map<String, String> envParams,
 			ResourceCreatorRepository creatorRepo) throws IOException {
+		this(new FileReader(file), envParams, creatorRepo,
+				file.getParentFile() == null ? new File(".") : file
+						.getParentFile());
+	}
+	
+	public ParameterizedExperiment(File file,
+			ResourceCreatorRepository creatorRepo) throws IOException {
+		this(file, Collections.<String, String> emptyMap(), creatorRepo);
+	}
+	
+	public ParameterizedExperiment(Reader reader,
+			Map<String, String> envParams,
+			ResourceCreatorRepository creatorRepo, File rootDir)
+			throws IOException {
 		this.creatorRepo = creatorRepo;
-		this.rootDir = file.getParentFile() == null ? new File(".") : file
-				.getParentFile();
+		this.rootDir = rootDir;
 		
-		final BufferedReader reader = new BufferedReader(new FileReader(file));
+		final BufferedReader bufferedReader = new BufferedReader(reader);
+		final Counter lineCounter = new Counter();
 		
 		try {
 			String line;
 			
 			// Read parameters
 			final Map<String, String> mutableParameters = new HashMap<String, String>();
-			while ((line = readLineSkipComments(reader)) != null
+			while ((line = readLineSkipComments(bufferedReader, lineCounter)) != null
 					&& !line.trim().equals("")) {
 				final String[] split = line.trim().split("=", 2);
 				if (split[0].equals(INCLUDE_DIRECTIVE)) {
@@ -96,43 +116,43 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			}
 			
 			// Read resources
-			this.resourceParams = readSectionLines(reader);
+			this.resourceParams = readSectionLines(bufferedReader, lineCounter);
 			
 			// Read jobs
-			this.jobParams = readSectionLines(reader);
+			this.jobParams = readSectionLines(bufferedReader, lineCounter);
 			
+		} catch (final Exception e) {
+			throw new FileReadingException(e, lineCounter.value());
 		} finally {
-			reader.close();
+			bufferedReader.close();
 		}
-		
-	}
-	
-	public ParameterizedExperiment(File file,
-			ResourceCreatorRepository creatorRepo) throws IOException {
-		this(file, Collections.<String, String> emptyMap(), creatorRepo);
 	}
 	
 	private static Map<String, String> readIncludedParamsFile(File file)
 			throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
+		final Counter lineCounter = new Counter();
 		try {
 			final Map<String, String> parameters = new HashMap<String, String>();
 			String line;
-			while ((line = readLineSkipComments(reader)) != null
+			while ((line = readLineSkipComments(reader, lineCounter)) != null
 					&& !line.trim().equals("")) {
 				final String[] split = line.trim().split("=", 2);
 				parameters.put(split[0], split[1]);
 			}
 			return Collections.unmodifiableMap(parameters);
+		} catch (final Exception e) {
+			throw new FileReadingException(e, lineCounter.value());
 		} finally {
 			reader.close();
 		}
 	}
 	
-	private static String readLineSkipComments(BufferedReader reader)
-			throws IOException {
+	private static String readLineSkipComments(BufferedReader reader,
+			Counter lineCounter) throws IOException {
 		String line;
 		while ((line = reader.readLine()) != null) {
+			lineCounter.inc();
 			if (!line.startsWith("#")) {
 				return line = line.split("\\s*//")[0];
 			}
@@ -151,6 +171,10 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		} else {
 			throw new IllegalStateException("Invalid resource: " + id);
 		}
+	}
+	
+	public boolean hasResource(String id) {
+		return resources.containsKey(id);
 	}
 	
 	public File makeAbsolute(File file) {
@@ -177,8 +201,9 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			}
 			return paramsList;
 		} else {
-			final String[] split = line.split("\\s+");
-			return ListUtils.createSingletonList(parseAttributesLine(split));
+			return ListUtils
+					.createSingletonList(parseAttributesLine(PARAM_SPLIT_PATTERN
+							.tokenizer(line).split()));
 		}
 	}
 	
@@ -186,22 +211,24 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		final Map<String, String> ret = new HashMap<String, String>();
 		for (final String pair : line) {
 			final String[] splitPair = pair.split("=", 2);
-			ret.put(splitPair[0], splitPair[1]);
+			ret.put(splitPair[0], splitPair[1].replace("\\ ", " "));
 		}
-		
 		return new Parameters(ret);
 	}
 	
 	private List<String> readIncludedLines(File file) throws IOException {
 		final BufferedReader reader = new BufferedReader(new FileReader(file));
+		final Counter lineCounter = new Counter();
 		try {
 			String line;
 			final List<String> lines = new LinkedList<String>();
-			while ((line = readLineSkipComments(reader)) != null
+			while ((line = readLineSkipComments(reader, lineCounter)) != null
 					&& !line.trim().equals("")) {
 				lines.add(line);
 			}
 			return lines;
+		} catch (final Exception e) {
+			throw new FileReadingException(e, lineCounter.value());
 		} finally {
 			reader.close();
 		}
@@ -220,11 +247,11 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		}
 	}
 	
-	private List<Parameters> readSectionLines(BufferedReader reader)
-			throws IOException {
+	private List<Parameters> readSectionLines(BufferedReader reader,
+			Counter lineCounter) throws IOException {
 		final List<Parameters> ret = new LinkedList<Parameters>();
 		String line;
-		while ((line = readLineSkipComments(reader)) != null
+		while ((line = readLineSkipComments(reader, lineCounter)) != null
 				&& !line.trim().equals("")) {
 			ret.addAll(readLine(line));
 		}
@@ -289,12 +316,40 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 			}
 		}
 		
+		public String get(String name, String defaultValue) {
+			if (!parametersMap.containsKey(name)) {
+				if (global) {
+					return defaultValue;
+				} else {
+					return substituteVars(globalParams.get(name));
+				}
+			} else {
+				return substituteVars(parametersMap.get(name));
+			}
+		}
+		
 		public boolean getAsBoolean(String name) {
 			return "true".equals(get(name));
 		}
 		
+		public boolean getAsBoolean(String name, boolean defaultValue) {
+			if (contains(name)) {
+				return "true".equals(get(name));
+			} else {
+				return defaultValue;
+			}
+		}
+		
 		public double getAsDouble(String name) {
 			return Double.valueOf(get(name));
+		}
+		
+		public double getAsDouble(String name, double defaultValue) {
+			if (contains(name)) {
+				return Double.valueOf(get(name));
+			} else {
+				return defaultValue;
+			}
 		}
 		
 		public File getAsFile(String name) {
@@ -318,6 +373,14 @@ public abstract class ParameterizedExperiment implements IResourceRepository {
 		
 		public int getAsInteger(String name) {
 			return Integer.valueOf(get(name));
+		}
+		
+		public int getAsInteger(String name, int defaultValue) {
+			if (contains(name)) {
+				return Integer.valueOf(get(name));
+			} else {
+				return defaultValue;
+			}
 		}
 		
 		public List<String> getSplit(String name) {

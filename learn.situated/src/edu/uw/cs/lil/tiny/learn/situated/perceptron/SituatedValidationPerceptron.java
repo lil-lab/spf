@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.uw.cs.lil.tiny.base.hashvector.HashVectorFactory;
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.categories.ICategoryServices;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
 import edu.uw.cs.lil.tiny.data.collection.IDataCollection;
@@ -44,8 +46,6 @@ import edu.uw.cs.lil.tiny.parser.joint.IJointParser;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointDataItemModel;
 import edu.uw.cs.lil.tiny.parser.joint.model.IJointModelImmutable;
 import edu.uw.cs.lil.tiny.parser.joint.model.JointModel;
-import edu.uw.cs.lil.tiny.utils.hashvector.HashVectorFactory;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.composites.Pair;
 import edu.uw.cs.utils.log.ILogger;
 import edu.uw.cs.utils.log.LoggerFactory;

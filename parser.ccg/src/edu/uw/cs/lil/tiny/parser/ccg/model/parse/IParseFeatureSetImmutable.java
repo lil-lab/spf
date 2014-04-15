@@ -18,10 +18,10 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.parse;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IFeatureSet;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 public interface IParseFeatureSetImmutable<DI extends IDataItem<?>, MR> extends
 		IFeatureSet {

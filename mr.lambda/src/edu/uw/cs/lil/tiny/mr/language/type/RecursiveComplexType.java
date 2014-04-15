@@ -82,8 +82,7 @@ public class RecursiveComplexType extends ComplexType {
 	
 	@Override
 	public String toString() {
-		return ComplexType.composeString(getFinalRange(), getDomain(),
-				new Option(orderSensitive, minArgs));
+		return getName();
 	}
 	
 	/**

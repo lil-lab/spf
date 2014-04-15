@@ -22,7 +22,8 @@
 		<mkdir dir="${build}" />
 		<mkdir dir="${build.src}" />
 		<copy todir="${build.src}" >
-			<fileset dir="${src.tinyutils}" includes="**/*.java" />
+			<fileset dir="${src.tinybase}" includes="**/*.java" />
+			<fileset dir="${src.utils}" includes="**/*.java" />
 			<fileset dir="${src.geoquery}" includes="**/*.java" />
 			<fileset dir="${src.ccg}" includes="**/*.java" />
 			<fileset dir="${src.ccg.lexicon}" includes="**/*.java" />
@@ -34,6 +35,7 @@
 			<fileset dir="${src.genlex.ccg.unification}" includes="**/*.java" />
 			<fileset dir="${src.exec}" includes="**/*.java" />
 			<fileset dir="${src.datasinglesentence}" includes="**/*.java" />
+			<fileset dir="${src.datasinglesentence.lex}" includes="**/*.java" />
 			<fileset dir="${src.explat}" includes="**/*.java" />
 			<fileset dir="${src.learn}" includes="**/*.java" />
 			<fileset dir="${src.learn.validation}" includes="**/*.java" />

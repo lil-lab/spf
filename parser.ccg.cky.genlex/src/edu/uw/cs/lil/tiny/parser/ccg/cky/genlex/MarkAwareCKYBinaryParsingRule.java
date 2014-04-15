@@ -42,7 +42,7 @@ public class MarkAwareCKYBinaryParsingRule<MR> extends CKYBinaryParsingRule<MR> 
 	
 	@Override
 	protected Collection<ParseRuleResult<MR>> apply(Cell<MR> left,
-			Cell<MR> right, boolean isCompleteSentence) {
+			Cell<MR> right) {
 		// If both cells contains a GENLEX lexical entry, don't apply the rule,
 		// just return
 		if (left instanceof IMarkedEntriesCounter
@@ -53,7 +53,7 @@ public class MarkAwareCKYBinaryParsingRule<MR> extends CKYBinaryParsingRule<MR> 
 			return Collections.emptyList();
 		}
 		
-		return super.apply(left, right, isCompleteSentence);
+		return super.apply(left, right);
 	}
 	
 	public static class Creator<MR> implements

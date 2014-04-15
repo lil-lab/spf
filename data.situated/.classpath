@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="/data"/>
-	<classpathentry kind="src" path="/tinyutils"/>
+	<classpathentry kind="src" path="/tinybase"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -21,6 +21,7 @@ package edu.uw.cs.lil.tiny.test;
 import java.util.List;
 import java.util.Set;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.data.ILabeledDataItem;
@@ -29,12 +30,11 @@ import edu.uw.cs.lil.tiny.explat.IResourceRepository;
 import edu.uw.cs.lil.tiny.explat.ParameterizedExperiment.Parameters;
 import edu.uw.cs.lil.tiny.explat.resources.IResourceObjectCreator;
 import edu.uw.cs.lil.tiny.explat.resources.usage.ResourceUsage;
-import edu.uw.cs.lil.tiny.parser.IParse;
+import edu.uw.cs.lil.tiny.parser.IDerivation;
 import edu.uw.cs.lil.tiny.parser.IParser;
 import edu.uw.cs.lil.tiny.parser.IParserOutput;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
 import edu.uw.cs.lil.tiny.test.stats.ITestingStatistics;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 import edu.uw.cs.utils.collections.ListUtils;
 import edu.uw.cs.utils.filter.IFilter;
 import edu.uw.cs.utils.log.ILogger;
@@ -85,7 +85,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 	}
 	
 	private void logParse(ILabeledDataItem<SAMPLE, MR> dataItem,
-			IParse<MR> parse, boolean logLexicalItems, String tag,
+			IDerivation<MR> parse, boolean logLexicalItems, String tag,
 			IModelImmutable<SAMPLE, MR> model) {
 		LOG.info("%s%s[S%.2f] %s",
 				dataItem.getLabel().equals(parse.getSemantics()) ? "* " : "  ",
@@ -105,7 +105,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 	private void processSingleBestParse(
 			final ILabeledDataItem<SAMPLE, MR> dataItem,
 			IModelImmutable<SAMPLE, MR> model,
-			final IParserOutput<MR> modelParserOutput, final IParse<MR> parse,
+			final IParserOutput<MR> modelParserOutput, final IDerivation<MR> parse,
 			boolean withWordSkipping, ITestingStatistics<SAMPLE, MR> stats) {
 		final Set<LexicalEntry<MR>> lexicalEntries = parse
 				.getMaxLexicalEntries();
@@ -130,7 +130,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 			LOG.info(lexToString(lexicalEntries, model));
 			
 			// Check if we had the correct parse and it just wasn't the best
-			final List<? extends IParse<MR>> correctParses = modelParserOutput
+			final List<? extends IDerivation<MR>> correctParses = modelParserOutput
 					.getMaxParses(new IFilter<MR>() {
 						
 						@Override
@@ -140,7 +140,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 					});
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
-				for (final IParse<MR> correctParse : correctParses) {
+				for (final IDerivation<MR> correctParse : correctParses) {
 					LOG.info(
 							"Correct parse lexical items:\n%s",
 							lexToString(correctParse.getMaxLexicalEntries(),
@@ -188,7 +188,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 		LOG.info("Test parsing time %.2f",
 				modelParserOutput.getParsingTime() / 1000.0);
 		
-		final List<? extends IParse<MR>> bestModelParses = modelParserOutput
+		final List<? extends IDerivation<MR>> bestModelParses = modelParserOutput
 				.getBestParses();
 		if (bestModelParses.size() == 1) {
 			// Case we have a single parse
@@ -199,9 +199,9 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 			
 			// Update statistics
 			stats.recordParses(dataItem, dataItem.getLabel(), ListUtils.map(
-					bestModelParses, new ListUtils.Mapper<IParse<MR>, MR>() {
+					bestModelParses, new ListUtils.Mapper<IDerivation<MR>, MR>() {
 						@Override
-						public MR process(IParse<MR> obj) {
+						public MR process(IDerivation<MR> obj) {
 							return obj.getSemantics();
 						}
 					}));
@@ -211,11 +211,11 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 			// from returning a result.
 			LOG.info("too many parses");
 			LOG.info("%d parses:", bestModelParses.size());
-			for (final IParse<MR> parse : bestModelParses) {
+			for (final IDerivation<MR> parse : bestModelParses) {
 				logParse(dataItem, parse, false, null, model);
 			}
 			// Check if we had the correct parse and it just wasn't the best
-			final List<? extends IParse<MR>> correctParses = modelParserOutput
+			final List<? extends IDerivation<MR>> correctParses = modelParserOutput
 					.getMaxParses(new IFilter<MR>() {
 						
 						@Override
@@ -226,7 +226,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 			
 			LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 			if (!correctParses.isEmpty()) {
-				for (final IParse<MR> correctParse : correctParses) {
+				for (final IDerivation<MR> correctParse : correctParses) {
 					LOG.info(
 							"Correct parse lexical items:\n%s",
 							lexToString(correctParse.getMaxLexicalEntries(),
@@ -250,7 +250,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 								true);
 				LOG.info("EMPTY Parsing time %f",
 						parserOutputWithSkipping.getParsingTime() / 1000.0);
-				final List<? extends IParse<MR>> bestEmptiesParses = parserOutputWithSkipping
+				final List<? extends IDerivation<MR>> bestEmptiesParses = parserOutputWithSkipping
 						.getBestParses();
 				
 				if (bestEmptiesParses.size() == 1) {
@@ -267,20 +267,20 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 					// too many parses or no parses
 					stats.recordParsesWithSkipping(dataItem, dataItem
 							.getLabel(), ListUtils.map(bestEmptiesParses,
-							new ListUtils.Mapper<IParse<MR>, MR>() {
+							new ListUtils.Mapper<IDerivation<MR>, MR>() {
 								@Override
-								public MR process(IParse<MR> obj) {
+								public MR process(IDerivation<MR> obj) {
 									return obj.getSemantics();
 								}
 							}));
 					
 					LOG.info("WRONG: %d parses", bestEmptiesParses.size());
-					for (final IParse<MR> parse : bestEmptiesParses) {
+					for (final IDerivation<MR> parse : bestEmptiesParses) {
 						logParse(dataItem, parse, false, null, model);
 					}
 					// Check if we had the correct parse and it just wasn't
 					// the best
-					final List<? extends IParse<MR>> correctParses = parserOutputWithSkipping
+					final List<? extends IDerivation<MR>> correctParses = parserOutputWithSkipping
 							.getMaxParses(new IFilter<MR>() {
 								
 								@Override
@@ -290,7 +290,7 @@ public class Tester<SAMPLE extends IDataItem<?>, MR> implements
 							});
 					LOG.info("Had correct parses: %s", !correctParses.isEmpty());
 					if (!correctParses.isEmpty()) {
-						for (final IParse<MR> correctParse : correctParses) {
+						for (final IDerivation<MR> correctParse : correctParses) {
 							LOG.info(
 									"Correct parse lexical items:\n%s",
 									lexToString(

@@ -22,25 +22,20 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.ComplexSyntax;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Slash;
 
 /**
- * Complex syntactic category.
+ * A CCG category with a complex syntactic category.
+ * 
+ * @author Yoav Artzi
+ * @param <MR>
+ *            Meaning representation.
  */
 public class ComplexCategory<MR> extends Category<MR> {
 	private static final long	serialVersionUID	= -6816584146794811796L;
-	private final boolean		fromLeftComp;
-	private final boolean		fromRightComp;
 	
 	private final ComplexSyntax	syntax;
 	
 	public ComplexCategory(ComplexSyntax syntax, MR semantics) {
-		this(syntax, semantics, false, false);
-	}
-	
-	public ComplexCategory(ComplexSyntax syntax, MR semantics,
-			boolean fromLeftComp, boolean fromRightComp) {
 		super(semantics);
 		this.syntax = syntax;
-		this.fromLeftComp = fromLeftComp;
-		this.fromRightComp = fromRightComp;
 	}
 	
 	@Override
@@ -94,14 +89,6 @@ public class ComplexCategory<MR> extends Category<MR> {
 	public boolean hasSlash(Slash s) {
 		return syntax.getSlash() == Slash.VERTICAL || s == syntax.getSlash()
 				|| s == Slash.VERTICAL;
-	}
-	
-	public boolean isFromLeftComp() {
-		return fromLeftComp;
-	}
-	
-	public boolean isFromRightComp() {
-		return fromRightComp;
 	}
 	
 	@Override

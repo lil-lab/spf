@@ -18,7 +18,7 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.injective.graph;
 
-import edu.uw.cs.lil.tiny.parser.graph.IGraphParse;
+import edu.uw.cs.lil.tiny.parser.graph.IGraphDerivation;
 import edu.uw.cs.lil.tiny.parser.graph.IGraphParser;
 import edu.uw.cs.lil.tiny.parser.joint.IEvaluation;
 import edu.uw.cs.lil.tiny.parser.joint.graph.IJointGraphDerivation;
@@ -40,10 +40,10 @@ public class InjectiveJointGraphDerivation<MR, ERESULT> extends
 		InjectiveJointDerivation<MR, ERESULT> implements
 		IJointGraphDerivation<MR, ERESULT> {
 	
-	private final IGraphParse<MR>		baseParse;
+	private final IGraphDerivation<MR>		baseParse;
 	private final IEvaluation<ERESULT>	execResult;
 	
-	public InjectiveJointGraphDerivation(IGraphParse<MR> baseParse,
+	public InjectiveJointGraphDerivation(IGraphDerivation<MR> baseParse,
 			IEvaluation<ERESULT> evalResult) {
 		super(baseParse, evalResult);
 		this.baseParse = baseParse;
@@ -58,7 +58,7 @@ public class InjectiveJointGraphDerivation<MR, ERESULT> extends
 		return baseParse.getLogInsideScore() + execResult.getScore();
 	}
 	
-	protected IGraphParse<MR> getBaseParse() {
+	protected IGraphDerivation<MR> getBaseParse() {
 		return baseParse;
 	}
 	

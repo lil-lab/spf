@@ -19,13 +19,15 @@
 package edu.uw.cs.lil.tiny.parser.ccg;
 
 import edu.uw.cs.lil.tiny.ccg.lexicon.LexicalEntry;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.UnaryRuleName;
 
 /**
  * @author Yoav Artzi
  * @param <MR>
  */
 public interface ILexicalParseStep<MR> extends IParseStep<MR> {
-	public static final String	LEXICAL_DERIVATION_STEP_RULENAME	= "lex";
+	public static final UnaryRuleName	LEXICAL_DERIVATION_STEP_RULENAME	= UnaryRuleName
+																					.create("lex");
 	
 	LexicalEntry<MR> getLexicalEntry();
 	

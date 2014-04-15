@@ -27,11 +27,15 @@ import edu.uw.cs.lil.tiny.ccg.categories.syntax.Slash;
 import edu.uw.cs.lil.tiny.ccg.categories.syntax.Syntax;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.IBinaryParseRule;
 import edu.uw.cs.lil.tiny.parser.ccg.rules.ParseRuleResult;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName;
+import edu.uw.cs.lil.tiny.parser.ccg.rules.RuleName.Direction;
 import edu.uw.cs.utils.collections.ListUtils;
 
 class CXRule<MR> implements IBinaryParseRule<MR> {
 	
-	private static final String				RULE_NAME	= "cx";
+	private static final RuleName			RULE_NAME	= RuleName
+																.create("cx",
+																		Direction.FORWARD);
 	
 	private final ICoordinationServices<MR>	services;
 	
@@ -41,7 +45,7 @@ class CXRule<MR> implements IBinaryParseRule<MR> {
 	
 	@Override
 	public Collection<ParseRuleResult<MR>> apply(Category<MR> left,
-			Category<MR> right, boolean isCompleteSentence) {
+			Category<MR> right) {
 		if (left.getSyntax() instanceof ComplexSyntax
 				&& ((ComplexSyntax) left.getSyntax()).getSlash().equals(
 						Slash.FORWARD) && right.getSem() != null
@@ -88,6 +92,11 @@ class CXRule<MR> implements IBinaryParseRule<MR> {
 	}
 	
 	@Override
+	public RuleName getName() {
+		return RULE_NAME;
+	}
+	
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -98,8 +107,4 @@ class CXRule<MR> implements IBinaryParseRule<MR> {
 		return result;
 	}
 	
-	@Override
-	public boolean isOverLoadable() {
-		return true;
-	}
 }

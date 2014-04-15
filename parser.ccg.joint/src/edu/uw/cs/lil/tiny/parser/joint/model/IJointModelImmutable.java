@@ -18,9 +18,9 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.joint.model;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.data.situated.ISituatedDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.model.IModelImmutable;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 /**
  * Immutable model for joint inference.

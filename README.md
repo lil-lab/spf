@@ -129,7 +129,7 @@ More coming soon ...
 ### Known Issues
 
 **The CKY parser output doesn't marginalize properly over logical forms under certain conditions.**  
-The class `CKYParse` stores a single CKY chart cell, which means that it stores a single category (pairing of syntax and logical form). When the parser is defined to consider more than one syntactic category as a complete parse, it will often lead to different CKY parses with the same logical form. This may lead to errors in computing a logical form's probability. To correctly compute the probably, collect the inside score of all `CKYParse` objects with the same logical form, add their inside score and normalize. 
+The class `CKYDerivation` stores a single CKY chart cell, which means that it stores a single category (pairing of syntax and logical form). When the parser is defined to consider more than one syntactic category as a complete parse, it will often lead to different CKY parses with the same logical form. This may lead to errors in computing a logical form's probability. To correctly compute the probably, collect the inside score of all `CKYDerivation` objects with the same logical form, add their inside score and normalize. 
 
 ### Troubleshooting
 

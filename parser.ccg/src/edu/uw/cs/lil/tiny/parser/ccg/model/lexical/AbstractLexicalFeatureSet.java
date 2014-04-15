@@ -18,10 +18,10 @@
  ******************************************************************************/
 package edu.uw.cs.lil.tiny.parser.ccg.model.lexical;
 
+import edu.uw.cs.lil.tiny.base.hashvector.IHashVector;
 import edu.uw.cs.lil.tiny.data.IDataItem;
 import edu.uw.cs.lil.tiny.parser.ccg.ILexicalParseStep;
 import edu.uw.cs.lil.tiny.parser.ccg.IParseStep;
-import edu.uw.cs.lil.tiny.utils.hashvector.IHashVector;
 
 public abstract class AbstractLexicalFeatureSet<DI extends IDataItem<?>, MR>
 		implements IIndependentLexicalFeatureSet<DI, MR> {

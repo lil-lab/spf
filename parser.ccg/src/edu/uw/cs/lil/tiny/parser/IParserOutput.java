@@ -37,14 +37,14 @@ public interface IParserOutput<MR> {
 	 * 
 	 * @return
 	 */
-	List<? extends IParse<MR>> getAllParses();
+	List<? extends IDerivation<MR>> getAllParses();
 	
 	/**
 	 * Get highest scoring complete parses.
 	 * 
 	 * @return
 	 */
-	List<? extends IParse<MR>> getBestParses();
+	List<? extends IDerivation<MR>> getBestParses();
 	
 	/**
 	 * Get all complete max scoring valid parses (can get multiple parses, since
@@ -53,7 +53,7 @@ public interface IParserOutput<MR> {
 	 * @param filter
 	 * @return
 	 */
-	List<? extends IParse<MR>> getMaxParses(IFilter<MR> filter);
+	List<? extends IDerivation<MR>> getMaxParses(IFilter<MR> filter);
 	
 	/**
 	 * Get all complete valid parses (can get multiple parses, since syntax is
@@ -62,7 +62,7 @@ public interface IParserOutput<MR> {
 	 * @param filter
 	 * @return
 	 */
-	List<? extends IParse<MR>> getParses(IFilter<MR> filter);
+	List<? extends IDerivation<MR>> getParses(IFilter<MR> filter);
 	
 	/**
 	 * Return parsing time in milliseconds.
