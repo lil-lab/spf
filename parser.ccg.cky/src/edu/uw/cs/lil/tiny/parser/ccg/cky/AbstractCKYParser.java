@@ -589,9 +589,14 @@ public abstract class AbstractCKYParser<MR> extends
 						for (final AbstractCKYParseStep<MR> step : cell
 								.getSteps()) {
 							// Create the combined parse step and the new cell.
-							final Cell<MR> newCell = cellFactory.create(
-									step.cloneWithUnary(transformed, model),
-									start, end);
+							final Cell<MR> newCell = cellFactory.create(step
+									.cloneWithUnary(
+											transformed,
+											model,
+											isFullParse(start, end, transformed
+													.getResultCategory(),
+													sentenceLength)), start,
+									end);
 							LOG.debug("Created new cell: %s", newCell);
 							newCells.add(newCell);
 						}
@@ -655,9 +660,14 @@ public abstract class AbstractCKYParser<MR> extends
 						for (final AbstractCKYParseStep<MR> step : cell
 								.getSteps()) {
 							// Create the combined parse step and the new cell.
-							final Cell<MR> newCell = cellFactory.create(
-									step.cloneWithUnary(transformed, model),
-									start, end);
+							final Cell<MR> newCell = cellFactory.create(step
+									.cloneWithUnary(
+											transformed,
+											model,
+											isFullParse(start, end, transformed
+													.getResultCategory(),
+													sentenceLength)), start,
+									end);
 							LOG.debug("Created new cell: %s", newCell);
 							
 							if (queue.contains(newCell)) {

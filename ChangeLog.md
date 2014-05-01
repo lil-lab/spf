@@ -1,3 +1,6 @@
+# v1.5.5
+- Bug in identifying full parses when using unary rules.
+
 # v1.5.4
 - Introduce a readers system to read logical expressions from text. Also, make logical expression equality more flexible. Makes it easier to add new logical expression objects to hierarchy. 
 - Various minor (but important) optimizations. 

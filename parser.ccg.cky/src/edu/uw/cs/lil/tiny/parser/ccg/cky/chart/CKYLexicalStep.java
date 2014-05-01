@@ -47,16 +47,21 @@ public class CKYLexicalStep<MR> extends AbstractCKYParseStep<MR> implements
 	}
 	
 	@Override
-	public CKYLexicalStep<MR> cloneWithUnary(ParseRuleResult<MR> ruleResult,
-			IDataItemModel<MR> model) {
-		if (!(ruleResult.getRuleName() instanceof UnaryRuleName)) {
+	public AbstractCKYParseStep<MR> cloneWithUnary(
+			ParseRuleResult<MR> unaryRuleResult, IDataItemModel<MR> model,
+			boolean fullParseAfterUnary) {
+		if (!(unaryRuleResult.getRuleName() instanceof UnaryRuleName)) {
 			throw new IllegalStateException(
-					"Provided result is not from a unary rule: " + ruleResult);
+					"Provided result is not from a unary rule: "
+							+ unaryRuleResult);
 		}
-		return new CKYLexicalStep<MR>(ruleResult.getResultCategory(),
-				lexicalEntry, isFullParse,
-				ruleName.overload((UnaryRuleName) ruleResult.getRuleName()),
+		return new CKYLexicalStep<MR>(
+				unaryRuleResult.getResultCategory(),
+				lexicalEntry,
+				fullParseAfterUnary,
+				ruleName.overload((UnaryRuleName) unaryRuleResult.getRuleName()),
 				model);
+		
 	}
 	
 	@Override

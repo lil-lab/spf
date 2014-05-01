@@ -111,7 +111,8 @@ public abstract class AbstractCKYParseStep<MR> implements Iterable<Cell<MR>>,
 	 * and appending the result rule name to the step rule name.
 	 */
 	public abstract AbstractCKYParseStep<MR> cloneWithUnary(
-			ParseRuleResult<MR> ruleResult, IDataItemModel<MR> model);
+			ParseRuleResult<MR> unaryRuleResult, IDataItemModel<MR> model,
+			boolean fullParseAfterUnary);
 	
 	@Override
 	public boolean equals(Object obj) {

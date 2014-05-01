@@ -44,15 +44,19 @@ public class CKYParseStep<MR> extends AbstractCKYParseStep<MR> {
 	}
 	
 	@Override
-	public CKYParseStep<MR> cloneWithUnary(ParseRuleResult<MR> ruleResult,
-			IDataItemModel<MR> model) {
-		if (!(ruleResult.getRuleName() instanceof UnaryRuleName)) {
+	public CKYParseStep<MR> cloneWithUnary(ParseRuleResult<MR> unaryRuleResult,
+			IDataItemModel<MR> model, boolean fullParseAfterUnary) {
+		if (!(unaryRuleResult.getRuleName() instanceof UnaryRuleName)) {
 			throw new IllegalStateException(
-					"Provided result is not from a unary rule: " + ruleResult);
+					"Provided result is not from a unary rule: "
+							+ unaryRuleResult);
 		}
-		return new CKYParseStep<MR>(ruleResult.getResultCategory(),
-				children.get(0), isUnary ? null : children.get(1), isFullParse,
-				ruleName.overload((UnaryRuleName) ruleResult.getRuleName()),
+		return new CKYParseStep<MR>(
+				unaryRuleResult.getResultCategory(),
+				children.get(0),
+				isUnary ? null : children.get(1),
+				fullParseAfterUnary,
+				ruleName.overload((UnaryRuleName) unaryRuleResult.getRuleName()),
 				model);
 	}
 }
