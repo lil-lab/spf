@@ -14,6 +14,10 @@ Web: http://yoavartzi.com
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)  
 **Contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), [Tom Kwiatkowski](http://homes.cs.washington.edu/~tomk/)
 
+## Tutorial
+
+See our ACL 2013 tutorial for an introduction to semantic parsing with Combinatory Categorial Grammars (CCGs). The slides and videos are available [here](http://yoavartzi.com/tutorial).
+
 ## Attribution
 
 When using UW SPF, please acknowledge it by citing:
@@ -56,8 +60,6 @@ Luke Zettlemoyer and Michael Collins. [Learning to Map Sentences to Logical Form
 ## Documentation
 
 **We are constantly updating this section.**
-
-See our ACL 2013 tutorial for general information about semantic parsing with CCGs. The slides are available [here](http://yoavartzi.com/pub/afz-tutorial.acl.2013.pdf).
 
 ### Building
 
