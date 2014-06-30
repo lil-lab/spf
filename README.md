@@ -3,8 +3,6 @@ Author: Yoav Artzi
 Affiliation: Computer Science and Engineering, The University of Washington
 Web: http://yoavartzi.com
 
-<div style="float: right"><img src="http://yoavartzi.com/img/uw.png" height="120px" alt="UW logo" /></div>
-
 # [_**UW SPF**_](http://yoavartzi.com/spf) - The University of Washington Semantic Parsing Framework 
 
 [TOC]
