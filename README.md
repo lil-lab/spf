@@ -18,6 +18,10 @@ Web: http://yoavartzi.com
 
 See our ACL 2013 tutorial for an introduction to semantic parsing with Combinatory Categorial Grammars (CCGs). The slides and videos are available [here](http://yoavartzi.com/tutorial).
 
+## Discussion Group
+
+Please post all technical questions and inquiries in our the [https://groups.google.com/d/forum/uwspf](UWSPF Google Group).
+
 ## Attribution
 
 When using UW SPF, please acknowledge it by citing:
