@@ -17,11 +17,9 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.simple"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.situated"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.validation"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.weakp"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda.ccg"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda.exec.naive"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda.exec.tabular"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.cky"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.cky.genlex"/>
