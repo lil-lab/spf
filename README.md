@@ -1,3 +1,5 @@
+**Code and models for the AMR parser from our EMNLP 2015 paper will be available shortly, please email Yoav to be notified or check here soon.**
+
 Title: UW SPF - README
 Author: Yoav Artzi
 Affiliation: Computer Science and Engineering, The University of Washington
