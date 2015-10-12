@@ -1,4 +1,8 @@
+**SPF is moving to Cornell! v2.0 with our AMR parser and many other improvements will be available soon!**
+
 **Code and models for the AMR parser from our EMNLP 2015 paper will be available shortly, please email Yoav to be notified or check here soon.**
+
+
 
 Title: UW SPF - README
 Author: Yoav Artzi
