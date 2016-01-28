@@ -10,7 +10,7 @@ Web: http://yoavartzi.com/spf
 ## Authors 
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)  
-**Past contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), Tom Kwiatkowski, [Kenton Lee][http://homes.cs.washington.edu/~kentonl/]
+**Past contributors:** [Luke Zettlemoyer](http://homes.cs.washington.edu/~lsz/), Tom Kwiatkowski, [Kenton Lee](http://homes.cs.washington.edu/~kentonl/)
 
 ## Tutorial
 
