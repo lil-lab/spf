@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/biu-normalizer.jar" sourcepath="/TINY_REPO/lib/biu-normalizer.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/commons-cli-1.2.jar" sourcepath="/TINY_REPO/lib/commons-cli-1.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/fastutil-6.5.15.jar" sourcepath="/TINY_REPO/lib/fastutil-6.5.15-src.zip"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/guava-14.0.1.jar" sourcepath="/TINY_REPO/lib/guava-14.0.1-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/jregex1.2_01-src.jar" sourcepath="/TINY_REPO/lib/jregex1.2_01-src.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/json_simple-1.1.jar" sourcepath="/TINY_REPO/lib/json_simple-1.1.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/trove-3.0.3.jar" sourcepath="/TINY_REPO/lib/trove-3.0.3-src.jar"/>
+	<classpathentry exported="true" kind="var" path="TINY_REPO/lib/javautils-lib-3.0.jar" sourcepath="/TINY_REPO/lib/javautils-lib-3.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

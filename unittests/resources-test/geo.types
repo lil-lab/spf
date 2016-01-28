@@ -1,5 +1,6 @@
 (
 id
+txt
 (i e)	// integer / number...
 (n e)		//name
 (lo e)		// location

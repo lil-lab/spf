@@ -8,7 +8,7 @@
 	<classpathentry kind="src" path="/ccg.lexicon.factored.lambda"/>
 	<classpathentry kind="src" path="/data"/>
 	<classpathentry kind="src" path="/parser.ccg"/>
-	<classpathentry kind="src" path="/tinybase"/>
+	<classpathentry kind="src" path="/spfbase"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
 	<classpathentry kind="src" path="/data.singlesentence"/>
 	<classpathentry kind="output" path="bin"/>

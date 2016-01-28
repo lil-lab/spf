@@ -1,3 +1,26 @@
+# v2.0
+- Support for crossing and high order composition.
+- Proper implementation of normal form parsing with Eisner (1996) NF.
+- Hockenmaier and Bisk (2010) NF parsing. 
+- IDs for generalized skolem terms.
+- Improvement to GENLEX procedures + composite lexicon to easily combine GENLEX procedures.
+- Better marking mechanism for CKY cells for constrained GENLEX parses.
+- Data items for situated sentences.
+- Improvements to situated (joint) inference.
+- Model now automatically distinguishes between lexical and parse features.
+- Numerous bug fixes and minor improvements.
+- Store argument in Literal as array instead of List for better performance.
+- Better performing LogicalExpression simplification. 
+- Massive performance improvements.
+- Variables now behave like in programming languages and "hide" each other. Variables names can be re-used and will be resolved correctly according to current scope.
+- Support for syntactic attributes (e.g., S[dcl]) and single variable for agreement (e.g., S[x]\S[x]).
+- CKY parsing derivations now store complete categories rather than only the logical forms (syntax included). 
+- Multiple assertion checks -- NOTE: running with assertions on decreases performance significantly.
+- Revise lexical factoring to work with syntactic attributes.
+- spfdist: a simple distribution framework with no architecture assumptions (written with Mark Yatskar)
+- Rename framework and packages
+- Numerous other changes and optimizations
+
 # v1.5.5
 - Bug in identifying full parses when using unary rules.
 

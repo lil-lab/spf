@@ -1,0 +1,57 @@
+#-------------------------------------------------------------------------------
+# UW SPF - The University of Washington Semantic Parsing Framework
+# <p>
+# Copyright (C) 2013 Yoav Artzi
+# <p>
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or any later version.
+# <p>
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+# <p>
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#-------------------------------------------------------------------------------
+zero	0
+one	1
+two	2
+three	3
+four	4
+five	5
+six	6
+seven	7
+eight	8
+nine	9
+ten	10
+eleven	11
+twelve	12
+thirteen	13
+fourteen	14
+fifteen	15
+sixteen	16
+seventeen	17
+eighteen	18
+nineteen	19
+twenty	20
+thirty	30
+forty	40
+fifty	50
+sixty	60
+seventy	70
+eighty	80
+ninety	90
+#hundred	100
+#hundreds	hundred
+#thousands	thousand
+#millions	million
+#billions	billion
+#trillions	trillion
+a hundred	100
+a thousand	1000
+a million	1000000
+a billion	1000000000
+#

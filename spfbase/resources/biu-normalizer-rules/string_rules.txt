@@ -1,0 +1,71 @@
+#-------------------------------------------------------------------------------
+# UW SPF - The University of Washington Semantic Parsing Framework
+# <p>
+# Copyright (C) 2013 Yoav Artzi
+# <p>
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or any later version.
+# <p>
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+# <p>
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#-------------------------------------------------------------------------------
+# note that the left element is a regular expression
+#
+$	dollar
+£	pound
+€	euro
+¥	yen
+won't	will not
+don't	do not
+doesn't	does not
+didn't	did not
+wouldn't	would not
+couldn't	could not
+shouldn't	should not
+can't	can not
+there's	there is
+that's	that is
+it's	it is
+kilograms	kg
+kilogram	kg
+kilometers	km
+kilometer	km
+kilometers per hour	kmh
+miles per hour	mph
+centimeters	cm
+centimeter	cm
+grams	gram
+#'d	 would
+'re	 are
+'ve	 have
+'ll	 will
+US dollars	dollars
+first	1
+second	2
+third	3
+fourth	4
+fifth	5
+sixth	6
+seventh	7
+eighth	8
+ninth	9
+tenth	10
+eleventh	11
+twelfth	12
+thirteenth	13
+fourteenth	14
+fifteenth	15
+sixteenth	16
+seventeenth	17
+eighteenth	18
+nineteenth	19
+twentieth	20
+thirtieth	30
+thirteeth	30

@@ -6,7 +6,7 @@
 	<classpathentry kind="src" path="/data"/>
 	<classpathentry kind="src" path="/mr.lambda"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/tinybase"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/spfbase"/>
 	<classpathentry kind="src" path="/ccg.lexicon"/>
 	<classpathentry kind="src" path="/parser.ccg.cky"/>
 	<classpathentry kind="src" path="/ccg.lexicon.factored.lambda"/>

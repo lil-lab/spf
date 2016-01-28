@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="/parser.ccg.joint"/>
 	<classpathentry kind="src" path="/learn"/>
 	<classpathentry kind="src" path="/data"/>
-	<classpathentry kind="src" path="/tinybase"/>
+	<classpathentry kind="src" path="/spfbase"/>
 	<classpathentry kind="src" path="/parser.ccg"/>
 	<classpathentry kind="src" path="/explat"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg.lexicon"/>

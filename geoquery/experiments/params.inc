@@ -5,6 +5,6 @@ seedlex=../../../resources/seed.lex
 nplist=../../../resources/np-list.lex
 gBeam=50
 lexbeam=100
-gIter=20
+gIter=13
 wordSkippingCost=-1.0
 trainingMaxSentenceLength=50

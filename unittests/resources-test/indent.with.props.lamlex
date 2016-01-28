@@ -1,0 +1,66 @@
+The Riyadh based Naif Arab Academy for Security Sciences said in a statement that it was running a two week workshop for 50 anti terrorism experts 
+file=PROXY_AFP_ENG_20020105_0162_4.txt	save-date=Sat Jul 6, 2013	annotator=LDC-AMR-03	snt-type=summary	date=2013-05-08T11:16:43	id=PROXY_AFP_ENG_20020105_0162.4
+(a:<id,<<e,t>,e>> !1 (lambda $0:e (and:<t*,t>
+	(say-01:<e,t> $0)
+	(c_ARG0:<e,<e,t>> $0 
+		(a:<id,<<e,t>,e>> !2 (lambda $1:e (and:<t*,t>
+			(university:<e,t> $1)
+			(c_name:<e,<e,t>> $1 Naif++Arab++Academy++for++Security++Sciences:e)
+			(c_ARG1-of:<e,<e,t>> $1 
+				(a:<id,<<e,t>,e>> !3 (lambda $2:e (and:<t*,t>
+					(base-01:<e,t> $2)
+					(c_location:<e,<e,t>> $2 
+						(a:<id,<<e,t>,e>> !4 (lambda $3:e (and:<t*,t>
+							(city:<e,t> $3)
+							(c_name:<e,<e,t>> $3 Riyadh:e)))))))))))))
+	(c_ARG1:<e,<e,t>> $0 
+		(a:<id,<<e,t>,p>> !5 (lambda $4:e (and:<t*,t>
+			(run-01:<e,t> $4)
+			(c_ARG0:<e,<e,t>> $4 
+				(ref:<id,e> !2))
+			(c_ARG1:<e,<e,t>> $4 
+				(a:<id,<<e,t>,e>> !6 (lambda $5:e (and:<t*,t>
+					(workshop:<e,t> $5)
+					(c_beneficiary:<e,<e,t>> $5 
+						(a:<id,<<e,t>,e>> !7 (lambda $6:e (and:<t*,t>
+							(person:<e,t> $6)
+							(c_quant:<e,<i,t>> $6 50:i)
+							(c_ARG1-of:<e,<e,t>> $6 
+								(a:<id,<<e,t>,e>> !8 (lambda $7:e (and:<t*,t>
+									(expert-41:<e,t> $7)
+									(c_ARG2:<e,<e,t>> $7 
+										(a:<id,<<e,t>,e>> !9 (lambda $8:e (and:<t*,t>
+											(oppose-01:<e,t> $8)
+											(c_ARG1:<e,<e,t>> $8 
+												(a:<id,<<e,t>,e>> !10 (lambda $9:e (terrorism:<e,t> $9))))))))))))))))
+					(c_duration:<e,<e,t>> $5 
+						(a:<id,<<e,t>,e>> !11 (lambda $10:e (and:<t*,t>
+							(week:<e,t> $10)
+							(c_quant:<e,<i,t>> $10 2:i)))))))))))))
+	(c_manner:<e,<e,t>> $0 
+		(a:<id,<<e,t>,e>> !12 (lambda $11:e (and:<t,<t,t>> (thing:<e,t> $11) (c_ARG1-of:<e,<p,t>> $11 
+			(a:<id,<<p,t>,p>> !13 (lambda $12:e (and:<t,<t,t>> (state-01:<e,t> $12) (c_ARG0:<p,<e,t>> $12 
+				(ref:<id,e> !2)))))))))))))
+boo :- N : dada:t
+based :- NP : (lambda $0:e true:t)
+
+how large is the largest city in alaska
+(size:<lo,i> (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 alaska:s))) (lambda $1:e (size:<lo,i> $1))))
+boo :- N : dada:t
+based :- NP : (lambda $0:e true:t)
+
+what is the largest city in wisconsin
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 wisconsin:s))) (lambda $1:e (size:<lo,i> $1)))
+what is the largest city :- S/NP : (lambda $2:e (argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (city:<c,t> $0) (loc:<lo,<lo,t>> $0 $2))) (lambda $1:e (size:<lo,i> $1))))
+wisconsin :- NP : wisconsin:s
+
+what are the highest points of states surrounding mississippi
+(argmax:<<e,t>,<<e,i>,e>> (lambda $0:e (and:<t*,t> (place:<p,t> $0) (exists:<<e,t>,t> (lambda $1:e (and:<t*,t> (state:<s,t> $1) (next_to:<lo,<lo,t>> $1 mississippi:s) (loc:<lo,<lo,t>> $0 $1)))))) (lambda $2:e (elevation:<lo,i> $2)))
+boo :- N : dada:t
+based :- NP : (lambda $0:e true:t)
+
+which states border hawaii
+(lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 hawaii:s)))
+which states border :- S/NP : (lambda $1:e (lambda $0:e (and:<t*,t> (state:<s,t> $0) (next_to:<lo,<lo,t>> $0 $1))))
+hawaii :- NP : hawaii:s
+

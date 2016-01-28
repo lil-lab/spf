@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mr.lambda"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/parser.ccg.rules"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/tinybase"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/spfbase"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ccg"/>
 	<classpathentry kind="src" path="/parser.ccg"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>

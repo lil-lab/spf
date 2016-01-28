@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/ccg"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/ccg.lexicon"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/ccg.lexicon.factored.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.singlesentence"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.situated"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/exec"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/explat"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/genlex.ccg"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/genlex.ccg.template"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/genlex.ccg.unification"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.simple"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.situated"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/learn.validation"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda.ccg"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mr.lambda.exec.naive"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.cky"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.cky.genlex"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.factoredlex"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.features.basic"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.features.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.joint"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.joint.cky"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.joint.genlex"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.rules"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.rules.coordination"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.rules.coordination.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.rules.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/test"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/test.ccg.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/test.exec"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/spfbase"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.rules.skolem"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.singlesentence.lex"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.normalform"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/parser.ccg.lambda"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/data.situated.labeled"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/spfdist"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="ExternalProjectImportWizard">
+		<item value="false" key="WizardProjectsImportPage.STORE_NESTED_PROJECTS"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
+		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/yoav/Documents/UW/dev/releases/spf.git"/>
+		</list>
+		<list key="WizardProjectsImportPage.STORE_ARCHIVES">
+			<item value=""/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog">
+		<item value="true" key="ShowStatusLine"/>
+		<item value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x0A;&lt;History&gt;&#x0A;&lt;historyRootNode&gt;&#x0A;&lt;infoNode path=&quot;/parser.ccg.cky/src/edu/uw/cs/lil/tiny/parser/ccg/cky/AbstractCKYParser.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/ccg.lexicon/src/edu/uw/cs/lil/tiny/ccg/lexicon/ILexicon.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/parser.ccg.cky/src/edu/uw/cs/lil/tiny/parser/ccg/cky/multi/MultiCKYParser.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/parser.ccg/src/edu/uw/cs/lil/tiny/parser/ccg/model/Model.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/learn.validation/src/edu/uw/cs/lil/tiny/learn/validation/perceptron/ValidationPerceptron.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/geoquery/src/edu/uw/cs/lil/tiny/geoquery/GeoExp.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/learn.validation/src/edu/uw/cs/lil/tiny/learn/validation/AbstractLearner.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;infoNode path=&quot;/genlex.ccg.template/src/edu/uw/cs/lil/tiny/genlex/ccg/template/TemplateSupervisedGenlex.java&quot; type=&quot;1&quot;/&gt;&#x0A;&lt;/historyRootNode&gt;&#x0A;&lt;/History&gt;" key="History"/>
+		<item value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x0A;&lt;workingSet workingSetName=&quot;&quot;/&gt;" key="WorkingSet"/>
+		<item value="false" key="ShowDerived"/>
+		<section name="DialogBoundsSettings">
+			<item value="600" key="DIALOG_WIDTH"/>
+			<item value="1|.Helvetica Neue DeskInterface|11.0|0|COCOA|1|.HelveticaNeueDeskInterface-Regular" key="DIALOG_FONT_NAME"/>
+			<item value="500" key="DIALOG_HEIGHT"/>
+			<item value="420" key="DIALOG_X_ORIGIN"/>
+			<item value="103" key="DIALOG_Y_ORIGIN"/>
+		</section>
+	</section>
+</section>

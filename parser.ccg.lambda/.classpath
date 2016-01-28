@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="/spfbase"/>
+	<classpathentry kind="src" path="/mr.lambda"/>
+	<classpathentry kind="src" path="/parser.ccg"/>
+	<classpathentry kind="src" path="/data.singlesentence"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/explat"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
