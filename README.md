@@ -1,7 +1,5 @@
 # [_**Cornell SPF**_](http://yoavartzi.com/spf) - Cornell Semantic Parsing Framework 
 
-[TOC]
-
 ## Authors 
 
 **Developed and maintained by** [Yoav Artzi](http://yoavartzi.com)  
