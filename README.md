@@ -24,16 +24,17 @@ Please post all technical questions and inquiries in our the [https://groups.goo
 
 When using Cornell SPF, please acknowledge it by citing:
 
-Artzi, Y., & Zettlemoyer, L. (2013). UW SPF: The University of Washington Semantic Parsing Framework.
+[Artzi, Yoav (2016). Cornell SPF: Cornell Semantic Parsing Framework.](https://arxiv.org/abs/1311.3011)
 
 [**Bibtex:**](http://yoavartzi.com/pub/az-arxiv.2013.bib)
 
-    @misc{Artzi:13spf,
-	    Author = {Yoav Artzi and Luke Zettlemoyer},
-	    Title = {{UW SPF: The University of Washington Semantic Parsing Framework}},
-	    Year = {2013},
+    @misc{Artzi:16spf,
+	    Author = {Yoav Artzi},
+	    Title = {{Cornell SPF: Cornell Semantic Parsing Framework}},
+	    Year = {2016},
 	    Eprint = {arXiv:1311.3011},
     }
+
 
 The article and bib file are both attached to the source code. When using specific algorithms please cite the appropriate work (see below).
 
@@ -164,6 +165,7 @@ Eunsol Choi, The University of Washington
 Nicholas FitzGerald, The University of Washington  
 Jun Ki Lee, Brown University 
 Kenton Lee, The University of Washington  
+Dipendra Misra, Cornell University  
 Gabriel Schubiner, The University of Washington  
 Adrienne Wang, The University of Washington  
 

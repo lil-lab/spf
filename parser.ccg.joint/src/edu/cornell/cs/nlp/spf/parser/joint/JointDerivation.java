@@ -33,29 +33,35 @@ import edu.cornell.cs.nlp.utils.composites.Pair;
  * @param <ERESULT>
  *            Semantics evaluation result.
  */
-public class JointDerivation<MR, ERESULT> extends
-		AbstractJointDerivation<MR, ERESULT, IDerivation<MR>> {
+public class JointDerivation<MR, ERESULT>
+		extends AbstractJointDerivation<MR, ERESULT, IDerivation<MR>> {
 
 	public JointDerivation(
-			List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>> maxPairs,
-			List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>> pairs,
+			List<InferencePair<MR, ERESULT, IDerivation<MR>>> maxPairs,
+			List<InferencePair<MR, ERESULT, IDerivation<MR>>> pairs,
 			ERESULT result, double viterbiScore) {
 		super(maxPairs, pairs, result, viterbiScore);
 	}
 
+	@Override
+	public double getScore() {
+		return getViterbiScore();
+	}
+
 	public static class Builder<MR, ERESULT> {
-		protected final List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>>();
-		protected final ERESULT														result;
+		protected final List<InferencePair<MR, ERESULT, IDerivation<MR>>>	inferencePairs	= new LinkedList<>();
+		protected final ERESULT												result;
 
 		public Builder(ERESULT result) {
 			this.result = result;
 		}
 
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair) {
+				InferencePair<MR, ERESULT, IDerivation<MR>> pair) {
 			// Verify the new pair leads to the same result as the rest.
-			if ((result != null || pair.second().getResult() != null)
-					&& !result.equals(pair.second().getResult())) {
+			if ((result != null
+					|| pair.getEvaluationResult().getResult() != null)
+					&& !result.equals(pair.getEvaluationResult().getResult())) {
 				throw new IllegalStateException(
 						"JointDerivation can only account for a single final outcome.");
 			}
@@ -64,18 +70,18 @@ public class JointDerivation<MR, ERESULT> extends
 		}
 
 		public JointDerivation<MR, ERESULT> build() {
-			final Pair<List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>>, Double> maxPair = createMaxPairs();
+			final Pair<List<InferencePair<MR, ERESULT, IDerivation<MR>>>, Double> maxPair = createMaxPairs();
 			return new JointDerivation<MR, ERESULT>(maxPair.first(),
 					inferencePairs, result, maxPair.second());
 		}
 
-		protected Pair<List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>>, Double> createMaxPairs() {
+		protected Pair<List<InferencePair<MR, ERESULT, IDerivation<MR>>>, Double> createMaxPairs() {
 			double maxScore = -Double.MAX_VALUE;
-			final List<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>>>();
-			for (final Pair<IDerivation<MR>, ? extends IEvaluation<ERESULT>> pair : inferencePairs) {
+			final List<InferencePair<MR, ERESULT, IDerivation<MR>>> maxPairs = new LinkedList<>();
+			for (final InferencePair<MR, ERESULT, IDerivation<MR>> pair : inferencePairs) {
 				// Viterbi score is for a linearly-weighted.
-				final double score = pair.first().getScore()
-						+ pair.second().getScore();
+				final double score = pair.getBaseDerivation().getScore()
+						+ pair.getBaseDerivation().getScore();
 				if (score > maxScore) {
 					maxScore = score;
 					maxPairs.clear();

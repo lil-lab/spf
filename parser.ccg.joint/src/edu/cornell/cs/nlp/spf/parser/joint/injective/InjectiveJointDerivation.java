@@ -41,8 +41,8 @@ import edu.cornell.cs.nlp.utils.collections.ListUtils;
  * @param <ERESULT>
  *            Semantic evaluation result.
  */
-public class InjectiveJointDerivation<MR, ERESULT> implements
-		IJointDerivation<MR, ERESULT> {
+public class InjectiveJointDerivation<MR, ERESULT>
+		implements IJointDerivation<MR, ERESULT> {
 
 	private final IDerivation<MR>		baseDerivation;
 	private final IEvaluation<ERESULT>	evalResult;
@@ -134,6 +134,11 @@ public class InjectiveJointDerivation<MR, ERESULT> implements
 	@Override
 	public ERESULT getResult() {
 		return evalResult.getResult();
+	}
+
+	@Override
+	public double getScore() {
+		return getViterbiScore();
 	}
 
 	public MR getSemantics() {

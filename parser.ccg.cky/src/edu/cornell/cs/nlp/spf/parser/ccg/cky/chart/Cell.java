@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ import edu.cornell.cs.nlp.utils.math.LogSumExp;
  */
 public class Cell<MR> implements IArrayRuleNameSet {
 	public static final ILogger				LOG					= LoggerFactory
-																		.create(Cell.class);
+			.create(Cell.class);
 
 	private final Category<MR>				category;
 
@@ -98,7 +99,9 @@ public class Cell<MR> implements IArrayRuleNameSet {
 
 	private int								numViterbiSteps		= 0;
 
-	/** The starting index of the span of the input string covered by this cell. */
+	/**
+	 * The starting index of the span of the input string covered by this cell.
+	 */
 	private final int						start;
 
 	/**
@@ -150,28 +153,16 @@ public class Cell<MR> implements IArrayRuleNameSet {
 	 * @return 'true' iff max children lists changed
 	 */
 	public boolean addCell(Cell<MR> other) {
-		// Iterate over the added children and add them to steps list and inside
-		// score
-		boolean addedToMaxChildren = false;
-		for (final IWeightedCKYStep<MR> derivationStep : other.steps) {
-			assert derivationStep.getStart() == start
-					&& derivationStep.getEnd() == end;
-			if (steps.add(derivationStep)) {
-				// Reset the cached set of generating rules and viterbi steps.
-				viterbiSteps = null;
-				generatingRules = null;
-				addedToMaxChildren = updateScores(derivationStep)
-						|| addedToMaxChildren;
-			}
-		}
-		return addedToMaxChildren;
+		// Try to add all the steps from the other cell.
+		return addSteps(other.steps);
 	}
 
 	/**
 	 * Recursively compute the mean (linear) viterbi feature vector.
 	 */
 	public IHashVector computeMaxAvgFeaturesRecursively() {
-		return computeMaxAvgFeaturesRecursively(new HashMap<Cell<MR>, IHashVector>());
+		return computeMaxAvgFeaturesRecursively(
+				new HashMap<Cell<MR>, IHashVector>());
 	}
 
 	@Override
@@ -383,23 +374,19 @@ public class Cell<MR> implements IArrayRuleNameSet {
 			IHashVectorImmutable theta) {
 		final StringBuffer result = new StringBuffer();
 		result.append("[");
-		result.append(start)
-				.append("-")
-				.append(end)
-				.append(" : ")
+		result.append(start).append("-").append(end).append(" : ")
 				.append(tokens == null ? "" : tokens)
-				.append(tokens == null ? "" : " :- ")
-				.append(category)
-				.append(" : ")
-				.append("prune=")
-				.append(getPruneScore() == getSecondPruneScore() ? getPruneScore()
+				.append(tokens == null ? "" : " :- ").append(category)
+				.append(" : ").append("prune=")
+				.append(getPruneScore() == getSecondPruneScore()
+						? getPruneScore()
 						: String.format("(%f,%f)", getPruneScore(),
-								getSecondPruneScore())).append(" : ")
-				.append("numParses=").append(numParses).append(" : ")
-				.append("numViterbiParses=").append(numViterbiParses)
-				.append(" : ").append("hash=").append(hashCode()).append(" : ")
-				.append(steps.size()).append(" : ").append(viterbiScore)
-				.append(" : ");
+								getSecondPruneScore()))
+				.append(" : ").append("numParses=").append(numParses)
+				.append(" : ").append("numViterbiParses=")
+				.append(numViterbiParses).append(" : ").append("hash=")
+				.append(hashCode()).append(" : ").append(steps.size())
+				.append(" : ").append(viterbiScore).append(" : ");
 
 		// Print the steps that created this cell.
 		result.append("[");
@@ -432,6 +419,22 @@ public class Cell<MR> implements IArrayRuleNameSet {
 		result.append("]");
 
 		return result.toString();
+	}
+
+	private boolean addSteps(Collection<IWeightedCKYStep<MR>> stepsToAdd) {
+		boolean addedToMaxChildren = false;
+		for (final IWeightedCKYStep<MR> derivationStep : stepsToAdd) {
+			assert derivationStep.getStart() == start
+					&& derivationStep.getEnd() == end;
+			if (steps.add(derivationStep)) {
+				// Reset the cached set of generating rules and viterbi steps.
+				viterbiSteps = null;
+				generatingRules = null;
+				addedToMaxChildren = updateScores(derivationStep)
+						|| addedToMaxChildren;
+			}
+		}
+		return addedToMaxChildren;
 	}
 
 	private int calcHashCode() {
@@ -521,8 +524,8 @@ public class Cell<MR> implements IArrayRuleNameSet {
 			// previous recursive call
 			return;
 		} else {
-			for (final IWeightedCKYStep<MR> derivationStep : viterbiOnly ? getViterbiSteps()
-					: steps) {
+			for (final IWeightedCKYStep<MR> derivationStep : viterbiOnly
+					? getViterbiSteps() : steps) {
 				if (derivationStep instanceof ILexicalParseStep) {
 					result.add(((ILexicalParseStep<MR>) derivationStep)
 							.getLexicalEntry());
@@ -572,8 +575,8 @@ public class Cell<MR> implements IArrayRuleNameSet {
 			// previous recursive call
 			return;
 		} else {
-			for (final IWeightedCKYStep<MR> derivationStep : viterbiOnly ? getViterbiSteps()
-					: steps) {
+			for (final IWeightedCKYStep<MR> derivationStep : viterbiOnly
+					? getViterbiSteps() : steps) {
 				for (final Cell<MR> child : derivationStep) {
 					child.recursiveGetParseSteps(result, visited, viterbiOnly);
 				}
@@ -699,14 +702,12 @@ public class Cell<MR> implements IArrayRuleNameSet {
 					final double logScore = derivationStep.getStepScore();
 					final Cell<MR> child1 = derivationStep.getChildCell(0);
 					final Cell<MR> child2 = derivationStep.getChildCell(1);
-					child1.logOutsideScore = LogSumExp.of(
-							child1.logOutsideScore,
-							logOutsideScore + child2.getLogInsideScore()
-									+ logScore);
-					child2.logOutsideScore = LogSumExp.of(
-							child2.logOutsideScore,
-							logOutsideScore + child1.getLogInsideScore()
-									+ logScore);
+					child1.logOutsideScore = LogSumExp
+							.of(child1.logOutsideScore, logOutsideScore
+									+ child2.getLogInsideScore() + logScore);
+					child2.logOutsideScore = LogSumExp
+							.of(child2.logOutsideScore, logOutsideScore
+									+ child1.getLogInsideScore() + logScore);
 				}
 			}
 		}
@@ -734,10 +735,10 @@ public class Cell<MR> implements IArrayRuleNameSet {
 		}
 	}
 
-	public static class ScoreComparator<MR> implements Comparator<Cell<MR>>,
-			Serializable {
+	public static class ScoreComparator<MR>
+			implements Comparator<Cell<MR>>, Serializable {
 
-		private static final long	serialVersionUID	= 5348011347391634770L;
+		private static final long serialVersionUID = 5348011347391634770L;
 
 		@Override
 		public int compare(Cell<MR> o1, Cell<MR> o2) {

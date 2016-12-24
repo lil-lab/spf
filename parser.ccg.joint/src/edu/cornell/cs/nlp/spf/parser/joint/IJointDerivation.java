@@ -77,6 +77,13 @@ public interface IJointDerivation<MR, ERESULT> {
 	ERESULT getResult();
 
 	/**
+	 * The score to be considered. Often this is the viterbi score, but may be
+	 * the inside score in some cases. This is the score used to identify the
+	 * max-scoring derivations.
+	 */
+	double getScore();
+
+	/**
 	 * Complete derivation viterbi score.
 	 */
 	double getViterbiScore();

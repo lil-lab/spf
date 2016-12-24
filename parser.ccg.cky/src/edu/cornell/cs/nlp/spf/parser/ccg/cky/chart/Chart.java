@@ -34,7 +34,6 @@ import edu.cornell.cs.nlp.spf.base.hashvector.IHashVector;
 import edu.cornell.cs.nlp.spf.base.hashvector.IHashVectorImmutable;
 import edu.cornell.cs.nlp.spf.base.token.TokenSeq;
 import edu.cornell.cs.nlp.spf.ccg.categories.Category;
-import edu.cornell.cs.nlp.spf.parser.ccg.IParseStep;
 import edu.cornell.cs.nlp.spf.parser.ccg.cky.CKYDerivation;
 import edu.cornell.cs.nlp.spf.parser.ccg.cky.steps.IWeightedCKYStep;
 import edu.cornell.cs.nlp.spf.parser.ccg.rules.Span;
@@ -60,8 +59,7 @@ import edu.cornell.cs.nlp.utils.math.LogSumExp;
  */
 public class Chart<MR> implements Iterable<Cell<MR>> {
 	public static final ILogger				LOG	= LoggerFactory
-														.create(Chart.class
-																.getName());
+			.create(Chart.class.getName());
 
 	private final int						beamSize;
 
@@ -98,8 +96,9 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				AbstractSpan.class, sentenceLength, sentenceLength);
 		for (int i = 0; i < sentenceLength; i++) {
 			for (int j = i; j < sentenceLength; j++) {
-				chart[i][j] = separateLexicalQueue ? new TwoQueueSpan<MR>(
-						maxNumberOfCellPerSpan, !breakTies)
+				chart[i][j] = separateLexicalQueue
+						? new TwoQueueSpan<MR>(maxNumberOfCellPerSpan,
+								!breakTies)
 						: new SingleQueueSpan<MR>(maxNumberOfCellPerSpan,
 								!breakTies);
 			}
@@ -286,13 +285,14 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			} else {
 				return Double.NEGATIVE_INFINITY;
 			}
-		}, span);
+		} , span);
 	}
 
 	/**
 	 * Complete expected features over all complete parses that pass the filter.
 	 */
-	public IHashVector logExpectedFeatures(IScorer<Category<MR>> initialScorer) {
+	public IHashVector logExpectedFeatures(
+			IScorer<Category<MR>> initialScorer) {
 		return logExpectedFeatures(
 				(Function<Category<MR>, Double>) c -> initialScorer.score(c),
 				Span.of(0, tokens.size() - 1));
@@ -318,22 +318,6 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			}
 		}
 		return LogSumExp.of(logInsideScores);
-	}
-
-	/**
-	 * Bottom-up re-computation of chart scores. Doesn't update the local scores
-	 * of any {@link IParseStep}, but recomputes the inside and viterbi scores
-	 * of {@link Cell}. This is required to propagate modifications to the
-	 * chart.
-	 */
-	public void recomputeScores() {
-		for (int len = 0; len < sentenceLength; len++) {
-			for (int begin = 0; begin < sentenceLength - len; begin++) {
-				for (final Cell<MR> cell : chart[begin][begin + len]) {
-					cell.recomputeScores();
-				}
-			}
-		}
 	}
 
 	/**
@@ -393,26 +377,26 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 			IHashVectorImmutable theta) {
 		final StringBuilder result = new StringBuilder();
 
-		final Iterator<Cell<MR>> iterator = sortCells ? iterator(new Comparator<Cell<MR>>() {
-			private final Comparator<Cell<MR>>	cellComparator	= new Cell.ScoreComparator<MR>();
+		final Iterator<Cell<MR>> iterator = sortCells
+				? iterator(new Comparator<Cell<MR>>() {
+					private final Comparator<Cell<MR>> cellComparator = new Cell.ScoreComparator<MR>();
 
-			@Override
-			public int compare(Cell<MR> o1, Cell<MR> o2) {
-				final int compare = cellComparator.compare(o1, o2);
-				return compare == 0 ? Double.compare(o1.hashCode(),
-						o2.hashCode()) : -compare;
-			}
-		})
-				: iterator();
+					@Override
+					public int compare(Cell<MR> o1, Cell<MR> o2) {
+						final int compare = cellComparator.compare(o1, o2);
+						return compare == 0
+								? Double.compare(o1.hashCode(), o2.hashCode())
+								: -compare;
+					}
+				}) : iterator();
 		while (iterator.hasNext()) {
 			final Cell<MR> cell = iterator.next();
 			result.append(
-					cell.toString(
-							false,
-							ListUtils.join(
-									tokens.subList(cell.getStart(),
-											cell.getEnd() + 1), " "), viterbi,
-							theta)).append("\n");
+					cell.toString(false,
+							ListUtils.join(tokens.subList(cell.getStart(),
+									cell.getEnd() + 1), " "),
+							viterbi, theta))
+					.append("\n");
 		}
 		result.append("Spans pruned: ").append(getPrunedSpans());
 		return result.toString();
@@ -448,7 +432,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		final IHashVector feats = HashVectorFactory.create();
 		for (int len = sentenceLength - 1; len >= 0; len--) {
 			for (int begin = 0; begin < sentenceLength - len; begin++) {
-				final Iterator<Cell<MR>> i = getSpanIterator(begin, begin + len);
+				final Iterator<Cell<MR>> i = getSpanIterator(begin,
+						begin + len);
 				while (i.hasNext()) {
 					i.next().collectLogExpectedFeatures(feats);
 				}
@@ -476,8 +461,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * @see #getMaxNonOverlappingSpans(Cell)
 	 */
 	private Map<Span, Set<Cell<MR>>> getMaxNonOverlappingSpans(Cell<MR> cell,
-			Map<Span, Set<Cell<MR>>> spanDictionary,
-			Set<Cell<MR>> visitedCells, boolean viterbiOnly) {
+			Map<Span, Set<Cell<MR>>> spanDictionary, Set<Cell<MR>> visitedCells,
+			boolean viterbiOnly) {
 		// Book keeping to short-circuit already visited cells.
 		if (visitedCells.contains(cell)) {
 			return spanDictionary;
@@ -491,8 +476,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 
 			// This cell is not in the chart. For each viterbi step in the cell,
 			// check to see if the chart contains both its children.
-			for (final IWeightedCKYStep<MR> step : viterbiOnly ? cell
-					.getViterbiSteps() : cell.getSteps()) {
+			for (final IWeightedCKYStep<MR> step : viterbiOnly
+					? cell.getViterbiSteps() : cell.getSteps()) {
 				boolean containsAll = true;
 				final int numChildren = step.numChildren();
 				for (int i = 0; i < numChildren; ++i) {
@@ -516,8 +501,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 
 			// If there's no viterbi step for which the chart contains all
 			// children, recurse into all the children.
-			for (final IWeightedCKYStep<MR> step : viterbiOnly ? cell
-					.getViterbiSteps() : cell.getSteps()) {
+			for (final IWeightedCKYStep<MR> step : viterbiOnly
+					? cell.getViterbiSteps() : cell.getSteps()) {
 				final int numChildren = step.numChildren();
 				for (int i = 0; i < numChildren; ++i) {
 					final Cell<MR> childCell = step.getChildCell(i);
@@ -616,13 +601,13 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 *
 	 * @author Yoav Artzi
 	 */
-	private static abstract class AbstractSpan<MR> implements
-			Iterable<Cell<MR>> {
+	private static abstract class AbstractSpan<MR>
+			implements Iterable<Cell<MR>> {
 		/**
 		 * A flag to indicate if this abstract was pruned externally (i.e.,
 		 * outside the chart).
 		 */
-		protected boolean	externallyPruned	= false;
+		protected boolean externallyPruned = false;
 
 		public abstract void addToExisting(Cell<MR> existingCell,
 				Cell<MR> newCell);
@@ -646,7 +631,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		private int							j;
 		private Iterator<Cell<MR>>			spanIterator;
 
-		public CellIterator(int start, int end, Comparator<Cell<MR>> comparator) {
+		public CellIterator(int start, int end,
+				Comparator<Cell<MR>> comparator) {
 			this.end = end;
 			this.i = start;
 			this.comparator = comparator;
@@ -689,8 +675,9 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 					++i;
 					if (i < end) {
 						j = i;
-						spanIterator = comparator == null ? getSpanIterator(i,
-								j) : getSpanIterator(i, j, comparator);
+						spanIterator = comparator == null
+								? getSpanIterator(i, j)
+								: getSpanIterator(i, j, comparator);
 					} else {
 						return;
 					}
@@ -708,11 +695,12 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 	 * @param <MR>
 	 */
 	private static class SingleQueueSpan<MR> extends AbstractSpan<MR> {
-		private final IDirectAccessBoundedPriorityQueue<Cell<MR>>	queue;
+		private final IDirectAccessBoundedPriorityQueue<Cell<MR>> queue;
 
 		public SingleQueueSpan(int capacity, boolean orderInvariant) {
-			this.queue = orderInvariant ? new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
-					capacity, new Cell.ScoreComparator<MR>())
+			this.queue = orderInvariant
+					? new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
+							capacity, new Cell.ScoreComparator<MR>())
 					: new DirectAccessBoundedPriorityQueue<>(capacity,
 							new Cell.ScoreComparator<MR>());
 		}
@@ -753,8 +741,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				return null;
 			} else {
 				final Cell<MR> peek = queue.peek();
-				return Pair
-						.of(peek.getPruneScore(), peek.getSecondPruneScore());
+				return Pair.of(peek.getPruneScore(),
+						peek.getSecondPruneScore());
 			}
 		}
 
@@ -775,8 +763,9 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 		private final IDirectAccessBoundedPriorityQueue<Cell<MR>>	nonLexicalQueue;
 
 		public TwoQueueSpan(int capacity, boolean orderInvariant) {
-			this.nonLexicalQueue = orderInvariant ? new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
-					capacity, new Cell.ScoreComparator<MR>())
+			this.nonLexicalQueue = orderInvariant
+					? new OrderInvariantDirectAccessBoundedQueue<Cell<MR>>(
+							capacity, new Cell.ScoreComparator<MR>())
 					: new DirectAccessBoundedPriorityQueue<>(capacity,
 							new Cell.ScoreComparator<MR>());
 		}
@@ -828,8 +817,8 @@ public class Chart<MR> implements Iterable<Cell<MR>> {
 				return null;
 			} else {
 				final Cell<MR> peek = nonLexicalQueue.peek();
-				return Pair
-						.of(peek.getPruneScore(), peek.getSecondPruneScore());
+				return Pair.of(peek.getPruneScore(),
+						peek.getSecondPruneScore());
 			}
 		}
 

@@ -21,8 +21,7 @@ import java.util.List;
 
 import edu.cornell.cs.nlp.spf.parser.graph.IGraphDerivation;
 import edu.cornell.cs.nlp.spf.parser.joint.AbstractJointDerivation;
-import edu.cornell.cs.nlp.spf.parser.joint.IEvaluation;
-import edu.cornell.cs.nlp.utils.composites.Pair;
+import edu.cornell.cs.nlp.spf.parser.joint.InferencePair;
 import edu.cornell.cs.nlp.utils.math.LogSumExp;
 
 /**
@@ -36,15 +35,15 @@ import edu.cornell.cs.nlp.utils.math.LogSumExp;
  * @param <ERESULT>
  *            Semantics evaluation result.
  */
-public class JointGraphDerivation<MR, ERESULT> extends
-		AbstractJointDerivation<MR, ERESULT, IGraphDerivation<MR>> implements
-		IJointGraphDerivation<MR, ERESULT> {
+public class JointGraphDerivation<MR, ERESULT>
+		extends AbstractJointDerivation<MR, ERESULT, IGraphDerivation<MR>>
+		implements IJointGraphDerivation<MR, ERESULT> {
 
-	private final double	logInsideScore;
+	private final double logInsideScore;
 
 	public JointGraphDerivation(
-			List<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>> maxPairs,
-			List<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>> pairs,
+			List<InferencePair<MR, ERESULT, IGraphDerivation<MR>>> maxPairs,
+			List<InferencePair<MR, ERESULT, IGraphDerivation<MR>>> pairs,
 			ERESULT result, double viterbiScore, double logInsideScore) {
 		super(maxPairs, pairs, result, viterbiScore);
 		assert !Double.isInfinite(logInsideScore);
@@ -56,19 +55,31 @@ public class JointGraphDerivation<MR, ERESULT> extends
 		return logInsideScore;
 	}
 
+	@Override
+	public double getScore() {
+		return getViterbiScore();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("[score=%.2f, v=%.2f, i=%.2f] %s", getScore(),
+				getViterbiScore(), getLogInsideScore(), getResult().toString());
+	}
+
 	public static class Builder<MR, ERESULT> {
-		protected final List<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>>();
-		protected final ERESULT																result;
+		protected final List<InferencePair<MR, ERESULT, IGraphDerivation<MR>>>	inferencePairs	= new LinkedList<>();
+		protected final ERESULT													result;
 
 		public Builder(ERESULT result) {
 			this.result = result;
 		}
 
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IGraphDerivation<MR>, IEvaluation<ERESULT>> pair) {
+				InferencePair<MR, ERESULT, IGraphDerivation<MR>> pair) {
 			// Verify the new pair leads to the same result as the rest.
-			if ((result != null || pair.second().getResult() != null)
-					&& !result.equals(pair.second().getResult())) {
+			if ((result != null
+					|| pair.getEvaluationResult().getResult() != null)
+					&& !result.equals(pair.getEvaluationResult().getResult())) {
 				throw new IllegalStateException(
 						"JointDerivation can only account for a single final outcome.");
 			}
@@ -79,11 +90,11 @@ public class JointGraphDerivation<MR, ERESULT> extends
 		public JointGraphDerivation<MR, ERESULT> build() {
 			double maxScore = -Double.MAX_VALUE;
 			double logInsideScore = Double.NEGATIVE_INFINITY;
-			final List<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>> maxPairs = new LinkedList<Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>>>();
-			for (final Pair<IGraphDerivation<MR>, ? extends IEvaluation<ERESULT>> pair : inferencePairs) {
+			final List<InferencePair<MR, ERESULT, IGraphDerivation<MR>>> maxPairs = new LinkedList<>();
+			for (final InferencePair<MR, ERESULT, IGraphDerivation<MR>> pair : inferencePairs) {
 				// Viterbi score is for a linearly-weighted.
-				final double score = pair.first().getScore()
-						+ pair.second().getScore();
+				final double score = pair.getBaseDerivation().getScore()
+						+ pair.getEvaluationResult().getScore();
 				if (score > maxScore) {
 					maxScore = score;
 					maxPairs.clear();
@@ -91,8 +102,9 @@ public class JointGraphDerivation<MR, ERESULT> extends
 				} else if (score == maxScore) {
 					maxPairs.add(pair);
 				}
-				logInsideScore = LogSumExp.of(logInsideScore, pair.first()
-						.getLogInsideScore() + pair.second().getScore());
+				logInsideScore = LogSumExp.of(logInsideScore,
+						pair.getBaseDerivation().getLogInsideScore()
+								+ pair.getEvaluationResult().getScore());
 			}
 
 			return new JointGraphDerivation<MR, ERESULT>(maxPairs,

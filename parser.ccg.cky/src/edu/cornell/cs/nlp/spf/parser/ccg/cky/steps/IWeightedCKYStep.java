@@ -25,7 +25,9 @@ import edu.cornell.cs.nlp.spf.parser.ccg.IWeightedParseStep;
  * @param <MR>
  *            Meaning representation.
  */
-public interface IWeightedCKYStep<MR> extends ICKYStep<MR>,
-		IWeightedParseStep<MR> {
-	// Doesn't add anything over the parent interfaces.
+public interface IWeightedCKYStep<MR>
+		extends ICKYStep<MR>, IWeightedParseStep<MR> {
+
+	// Nothing to add, used to simply merge the two interfaces.
+
 }

@@ -42,8 +42,8 @@ public abstract class AbstractJointOutput<MR, ERESULT, DERIV extends IJointDeriv
 	protected final IParserOutput<MR>	baseOutput;
 	protected final List<DERIV>			derivations;
 
-	public AbstractJointOutput(IParserOutput<MR> baseOutput,
-			long inferenceTime, List<DERIV> derivations, boolean exactInference) {
+	public AbstractJointOutput(IParserOutput<MR> baseOutput, long inferenceTime,
+			List<DERIV> derivations, boolean exactInference) {
 		this.baseOutput = baseOutput;
 		this.inferenceTime = inferenceTime;
 		this.derivations = derivations;
@@ -56,12 +56,12 @@ public abstract class AbstractJointOutput<MR, ERESULT, DERIV extends IJointDeriv
 		double maxScore = -Double.MAX_VALUE;
 		for (final DERIV derivation : all) {
 			if (filter.test(derivation.getResult())) {
-				if (!maxOnly || derivation.getViterbiScore() == maxScore) {
+				if (!maxOnly || derivation.getScore() == maxScore) {
 					filtered.add(derivation);
-				} else if (derivation.getViterbiScore() > maxScore) {
+				} else if (derivation.getScore() > maxScore) {
 					filtered.clear();
 					filtered.add(derivation);
-					maxScore = derivation.getViterbiScore();
+					maxScore = derivation.getScore();
 				}
 			}
 		}
@@ -75,24 +75,12 @@ public abstract class AbstractJointOutput<MR, ERESULT, DERIV extends IJointDeriv
 
 	@Override
 	public List<DERIV> getDerivations(boolean includeFails) {
-		return filterDerivations(derivations, new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return e != null;
-			}
-		}, false);
+		return filterDerivations(derivations, e -> e != null, false);
 	}
 
 	@Override
 	public List<DERIV> getDerivations(final ERESULT result) {
-		return getDerivations(new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return result.equals(e);
-			}
-		});
+		return getDerivations(e -> result.equals(e));
 	}
 
 	@Override
@@ -112,24 +100,12 @@ public abstract class AbstractJointOutput<MR, ERESULT, DERIV extends IJointDeriv
 
 	@Override
 	public List<DERIV> getMaxDerivations(boolean includeFails) {
-		return filterDerivations(derivations, new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return e != null;
-			}
-		}, true);
+		return filterDerivations(derivations, e -> e != null, true);
 	}
 
 	@Override
 	public List<DERIV> getMaxDerivations(final ERESULT result) {
-		return getMaxDerivations(new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return result.equals(e);
-			}
-		});
+		return getMaxDerivations(e -> result.equals(e));
 	}
 
 	@Override

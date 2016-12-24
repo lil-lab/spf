@@ -661,7 +661,7 @@ public class ReliableManager implements Runnable, Shutdownable {
 				builder.setPingFrequency(params.getAsInteger("pingFreq"));
 			}
 
-			if (params.contains("timeout")) {
+			if (params.contains("pingTimeout")) {
 				builder.setTimeout(params.getAsInteger("pingTimeout"));
 			}
 

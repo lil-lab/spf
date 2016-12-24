@@ -75,13 +75,7 @@ public abstract class AbstractInjectiveJointOutput<MR, ERESULT, DERIV extends IJ
 
 	@Override
 	public List<DERIV> getDerivations(final ERESULT result) {
-		return getDerivations(new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return result.equals(e);
-			}
-		});
+		return getDerivations(e -> result.equals(e));
 	}
 
 	@Override
@@ -116,13 +110,7 @@ public abstract class AbstractInjectiveJointOutput<MR, ERESULT, DERIV extends IJ
 
 	@Override
 	public List<DERIV> getMaxDerivations(final ERESULT result) {
-		return getMaxDerivations(new IFilter<ERESULT>() {
-
-			@Override
-			public boolean test(ERESULT e) {
-				return result.equals(e);
-			}
-		});
+		return getMaxDerivations(e -> result.equals(e));
 	}
 
 	@Override
@@ -131,11 +119,11 @@ public abstract class AbstractInjectiveJointOutput<MR, ERESULT, DERIV extends IJ
 		double score = -Double.MAX_VALUE;
 		for (final DERIV p : jointParses) {
 			if (filter.test(p.getResult())) {
-				if (p.getViterbiScore() > score) {
+				if (p.getScore() > score) {
 					parses.clear();
 					parses.add(p);
-					score = p.getViterbiScore();
-				} else if (p.getViterbiScore() == score) {
+					score = p.getScore();
+				} else if (p.getScore() == score) {
 					parses.add(p);
 				}
 			}
@@ -146,14 +134,7 @@ public abstract class AbstractInjectiveJointOutput<MR, ERESULT, DERIV extends IJ
 	public List<LexicalEntry<MR>> getMaxLexicalEntries(final ERESULT result) {
 		final List<LexicalEntry<MR>> entries = new LinkedList<LexicalEntry<MR>>();
 		for (final DERIV p : findBestParses(jointParses,
-				new IFilter<ERESULT>() {
-
-					@Override
-					public boolean test(ERESULT e) {
-						return result == e || result != null
-								&& result.equals(e);
-					}
-				})) {
+				e -> result == e || result != null && result.equals(e))) {
 			entries.addAll(p.getMaxLexicalEntries());
 		}
 		return entries;
@@ -168,16 +149,17 @@ public abstract class AbstractInjectiveJointOutput<MR, ERESULT, DERIV extends IJ
 		return findBestParses(all, FilterUtils.<ERESULT> stubTrue());
 	}
 
-	private List<DERIV> findBestParses(List<DERIV> all, IFilter<ERESULT> filter) {
+	private List<DERIV> findBestParses(List<DERIV> all,
+			IFilter<ERESULT> filter) {
 		final List<DERIV> best = new LinkedList<DERIV>();
 		double bestScore = -Double.MAX_VALUE;
 		for (final DERIV p : all) {
 			if (filter.test(p.getResult())) {
-				if (p.getViterbiScore() == bestScore) {
+				if (p.getScore() == bestScore) {
 					best.add(p);
 				}
-				if (p.getViterbiScore() > bestScore) {
-					bestScore = p.getViterbiScore();
+				if (p.getScore() > bestScore) {
+					bestScore = p.getScore();
 					best.clear();
 					best.add(p);
 				}

@@ -28,7 +28,6 @@ import edu.cornell.cs.nlp.spf.parser.IDerivation;
 import edu.cornell.cs.nlp.spf.parser.RuleUsageTriplet;
 import edu.cornell.cs.nlp.spf.parser.ccg.IWeightedParseStep;
 import edu.cornell.cs.nlp.utils.collections.ListUtils;
-import edu.cornell.cs.nlp.utils.composites.Pair;
 
 /**
  * Abstract joint inference derivation that compactly holds all derivations that
@@ -46,15 +45,16 @@ import edu.cornell.cs.nlp.utils.composites.Pair;
 public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDerivation<MR>>
 		implements IJointDerivation<MR, ERESULT> {
 
-	private final List<Pair<PARSE, ? extends IEvaluation<ERESULT>>>	maxPairs;
-	private final List<Pair<PARSE, ? extends IEvaluation<ERESULT>>>	pairs;
-	private final ERESULT											result;
-	private final double											viterbiScore;
+	private final List<InferencePair<MR, ERESULT, PARSE>>	maxPairs;
+
+	private final List<InferencePair<MR, ERESULT, PARSE>>	pairs;
+	private final ERESULT									result;
+	private final double									viterbiScore;
 
 	public AbstractJointDerivation(
-			List<Pair<PARSE, ? extends IEvaluation<ERESULT>>> maxPairs,
-			List<Pair<PARSE, ? extends IEvaluation<ERESULT>>> pairs,
-			ERESULT result, double viterbiScore) {
+			List<InferencePair<MR, ERESULT, PARSE>> maxPairs,
+			List<InferencePair<MR, ERESULT, PARSE>> pairs, ERESULT result,
+			double viterbiScore) {
 		assert !maxPairs.isEmpty();
 		assert !pairs.isEmpty();
 		assert result != null;
@@ -67,8 +67,8 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 	@Override
 	public LinkedHashSet<LexicalEntry<MR>> getAllLexicalEntries() {
 		final LinkedHashSet<LexicalEntry<MR>> entries = new LinkedHashSet<LexicalEntry<MR>>();
-		for (final Pair<PARSE, ? extends IEvaluation<ERESULT>> pair : pairs) {
-			entries.addAll(pair.first().getAllLexicalEntries());
+		for (final InferencePair<MR, ERESULT, PARSE> pair : pairs) {
+			entries.addAll(pair.getBaseDerivation().getAllLexicalEntries());
 		}
 		return entries;
 	}
@@ -77,7 +77,7 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 	 * All inference pairs, each one includes a base {@link IParse<MR>} and
 	 * {@link IEvaluation<ERESULT>}.
 	 */
-	public List<Pair<PARSE, ? extends IEvaluation<ERESULT>>> getInferencePairs() {
+	public List<InferencePair<MR, ERESULT, PARSE>> getInferencePairs() {
 		return pairs;
 	}
 
@@ -85,15 +85,15 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 	 * Max-scoring inference pairs, each one includes a base {@link IParse<MR>}
 	 * and {@link IEvaluation<ERESULT>}.
 	 */
-	public List<Pair<PARSE, ? extends IEvaluation<ERESULT>>> getMaxInferencePairs() {
+	public List<InferencePair<MR, ERESULT, PARSE>> getMaxInferencePairs() {
 		return maxPairs;
 	}
 
 	@Override
 	public LinkedHashSet<LexicalEntry<MR>> getMaxLexicalEntries() {
 		final LinkedHashSet<LexicalEntry<MR>> entries = new LinkedHashSet<LexicalEntry<MR>>();
-		for (final Pair<PARSE, ? extends IEvaluation<ERESULT>> pair : maxPairs) {
-			entries.addAll(pair.first().getMaxLexicalEntries());
+		for (final InferencePair<MR, ERESULT, PARSE> pair : maxPairs) {
+			entries.addAll(pair.getBaseDerivation().getMaxLexicalEntries());
 		}
 		return entries;
 	}
@@ -101,31 +101,23 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 	@Override
 	public LinkedHashSet<RuleUsageTriplet> getMaxParsingRules() {
 		final LinkedHashSet<RuleUsageTriplet> rules = new LinkedHashSet<RuleUsageTriplet>();
-		for (final Pair<PARSE, ? extends IEvaluation<ERESULT>> pair : maxPairs) {
-			rules.addAll(pair.first().getMaxRulesUsed());
+		for (final InferencePair<MR, ERESULT, PARSE> pair : maxPairs) {
+			rules.addAll(pair.getBaseDerivation().getMaxRulesUsed());
 		}
 		return rules;
 	}
 
 	@Override
 	public List<MR> getMaxSemantics() {
-		return ListUtils
-				.map(maxPairs,
-						new ListUtils.Mapper<Pair<PARSE, ? extends IEvaluation<ERESULT>>, MR>() {
-
-							@Override
-							public MR process(
-									Pair<PARSE, ? extends IEvaluation<ERESULT>> obj) {
-								return obj.first().getSemantics();
-							}
-						});
+		return ListUtils.map(maxPairs,
+				obj -> obj.getBaseDerivation().getSemantics());
 	}
 
 	@Override
 	public LinkedHashSet<? extends IWeightedParseStep<MR>> getMaxSteps() {
 		final LinkedHashSet<IWeightedParseStep<MR>> steps = new LinkedHashSet<IWeightedParseStep<MR>>();
-		for (final Pair<PARSE, ? extends IEvaluation<ERESULT>> pair : maxPairs) {
-			steps.addAll(pair.first().getMaxSteps());
+		for (final InferencePair<MR, ERESULT, PARSE> pair : maxPairs) {
+			steps.addAll(pair.getBaseDerivation().getMaxSteps());
 		}
 		return steps;
 	}
@@ -134,11 +126,12 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 	public IHashVectorImmutable getMeanMaxFeatures() {
 		final IHashVector features = HashVectorFactory.create();
 		int num = 0;
-		for (final Pair<PARSE, ? extends IEvaluation<ERESULT>> pair : maxPairs) {
+		for (final InferencePair<MR, ERESULT, PARSE> pair : maxPairs) {
 			++num;
-			pair.first().getAverageMaxFeatureVector()
+			pair.getBaseDerivation().getAverageMaxFeatureVector()
 					.addTimesInto(1.0, features);
-			pair.second().getFeatures().addTimesInto(1.0, features);
+			pair.getEvaluationResult().getFeatures().addTimesInto(1.0,
+					features);
 		}
 		features.divideBy(num);
 		return features;
@@ -156,7 +149,8 @@ public abstract class AbstractJointDerivation<MR, ERESULT, PARSE extends IDeriva
 
 	@Override
 	public String toString() {
-		return result.toString();
+		return String.format("[score=%.2f, v=%.2f] %s", getScore(),
+				getViterbiScore(), result.toString());
 	}
 
 }

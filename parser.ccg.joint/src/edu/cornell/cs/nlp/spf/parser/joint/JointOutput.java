@@ -25,7 +25,6 @@ import java.util.Map;
 import edu.cornell.cs.nlp.spf.parser.IDerivation;
 import edu.cornell.cs.nlp.spf.parser.IParserOutput;
 import edu.cornell.cs.nlp.utils.collections.ListUtils;
-import edu.cornell.cs.nlp.utils.composites.Pair;
 
 /**
  * Joint inference output. Doesn't support fancy dynamic programming for
@@ -37,14 +36,14 @@ import edu.cornell.cs.nlp.utils.composites.Pair;
  * @param <ERESULT>
  *            Semantics evaluation result.
  */
-public class JointOutput<MR, ERESULT> extends
-		AbstractJointOutput<MR, ERESULT, JointDerivation<MR, ERESULT>> {
+public class JointOutput<MR, ERESULT>
+		extends AbstractJointOutput<MR, ERESULT, JointDerivation<MR, ERESULT>> {
 
 	public JointOutput(IParserOutput<MR> baseOutput, long inferenceTime,
 			List<JointDerivation<MR, ERESULT>> derivations,
 			boolean exactEvaluation) {
-		super(baseOutput, inferenceTime, derivations, exactEvaluation
-				&& baseOutput.isExact());
+		super(baseOutput, inferenceTime, derivations,
+				exactEvaluation && baseOutput.isExact());
 	}
 
 	@Override
@@ -56,7 +55,7 @@ public class JointOutput<MR, ERESULT> extends
 
 		private final IParserOutput<MR>									baseOutput;
 		private boolean													exactEvaluation	= false;
-		private final List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>	inferencePairs	= new LinkedList<Pair<IDerivation<MR>, IEvaluation<ERESULT>>>();
+		private final List<InferencePair<MR, ERESULT, IDerivation<MR>>>	inferencePairs	= new LinkedList<>();
 		private final long												inferenceTime;
 
 		public Builder(IParserOutput<MR> baseOutput, long inferenceTime) {
@@ -65,44 +64,39 @@ public class JointOutput<MR, ERESULT> extends
 		}
 
 		public Builder<MR, ERESULT> addInferencePair(
-				Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair) {
+				InferencePair<MR, ERESULT, IDerivation<MR>> pair) {
 			inferencePairs.add(pair);
 			return this;
 		}
 
 		public Builder<MR, ERESULT> addInferencePairs(
-				List<Pair<IDerivation<MR>, IEvaluation<ERESULT>>> pairs) {
+				List<InferencePair<MR, ERESULT, IDerivation<MR>>> pairs) {
 			inferencePairs.addAll(pairs);
 			return this;
 		}
 
 		public JointOutput<MR, ERESULT> build() {
 			final Map<ERESULT, JointDerivation.Builder<MR, ERESULT>> builders = new HashMap<ERESULT, JointDerivation.Builder<MR, ERESULT>>();
-			for (final Pair<IDerivation<MR>, IEvaluation<ERESULT>> pair : inferencePairs) {
-				final ERESULT pairResult = pair.second().getResult();
+			for (final InferencePair<MR, ERESULT, IDerivation<MR>> pair : inferencePairs) {
+				final ERESULT pairResult = pair.getEvaluationResult()
+						.getResult();
 				if (!builders.containsKey(pairResult)) {
-					builders.put(
-							pairResult,
-							new JointDerivation.Builder<MR, ERESULT>(pairResult));
+					builders.put(pairResult,
+							new JointDerivation.Builder<MR, ERESULT>(
+									pairResult));
 				}
 				builders.get(pairResult).addInferencePair(pair);
 			}
 			// Create all derivations.
 			final List<JointDerivation<MR, ERESULT>> derivations = Collections
-					.unmodifiableList(ListUtils.map(
-							builders.values(),
-							new ListUtils.Mapper<JointDerivation.Builder<MR, ERESULT>, JointDerivation<MR, ERESULT>>() {
-								@Override
-								public JointDerivation<MR, ERESULT> process(
-										JointDerivation.Builder<MR, ERESULT> obj) {
-									return obj.build();
-								}
-							}));
+					.unmodifiableList(ListUtils.map(builders.values(),
+							obj -> obj.build()));
 			return new JointOutput<MR, ERESULT>(baseOutput, inferenceTime,
 					derivations, exactEvaluation);
 		}
 
-		public Builder<MR, ERESULT> setExactEvaluation(boolean exactEvaluation) {
+		public Builder<MR, ERESULT> setExactEvaluation(
+				boolean exactEvaluation) {
 			this.exactEvaluation = exactEvaluation;
 			return this;
 		}

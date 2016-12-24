@@ -34,8 +34,8 @@ import edu.cornell.cs.nlp.spf.parser.joint.model.IJointDataItemModel;
  * @param <RESULT>
  *            The final result {@link IExecution} will output.
  */
-public abstract class AbstractJointExecution<MR, ERESULT, RESULT> implements
-		IExecution<RESULT> {
+public abstract class AbstractJointExecution<MR, ERESULT, RESULT>
+		implements IExecution<RESULT> {
 
 	private final IJointDataItemModel<MR, ERESULT>	dataItemModel;
 	protected final IJointDerivation<MR, ERESULT>	jointDerivation;
@@ -55,8 +55,8 @@ public abstract class AbstractJointExecution<MR, ERESULT, RESULT> implements
 			ret.append("[").append(model.score(entry)).append("] ");
 			ret.append(entry);
 			ret.append(" [");
-			ret.append(model.getTheta().printValues(
-					model.computeFeatures(entry)));
+			ret.append(
+					model.getTheta().printValues(model.computeFeatures(entry)));
 			ret.append("]\n");
 		}
 		ret.append("]");
@@ -70,7 +70,7 @@ public abstract class AbstractJointExecution<MR, ERESULT, RESULT> implements
 
 	@Override
 	public double score() {
-		return jointDerivation.getViterbiScore();
+		return jointDerivation.getScore();
 	}
 
 	@Override

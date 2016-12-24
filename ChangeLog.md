@@ -1,3 +1,8 @@
+# v2.1
+- Update README and bib file
+- Various cosmetic changes to simplify use of generics
+- Fix Eclipse build issues -- follow README to work with Eclipse
+
 # v2.0
 - Support for crossing and high order composition.
 - Proper implementation of normal form parsing with Eisner (1996) NF.

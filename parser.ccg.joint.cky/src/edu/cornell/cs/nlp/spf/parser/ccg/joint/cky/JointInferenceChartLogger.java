@@ -99,7 +99,7 @@ public class JointInferenceChartLogger<ESTEP, ERESULT>
 				writer.append(chart.toString(true, viterbi,
 						dataItemModel.getTheta()));
 				writer.write("\n\n");
-				for (final IDerivation<LogicalExpression> parse : CollectionUtils
+				for (final IDerivation<LogicalExpression> derivation : CollectionUtils
 						.sorted(output.getAllDerivations(), (o1, o2) -> {
 							final int comp = Double.compare(o2.getScore(),
 									o1.getScore());
@@ -107,20 +107,19 @@ public class JointInferenceChartLogger<ESTEP, ERESULT>
 									.compareTo(o1.getCategory().toString())
 									: comp;
 						})) {
-					writer.write(String.format("[%.2f] %s\n", parse.getScore(),
-							parse.getCategory()));
-					for (final LexicalEntry<LogicalExpression> entry : parse
+					writer.write(String.format("%s\n", derivation));
+					for (final LexicalEntry<LogicalExpression> entry : derivation
 							.getMaxLexicalEntries()) {
 						writer.write(String.format("\t[%f] %s [%s]\n",
 								dataItemModel.score(entry), entry,
 								dataItemModel.getTheta().printValues(
 										dataItemModel.computeFeatures(entry))));
 					}
-					writer.write(String.format("\tRules: %s\n",
-							ListUtils.join(parse.getMaxRulesUsed(), ", ")));
+					writer.write(String.format("\tRules: %s\n", ListUtils
+							.join(derivation.getMaxRulesUsed(), ", ")));
 					writer.write(String.format("\tFeatures: %s\n",
 							dataItemModel.getTheta().printValues(
-									parse.getAverageMaxFeatureVector())));
+									derivation.getAverageMaxFeatureVector())));
 				}
 			}
 			LOG.info("Dumped chart to %s (%.3fsec)", file.getAbsolutePath(),

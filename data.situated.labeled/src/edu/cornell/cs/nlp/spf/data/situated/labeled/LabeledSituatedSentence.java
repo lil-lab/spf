@@ -31,15 +31,16 @@ import edu.cornell.cs.nlp.spf.data.situated.sentence.SituatedSentence;
  * @param <LABEL>
  *            Final label for testing.
  */
-public class LabeledSituatedSentence<STATE, LABEL> implements
-		ILabeledDataItem<SituatedSentence<STATE>, LABEL> {
+public class LabeledSituatedSentence<STATE, LABEL>
+		implements ILabeledDataItem<SituatedSentence<STATE>, LABEL> {
 
 	private static final long				serialVersionUID	= -4413253762974669632L;
 	private final LABEL						label;
 	private final Map<String, String>		properties;
 	private final SituatedSentence<STATE>	sentence;
 
-	public LabeledSituatedSentence(SituatedSentence<STATE> sentence, LABEL label) {
+	public LabeledSituatedSentence(SituatedSentence<STATE> sentence,
+			LABEL label) {
 		this(sentence, label, Collections.<String, String> emptyMap());
 	}
 
@@ -66,7 +67,7 @@ public class LabeledSituatedSentence<STATE, LABEL> implements
 
 	@Override
 	public boolean isCorrect(LABEL candidate) {
-		return label.equals(label);
+		return label.equals(candidate);
 	}
 
 	@Override
