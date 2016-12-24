@@ -86,7 +86,7 @@ All classes that output log messages include a public static object called `LOG`
 
 Want to use the logging system in your own code or add new log messages? You can view the interface `edu.cornell.cs.utils.log.ILogger` to see what logging methods are available.
 
-### ExPlat[explat]
+### ExPlat: SPF's Experiments Platform
 
 ExPlat is SPF's experiments platform. It's intended to streamline experiments and help you avoid huge `main(String[])` methods that just initialize one things after the other and are a pain to update. 
 
@@ -112,17 +112,13 @@ Each directive in this section defines a job to be executed. The type of the job
 
 See `LogicalLanaguageServices` for the main service class that is required for the logical language to work. Most operations on logical expressions are done using the visitor design pattern, see `ILogicalExpressionVisitor`. 
 
-More coming soon ... 
-
 ### Combinatory Categorial Grammars (CCGs) in SPF
 
-Coming soon ... 
+CCG categories are represented by `edu.cornell.cs.nlp.spf.ccg.categories.Category` and the classes that extend it. The starting classes for CCG binary operations is `edu.cornell.cs.nlp.spf.parser.ccg.rules.IBinaryParseRule` and for unary operations `edu.cornell.cs.nlp.spf.parser.ccg.rules.IUnaryParseRule`.  
 
 #### Basic Operations on Categories
 
 See `ICatagoeryServices`.
-
-More coming soon ... 
 
 ### Known Issues
 
