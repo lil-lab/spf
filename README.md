@@ -1,8 +1,3 @@
-Title: Cornell SPF - README
-Author: Yoav Artzi
-Affiliation: Computer Science, Cornell University
-Web: http://yoavartzi.com/spf
-
 # [_**Cornell SPF**_](http://yoavartzi.com/spf) - Cornell Semantic Parsing Framework 
 
 [TOC]
