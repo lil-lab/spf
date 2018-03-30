@@ -110,7 +110,7 @@ Each directive in this section defines a job to be executed. The type of the job
 
 ### Working with Logical Expressions
 
-See `LogicalLanaguageServices` for the main service class that is required for the logical language to work. Most operations on logical expressions are done using the visitor design pattern, see `ILogicalExpressionVisitor`. 
+See `LogicalLanguageServices` for the main service class that is required for the logical language to work. Most operations on logical expressions are done using the visitor design pattern, see `ILogicalExpressionVisitor`. 
 
 ### Combinatory Categorial Grammars (CCGs) in SPF
 
@@ -118,7 +118,7 @@ CCG categories are represented by `edu.cornell.cs.nlp.spf.ccg.categories.Categor
 
 #### Basic Operations on Categories
 
-See `ICatagoeryServices`.
+See `ICategoryServices`.
 
 ### Known Issues
 
