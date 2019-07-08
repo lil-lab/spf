@@ -136,6 +136,9 @@ The unification code in SPF is not identical to the original paper. The code for
 **When using a factored lexicon, I sometimes see two lexical entries that have a similar structure factored into different lexical templates, although they should share the same template.**  
 This is a known issue in the implementation of factoring the current version of SPF. We hope to update the framework soon with a fix, but have no concrete date. However, in practice, we noticed no degradation in performance due to this issue. 
 
+**Having issues with saving and loading model?**  
+Please read this issue [https://github.com/lil-lab/spf/issues/6](https://github.com/lil-lab/spf/issues/6). 
+
 ## Publications and Projects Using SPF
 
 Please let us know if you used SPF in your published work and we will be happy to list it here. 
